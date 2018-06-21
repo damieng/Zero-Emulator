@@ -4,11 +4,11 @@ using Peripherals;
 
 namespace Speccy
 {
-    public class zxPlus3 : Speccy.zxmachine
+    public class zxPlus3 : zxmachine
     {
         //Disk emulation related stuff
         protected bool[] diskInserted = { false, false };
-        private UDP765 udpDrive = new UDP765();
+        private readonly UDP765 udpDrive = new UDP765();
 
         public zxPlus3(IntPtr handle, bool lateTimingModel)
             : base(handle, lateTimingModel) {
@@ -63,7 +63,7 @@ namespace Speccy
                 base.Reset(coldBoot);
 
                 contentionStartPeriod = 14361;// The +3 didn't have late timings!
-                contentionEndPeriod = contentionStartPeriod + (ScreenHeight * TstatesPerScanline); //57324 + LateTiming;
+                contentionEndPeriod = contentionStartPeriod + ScreenHeight * TstatesPerScanline; //57324 + LateTiming;
 
                 PageReadPointer[0] = ROMpage[0];
                 PageReadPointer[1] = ROMpage[1];
@@ -104,7 +104,7 @@ namespace Speccy
                 screen = GetPageData(5); //Bank 5 is a copy of the screen
                 screenByteCtr = DisplayStart;
                 ULAByteCtr = 0;
-                ActualULAStart = 14366 - 24 - (TstatesPerScanline * BorderTopHeight);
+                ActualULAStart = 14366 - 24 - TstatesPerScanline * BorderTopHeight;
                 lastTState = ActualULAStart;
                 BuildAttributeMap();
 
@@ -149,7 +149,7 @@ namespace Speccy
                     contentionTable[t++] = 1;
                     contentionTable[t++] = 0;
                 }
-                t += (TstatesPerScanline - 128) - 2;
+                t += TstatesPerScanline - 128 - 2;
             }
 
             //build top half of tstateToDisp table
@@ -158,7 +158,7 @@ namespace Speccy
                 tstateToDisp[t] = 0;
 
             //next 48 are actual border
-            while (t < ActualULAStart + (TstateAtTop)) {
+            while (t < ActualULAStart + TstateAtTop) {
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
 
@@ -170,14 +170,14 @@ namespace Speccy
             int _x = 0;
             int _y = 0;
             int scrval = 2;
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline) {
                 for (int g = 0; g < 24; g++)
                     tstateToDisp[t++] = 1;
 
                 for (int g = 24; g < 24 + 128; g++) {
                     //Map screenaddr to tstate
                     if (g % 4 == 0) {
-                        scrval = (((((_y & 0xc0) >> 3) | (_y & 0x07) | (0x40)) << 8)) | (((_x >> 3) & 0x1f) | ((_y & 0x38) << 2));
+                        scrval = ((((_y & 0xc0) >> 3) | (_y & 0x07) | 0x40) << 8) | ((_x >> 3) & 0x1f) | ((_y & 0x38) << 2);
                         _x += 8;
                     }
                     tstateToDisp[t++] = (short)scrval;
@@ -195,16 +195,16 @@ namespace Speccy
             while (h < contentionEndPeriod + 3) {
                 for (int j = 0; j < 128; j += 8) {
                     floatingBusTable[h] = tstateToDisp[h + 2];
-                    floatingBusTable[h + 1] = attr[(tstateToDisp[h + 2] - 16384)];
+                    floatingBusTable[h + 1] = attr[tstateToDisp[h + 2] - 16384];
                     floatingBusTable[h + 2] = tstateToDisp[h + 2 + 4];
-                    floatingBusTable[h + 3] = attr[(tstateToDisp[h + 2 + 4] - 16384)];
+                    floatingBusTable[h + 3] = attr[tstateToDisp[h + 2 + 4] - 16384];
                     h += 8;
                 }
                 h += TstatesPerScanline - 128;
             }
 
             //build bottom half
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline) + (TstateAtBottom)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline + TstateAtBottom) {
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
 
@@ -222,7 +222,7 @@ namespace Speccy
                 return true;
 
             //High port contention
-            if ((addr == 0xc000) && contendedBankPagedIn)
+            if (addr == 0xc000 && contendedBankPagedIn)
                 return true;
 
             return false;
@@ -286,12 +286,12 @@ namespace Speccy
 
                 if (tapeIsPlaying) {
                     if (pulseLevel == 0)
-                        result &= ~(TAPE_BIT);    //reset is EAR off
+                        result &= ~TAPE_BIT;    //reset is EAR off
                     else
-                        result |= (TAPE_BIT); //set is EAR On
+                        result |= TAPE_BIT; //set is EAR On
                 }
                 else if ((lastFEOut & 0x10) == 0)
-                    result &= ~(0x40);
+                    result &= ~0x40;
                 else
                     result |= 0x40;
             }
@@ -323,7 +323,7 @@ namespace Speccy
             }
             totalTStates += 3;
             base.In(port, result & 0xff);
-            return (result & 0xff);
+            return result & 0xff;
         }
 
         private void NormalPaging(int val) {
@@ -422,7 +422,7 @@ namespace Speccy
             else
                 lowROMis48K = false;
             //Debugging string for monitor
-            BankInPage0 = (romSelect > 1 ? romSelect == 3 ? ROM_48_BAS : ROM_PLUS3_DOS : romSelect == 1 ? ROM_128_SYN : ROM_128_BAS);
+            BankInPage0 = romSelect > 1 ? romSelect == 3 ? ROM_48_BAS : ROM_PLUS3_DOS : romSelect == 1 ? ROM_128_SYN : ROM_128_BAS;
 
             if ((val & 0x08) != 0) {
                 if (!showShadowScreen)
@@ -448,7 +448,7 @@ namespace Speccy
             udpDrive.DiskMotorState((byte)(val & 0xff));
 
             if ((val & 0x8) != 0) {
-                diskDriveState |= (1 << 4);
+                diskDriveState |= 1 << 4;
                 OnDiskEvent(new DiskEventArgs(diskDriveState));
             } else {
                 diskDriveState &= ~(1 << 4);
@@ -635,11 +635,11 @@ namespace Speccy
                 totalTStates++; //Fix for rotatrix demo!
 
                 borderColour = val & BORDER_BIT;  //The LSB 3 bits of val hold the border colour
-                int beepVal = val & (EAR_BIT);// + MIC_BIT);
+                int beepVal = val & EAR_BIT;// + MIC_BIT);
 
                 if (!tapeIsPlaying) {
                     if (beepVal != lastSoundOut) {
-                        if ((beepVal) == 0) {
+                        if (beepVal == 0) {
                             soundOut = MIN_SOUND_VOL;
                         } else {
                             soundOut = MAX_SOUND_VOL;
@@ -707,11 +707,8 @@ namespace Speccy
                                                 int gl = val & 0x01;
                                                 int gm = (val & 0x02) >> 1;
                                                 int gh = (val & 0x04) >> 2;
-                                                int bgr = ( //each byte built as hmlhmlml bits from original 3 bit colour value
-                                                            (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | (rl)) << 16)
-                                                            | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | (gl)) << 8)
-                                                            | (((bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | (bl)))
-                                                            );
+                                                int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
+                                                          | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
                                                 ULAPlusColours[ULAPaletteGroup] = bgr;
                                             }
                                         }
@@ -735,12 +732,12 @@ namespace Speccy
                 byte[] buffer = new byte[65536];
                 int bytesRead = r.Read(buffer, 0, 65536);
 
-                if ((bytesRead == 0) || (bytesRead < 65536))
+                if (bytesRead == 0 || bytesRead < 65536)
                     return false; //something bad happened!
 
                 for (int g = 0; g < 8; g++)
                     for (int f = 0; f < 8192; ++f) {
-                        ROMpage[g][f] = (buffer[f + 8192 * g]);
+                        ROMpage[g][f] = buffer[f + 8192 * g];
                     }
             }
             fs.Close();
@@ -764,7 +761,7 @@ namespace Speccy
                 IY = sna.HEADER.IY;
                 IX = sna.HEADER.IX;
 
-                IFF1 = ((sna.HEADER.IFF2 & 0x04) != 0);
+                IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
                 _R = sna.HEADER.R;
                 AF = sna.HEADER.AF;
                 SP = sna.HEADER.SP;

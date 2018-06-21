@@ -4,32 +4,32 @@ using Peripherals;
 
 namespace Speccy
 {
-    public class Pentagon128K : Speccy.zxmachine
+    public class Pentagon128K : zxmachine
     {
         //Disk emulation related stuff
         protected bool[] diskInserted = { false, false, false, false };
 
-        private WD1793 wdDrive = new WD1793();
-        private int pixelData = 0;
-        private int pixelsWritten = 0;
+        private readonly WD1793 wdDrive = new WD1793();
+        private int pixelData;
+        private int pixelsWritten;
 
-        private int attrData = 0;
-        private int bright = 0;
-        private int ink = 0;
-        private int paper = 0;
-        private bool flashBitOn = false;
-        private int bor = 0;
+        private int attrData;
+        private int bright;
+        private int ink;
+        private int paper;
+        private bool flashBitOn;
+        private int bor;
 
-        private int adjustedScreenHeight = 0;
+        private int adjustedScreenHeight;
 
-        int leftBorderOffset = 24;
-        int rightBorderOffset = 8;
-        int topBorderOffset = 8;
-       
-        int adjustedBorderLeftWidth = 0;
-        int adjustedBorderRightWidth = 0;
-        int adjustedBorderTopHeight = 0;
-        int adjustedScanlineWidth = 0;
+        readonly int leftBorderOffset = 24;
+        readonly int rightBorderOffset = 8;
+        readonly int topBorderOffset = 8;
+
+        readonly int adjustedBorderLeftWidth;
+        readonly int adjustedBorderRightWidth;
+        readonly int adjustedBorderTopHeight;
+        readonly int adjustedScanlineWidth;
 
         public override void DiskInsert(string filename, byte _unit) {
             if (diskInserted[_unit])
@@ -149,7 +149,7 @@ namespace Speccy
             pagingDisabled = false;
             showShadowScreen = false;
             contentionStartPeriod = 14337;
-            contentionEndPeriod = contentionStartPeriod + (ScreenHeight * TstatesPerScanline); //57324 + LateTiming;
+            contentionEndPeriod = contentionStartPeriod + ScreenHeight * TstatesPerScanline; //57324 + LateTiming;
             Random rand = new Random();
 
             //Fill memory with zero to simulate hard reset
@@ -179,7 +179,7 @@ namespace Speccy
             }
 
             //the additional 1 tstate is required to get correct number of bytes to output in ircontention.sna
-            elapsedTStates = (_tstates + 1 - lastTState);
+            elapsedTStates = _tstates + 1 - lastTState;
             if (elapsedTStates < 0)
                 elapsedTStates = 0;
             //if (model == MachineModel._pentagon)
@@ -256,11 +256,11 @@ namespace Speccy
             for (; t < ActualULAStart; t++)
                 tstateToDisp[t] = 0;
 
-            for (; t < ActualULAStart + (topBorderOffset * TstatesPerScanline); t++)
+            for (; t < ActualULAStart + topBorderOffset * TstatesPerScanline; t++)
                 tstateToDisp[t] = 0;
 
             //next 48 are actual border
-            while (t < ActualULAStart + (TstateAtTop)) {
+            while (t < ActualULAStart + TstateAtTop) {
                 int g = 0;
                 int k = 0;
 
@@ -279,7 +279,7 @@ namespace Speccy
             int _y = 0;
             int scrval = 2;
 
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline) {
                 int g = 0;
 
                 for (; g < leftBorderOffset / 2; g++)
@@ -288,10 +288,10 @@ namespace Speccy
                 for (g = 0; g < adjustedBorderLeftWidth / 2; g++)
                     tstateToDisp[t++] = 1;
 
-                for (g = 0; g < (ScreenWidth) / 2; g++) {
+                for (g = 0; g < ScreenWidth / 2; g++) {
                     //Map screenaddr to tstate
                     if (g % 4 == 0) {
-                        scrval = (((((_y & 0xc0) >> 3) | (_y & 0x07) | (0x40)) << 8)) | (((_x >> 3) & 0x1f) | ((_y & 0x38) << 2));
+                        scrval = ((((_y & 0xc0) >> 3) | (_y & 0x07) | 0x40) << 8) | ((_x >> 3) & 0x1f) | ((_y & 0x38) << 2);
                         _x += 8;
                     }
                     tstateToDisp[t++] = (short)scrval;
@@ -306,7 +306,7 @@ namespace Speccy
             }
 
             //build bottom half
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline) + (TstateAtBottom)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline + TstateAtBottom) {
                 int g = 0;
                 int k = 0;
 
@@ -417,12 +417,12 @@ namespace Speccy
 
                 if (tapeIsPlaying) {
                     if (pulseLevel == 0)
-                        result &= ~(TAPE_BIT);    //reset is EAR off
+                        result &= ~TAPE_BIT;    //reset is EAR off
                     else
-                        result |= (TAPE_BIT);     //set is EAR on
+                        result |= TAPE_BIT;     //set is EAR on
                 }
                 else if ((lastFEOut & EAR_BIT) == 0)
-                        result &= ~(TAPE_BIT);
+                        result &= ~TAPE_BIT;
                      else
                         result |= TAPE_BIT;
             }
@@ -437,7 +437,7 @@ namespace Speccy
                     result = MouseButton;
             }
             totalTStates += 3;
-            return (result & 0xff);
+            return result & 0xff;
         }
 
         private void Out_7ffd(int val) {
@@ -580,11 +580,11 @@ namespace Speccy
                     UpdateScreenBuffer(totalTStates);
 
                 borderColour = val & BORDER_BIT;  //The LSB 3 bits of val hold the border colour
-                int beepVal = val & (EAR_BIT);// + MIC_BIT);
+                int beepVal = val & EAR_BIT;// + MIC_BIT);
 
                 if (!tapeIsPlaying) {
                     if (beepVal != lastSoundOut) {
-                        if ((beepVal) == 0) {
+                        if (beepVal == 0) {
                             soundOut = MIN_SOUND_VOL;
                         } else {
                             soundOut = MAX_SOUND_VOL;
@@ -608,7 +608,7 @@ namespace Speccy
                                     diskDriveState &= ~(1 << 4);
                                     OnDiskEvent(new DiskEventArgs(diskDriveState));
                                 } else {
-                                    diskDriveState |= (1 << 4);
+                                    diskDriveState |= 1 << 4;
                                     OnDiskEvent(new DiskEventArgs(diskDriveState));
                                 }
                                 totalTStates += 3;
@@ -657,7 +657,6 @@ namespace Speccy
             }
 
             totalTStates += 3;
-            return;
         }
 
         public override bool LoadROM(string path, string file) {
@@ -683,7 +682,7 @@ namespace Speccy
 
                 for (int g = 0; g < 4; g++)
                     for (int f = 0; f < 8192; ++f) {
-                        ROMpage[g][f] = (buffer[f + 8192 * g]);
+                        ROMpage[g][f] = buffer[f + 8192 * g];
                     }
             }
             fs.Close();
@@ -706,7 +705,7 @@ namespace Speccy
 
                 for (int g = 4; g < 6; g++)
                     for (int f = 0; f < 8192; ++f) {
-                        ROMpage[g][f] = (buffer[f + 8192 * (g - 4)]);
+                        ROMpage[g][f] = buffer[f + 8192 * (g - 4)];
                     }
             }
             fs.Close();
@@ -715,9 +714,6 @@ namespace Speccy
         }
 
         public override void UseSNA(SNA_SNAPSHOT sna) {
-            if (sna == null)
-                return;
-
             if (sna is SNA_128K) {
                 I = sna.HEADER.I;
                 _HL = sna.HEADER.HL_;
@@ -731,7 +727,7 @@ namespace Speccy
                 IY = sna.HEADER.IY;
                 IX = sna.HEADER.IX;
 
-                IFF1 = ((sna.HEADER.IFF2 & 0x04) != 0);
+                IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
 
                 //Force ignore re-triggered interrupts when loading SNA. Causes Shock Medademo 128k SNA to work incorrectly otherwise.
                 if (IFF1)

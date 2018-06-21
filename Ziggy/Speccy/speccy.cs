@@ -1,5 +1,4 @@
-﻿
-#define NEW_RZX_METHODS
+﻿#define NEW_RZX_METHODS
 
 using System;
 using System.ComponentModel;
@@ -132,24 +131,17 @@ namespace Speccy
     #region Delegates and args for speccy related events (used by monitor)
     public class MemoryEventArgs : EventArgs
     {
-        private int addr, val;
+        private readonly int addr;
+        private readonly int val;
 
         public MemoryEventArgs(int _addr, int _val) {
-            this.addr = _addr;
-            this.val = _val;
+            addr = _addr;
+            val = _val;
         }
 
-        public int Address {
-            get {
-                return addr;
-            }
-        }
+        public int Address => addr;
 
-        public int Byte {
-            get {
-                return val;
-            }
-        }
+        public int Byte => val;
     }
 
     public class OpcodeExecutedEventArgs : EventArgs { }
@@ -167,21 +159,20 @@ namespace Speccy
 
     public class TapeEventArgs : EventArgs
     {
-        private TapeEventType type;
+        private readonly TapeEventType type;
 
         public TapeEventArgs(TapeEventType _type) {
             type = _type;
         }
 
-        public TapeEventType EventType {
-            get { return type; }
-        }
+        public TapeEventType EventType => type;
     }
 
     public class PortIOEventArgs : EventArgs
     {
-        private int port, val;
-        private bool isWrite;
+        private readonly int port;
+        private readonly int val;
+        private readonly bool isWrite;
 
         public PortIOEventArgs(int _port, int _val, bool _write) {
             port = _port;
@@ -189,32 +180,23 @@ namespace Speccy
             isWrite = _write;
         }
 
-        public int Port {
-            get { return port; }
-        }
+        public int Port => port;
 
-        public int Value {
-            get { return val; }
-        }
+        public int Value => val;
 
-        public bool IsWrite {
-            get { return isWrite; }
-        }
+        public bool IsWrite => isWrite;
     }
 
     public class StateChangeEventArgs : EventArgs
     {
-        private SPECCY_EVENT eventType;
+        private readonly SPECCY_EVENT eventType;
 
         public StateChangeEventArgs(SPECCY_EVENT _eventType)
         {
             eventType = _eventType;
         }
 
-        public SPECCY_EVENT EventType
-        {
-            get { return eventType; }
-        }
+        public SPECCY_EVENT EventType => eventType;
     }
 
     public delegate void MemoryWriteEventHandler(object sender, MemoryEventArgs e);
@@ -376,15 +358,15 @@ namespace Speccy
         //ULA Plus support
         public bool ULAPlusEnabled = false;
         protected int ULAGroupMode = 0; //0 = palette group, 1 = mode group
-        protected int ULAPaletteGroup = 0;
-        public bool ULAPaletteEnabled = false;
+        protected int ULAPaletteGroup;
+        public bool ULAPaletteEnabled;
 
         //Misc variables
-        protected int opcode = 0;
+        protected int opcode;
         protected int val, addr;
         public bool isROMprotected = true;  //not really used ATM
-        public bool needsPaint = false;     //Raised when the ULA has finished painting the entire screen
-        protected bool CapsLockOn = false;
+        public bool needsPaint;     //Raised when the ULA has finished painting the entire screen
+        protected bool CapsLockOn;
 
         //Sound
         public const short MIN_SOUND_VOL = 0;
@@ -392,23 +374,23 @@ namespace Speccy
         private short[] soundSamples = new short[882 * 2]; //882 samples, 2 channels, 2 bytes per channel (short)
         public ZeroSound.SoundManager beeper;
         public const bool ENABLE_SOUND = false;
-        protected int averagedSound = 0;
-        protected short soundCounter = 0;
+        protected int averagedSound;
+        protected short soundCounter;
         protected int lastSoundOut = 0;
-        public short soundOut = 0;
+        public short soundOut;
         protected int soundTStatesToSample = 79;
-        private float soundVolume = 0f;        //cached reference used when beeper instance is recreated.
-        private short soundSampleCounter = 0;
+        private float soundVolume;        //cached reference used when beeper instance is recreated.
+        private short soundSampleCounter;
 
         //Threading stuff (not used)
         public bool doRun = true;           //z80 executes only when true. Mainly for debugging purpose.
 
         //Important ports
-        protected int lastFEOut = 0;        //The ULA Port
-        protected int last7ffdOut = 0;      //Paging port on 128k/+2/+3/Pentagon
-        protected int last1ffdOut = 0;      //Paging + drive motor port on +3
-        protected int lastAYPortOut = 0;    //AY sound port
-        protected int lastULAPlusOut = 0;
+        protected int lastFEOut;        //The ULA Port
+        protected int last7ffdOut;      //Paging port on 128k/+2/+3/Pentagon
+        protected int last1ffdOut;      //Paging + drive motor port on +3
+        protected int lastAYPortOut;    //AY sound port
+        protected int lastULAPlusOut;
 
         //Port 0xfe constants
         protected const int BORDER_BIT = 0x07;
@@ -433,8 +415,8 @@ namespace Speccy
         protected int AttributeStart;       //memory address of attribute start
         protected int AttributeLength;      //total # bytes of attribute memory
         protected bool ULASnowEffect = true;
-        public bool Issue2Keyboard = false; //Only of use for 48k & 16k machines.
-        public int LateTiming = 0;       //Some machines have late timings. This affects contention and has to be factored in.
+        public bool Issue2Keyboard; //Only of use for 48k & 16k machines.
+        public int LateTiming;       //Some machines have late timings. This affects contention and has to be factored in.
 
         //Utility strings
         protected const string ROM_128_BAS = "128K BAS";
@@ -477,7 +459,7 @@ namespace Speccy
         
         //Paging
         protected bool lowROMis48K = true;
-        protected bool trDosPagedIn = false ;//TR DOS is swapped in only if the lower ROM is 48k.
+        protected bool trDosPagedIn;//TR DOS is swapped in only if the lower ROM is 48k.
         protected bool special64KRAM = false;  //for +3
         public bool contendedBankPagedIn = false;
         public bool showShadowScreen = false;
@@ -486,7 +468,7 @@ namespace Speccy
         //The cpu needs access to this so are public
         public int InterruptPeriod;             //Number of t-states to hold down /INT
         public int FrameLength;                 //Number of t-states of in 1 frame before interrupt is fired.
-        private byte FrameCount = 0;            //Used to keep tabs on tape play time out period.
+        private byte FrameCount;            //Used to keep tabs on tape play time out period.
 
         //Contention related stuff
         protected int contentionStartPeriod;              //t-state at which to start applying contention
@@ -507,7 +489,7 @@ namespace Speccy
         protected int screenByteCtr;                      //offset into display memory based on current tstate
         protected int ULAByteCtr;                         //offset into current pixel of rasterizer
         protected int borderColour;                       //Used by the screen update routine to output border colour
-        protected bool flashOn = false;
+        protected bool flashOn;
 
         //For floating bus implementation
         protected int lastPixelValue;                     //last 8-bit bitmap read from display memory
@@ -539,51 +521,51 @@ namespace Speccy
 
         //Tape edge detection variables
         public String tapeFilename = "";
-        private int tape_detectionCount = 0;
-        private int tape_PC = 0;
-        private int tape_PCatLastIn = 0;
-        private int tape_whichRegToCheck = 0;
-        private int tape_regValue = 0;
-        private bool tape_edgeDetectorRan = false;
-        private int tape_tstatesSinceLastIn = 0;
+        private int tape_detectionCount;
+        private int tape_PC;
+        private int tape_PCatLastIn;
+        private int tape_whichRegToCheck;
+        private int tape_regValue;
+        private bool tape_edgeDetectorRan;
+        private int tape_tstatesSinceLastIn;
         private int tape_tstatesStep, tape_diff;
         private int tape_A, tape_B, tape_C, tape_D, tape_E, tape_H, tape_L;
         public bool tape_edgeLoad = false;
-        public bool tapeBitWasFlipped = false;
-        public bool tapeBitFlipAck = false;
+        public bool tapeBitWasFlipped;
+        public bool tapeBitFlipAck;
         public bool tape_AutoPlay = false;
-        public bool tape_AutoStarted = false;
-        public bool tape_readToPlay = false;
+        public bool tape_AutoStarted;
+        public bool tape_readToPlay;
         private const int TAPE_TIMEOUT = 50;// 69888 * 10;
         private int tape_stopTimeOut = TAPE_TIMEOUT;
-        private byte tape_FrameCount = 0;
-        public int tapeTStates = 0;
-        public uint edgeDuration = 0;
-        public bool tapeIsPlaying = false;
-        public int pulseLevel = 0;
+        private byte tape_FrameCount;
+        public int tapeTStates;
+        public uint edgeDuration;
+        public bool tapeIsPlaying;
+        public int pulseLevel;
 
         //Tape loading
-        public int blockCounter = 0;
+        public int blockCounter;
         public bool tapePresent = false;
         public bool tape_flashLoad = true;
         public bool tapeTrapsDisabled = false;
-        public bool isPlaying = false;
-        private int pulseCounter = 0;
-        private int repeatCount = 0;
-        private int bitCounter = 0;
-        private byte bitShifter = 0;
-        private int dataCounter = 0;
-        private byte dataByte = 0;
-        private int currentBit = 0;
-        private bool isPauseBlockPreproccess = false; //To ensure previous edge is finished correctly
-        private bool isProcessingPauseBlock = false;  //Signals if the current pause block is currently being serviced.
-        private int pauseCounter = 0;
+        public bool isPlaying;
+        private int pulseCounter;
+        private int repeatCount;
+        private int bitCounter;
+        private byte bitShifter;
+        private int dataCounter;
+        private byte dataByte;
+        private int currentBit;
+        private bool isPauseBlockPreproccess; //To ensure previous edge is finished correctly
+        private bool isProcessingPauseBlock;  //Signals if the current pause block is currently being serviced.
+        private int pauseCounter;
         public PZXFile.Block currentBlock;
 
         //AY support
         protected bool ayIsAvailable = true;
         protected AYSound aySound = new AYSound();
-        protected int ayTStates = 0;
+        protected int ayTStates;
         protected const int AY_SAMPLE_RATE = 16;
 
         //Handy enum for various keys
@@ -673,26 +655,26 @@ namespace Speccy
         protected byte rzxIN;
         public RZXFile rzx;
         protected System.Collections.Generic.List<byte> rzxInputs = new System.Collections.Generic.List<byte>();
-        public bool isPlayingRZX = false;
-        public bool isRecordingRZX = false;
+        public bool isPlayingRZX;
+        public bool isRecordingRZX;
 
         //Disk related stuff
-        protected int diskDriveState = 0;
+        protected int diskDriveState;
 
         //Thread related stuff (not used ATM)
         private System.Threading.Thread emulationThread;
         public bool isSuspended = true;
-        public System.Object lockThis = new System.Object(); //used to synchronise emulation with methods that change emulation state
-        public System.Object lockThis2 = new System.Object(); //used by monitor/emulation
+        public Object lockThis = new Object(); //used to synchronise emulation with methods that change emulation state
+        public Object lockThis2 = new Object(); //used by monitor/emulation
 
         public MachineModel model;
         private int emulationSpeed;
-        public bool isResetOver = false;
+        public bool isResetOver;
         private const int MAX_CPU_SPEED = 500;
 
         //How long should we wait after speccy reset before signalling that it's safe to assume so.
-        private int resetFrameTarget = 0;
-        private int resetFrameCounter = 0;
+        private int resetFrameTarget;
+        private int resetFrameCounter;
 
         public void Start() {
             doRun = true;
@@ -741,7 +723,7 @@ namespace Speccy
                 beeper.SetVolume(2.0f);
             } else {
                 beeper.SetVolume(soundVolume);
-                soundTStatesToSample = (int)((FrameLength * (50.0f * (speed / 100.0f))) / 44100.0f);
+                soundTStatesToSample = (int)(FrameLength * (50.0f * (speed / 100.0f)) / 44100.0f);
             }
 
             emulationSpeed = (speed - 100) / 100; //0 = normal.
@@ -841,7 +823,7 @@ namespace Speccy
             }
         }
 
-        public void StartRecordingRZX(string filename, System.Action<RZXFileEventArgs> callback) {
+        public void StartRecordingRZX(string filename, Action<RZXFileEventArgs> callback) {
             rzx = new RZXFile();
 #if NEW_RZX_METHODS
             rzx.RZXFileEventHandler += callback;
@@ -869,7 +851,7 @@ namespace Speccy
         }
 
         public virtual void DiskInsert(string filename, byte _unit) {
-            diskDriveState |= (1 << _unit);
+            diskDriveState |= 1 << _unit;
             OnDiskEvent(new DiskEventArgs(diskDriveState));
         }
 
@@ -914,7 +896,7 @@ namespace Speccy
             RAMpage[14] = new byte[8192]; //Bank 7
             RAMpage[15] = new byte[8192]; //Bank 7
             AttrColors = NormalColors;
-            LateTiming = (lateTimingModel ? 1 : 0);
+            LateTiming = lateTimingModel ? 1 : 0;
             tapeBitWasFlipped = false;
 
             //THREAD
@@ -1190,11 +1172,11 @@ namespace Speccy
                             }
 
                             tape_edgeDetectorRan = true;
-                            while (!((tape_regValue == 255) || (tape_regValue == 1))) {
+                            while (!(tape_regValue == 255 || tape_regValue == 1)) {
                                 if (tapeBitFlipAck)
                                     tapeBitWasFlipped = false;
 
-                                tapeTStates += (totalTStates - oldTStates);
+                                tapeTStates += totalTStates - oldTStates;
 
                                  if (tapeBitWasFlipped) {
                                     tapeBitFlipAck = true;
@@ -1259,7 +1241,7 @@ namespace Speccy
                     tape_detectionCount = 0;
 
                 int elapsedTapeTstates = totalTStates - tape_tstatesSinceLastIn;
-                if (((elapsedTapeTstates > 0) && (elapsedTapeTstates < 96)) && (PC == tape_PC)) {
+                if (elapsedTapeTstates > 0 && elapsedTapeTstates < 96 && PC == tape_PC) {
                     tape_tstatesStep = elapsedTapeTstates;
                     //which reg has changes since last IN
                     int numRegsThatHaveChanged = 0;
@@ -1353,7 +1335,7 @@ namespace Speccy
 
         //The main loop which executes opcodes repeatedly till 1 frame (69888 tstates)
         //has been generated.
-        private int NO_PAINT_REP = 50;
+        private readonly int NO_PAINT_REP = 50;
 
         public void Run() {
             for (int rep = 0; rep < (tapeIsPlaying && tape_edgeLoad ? NO_PAINT_REP : 1); rep++)
@@ -1407,7 +1389,7 @@ namespace Speccy
                         {
                             if (tape_AutoPlay && tape_AutoStarted)
                             {
-                                if (!(isPauseBlockPreproccess && (edgeDuration > 0) && and_32_Or_64))
+                                if (!(isPauseBlockPreproccess && edgeDuration > 0 && and_32_Or_64))
                                 {
                                     if (tape_stopTimeOut <= 0)
                                     {
@@ -1496,8 +1478,8 @@ namespace Speccy
 
             totalTStates += 3;
 
-            int page = (addr) >> 13;
-            int offset = (addr) & 0x1FFF;
+            int page = addr >> 13;
+            int offset = addr & 0x1FFF;
             byte _b = PageReadPointer[page][offset];
 
             //This call flags a memory change event for the debugger
@@ -1517,8 +1499,8 @@ namespace Speccy
 
             totalTStates += 3;
 
-            int page = (addr) >> 13;
-            int offset = (addr) & 0x1FFF;
+            int page = addr >> 13;
+            int offset = addr & 0x1FFF;
             byte _b = PageReadPointer[page][offset];
 
             //This call flags a memory change event for the debugger
@@ -1541,10 +1523,10 @@ namespace Speccy
                 totalTStates += contentionTable[totalTStates];
             }
             totalTStates += 3;
-            int page = (addr) >> 13;
-            int offset = (addr) & 0x1FFF;
+            int page = addr >> 13;
+            int offset = addr & 0x1FFF;
 
-            if (((addr & 49152) == 16384) && (PageReadPointer[page][offset] != b)) {
+            if ((addr & 49152) == 16384 && PageReadPointer[page][offset] != b) {
                 UpdateScreenBuffer(totalTStates);
             }
 
@@ -1554,26 +1536,26 @@ namespace Speccy
         //Returns the byte at a given 16 bit address with no contention
         public byte PeekByteNoContend(int addr) {
             addr &= 0xffff;
-            int page = (addr) >> 13;
-            int offset = (addr) & 0x1FFF;
+            int page = addr >> 13;
+            int offset = addr & 0x1FFF;
             byte _b = PageReadPointer[page][offset];
             return _b;
         }
 
         //Returns a word at a given 16 bit address with no contention
         public int PeekWordNoContend(int addr) {
-            return (PeekByteNoContend(addr) + (PeekByteNoContend(addr + 1) << 8));
+            return PeekByteNoContend(addr) + (PeekByteNoContend(addr + 1) << 8);
         }
 
         //Pokes a 16 bit value at given address. Contention applies.
         public void PokeWord(int addr, int w) {
             PokeByte(addr, w);
-            PokeByte((addr + 1), w >> 8);
+            PokeByte(addr + 1, w >> 8);
         }
 
         //Returns a 16 bit value from given address. Contention applies.
         public int PeekWord(int addr) {
-            return (PeekByte(addr)) | (PeekByte(addr + 1) << 8);
+            return PeekByte(addr) | (PeekByte(addr + 1) << 8);
         }
 
         //The stack is pushed in low byte, high byte form
@@ -1586,7 +1568,7 @@ namespace Speccy
         }
 
         public int PopStack() {
-            int val = (PeekByte(SP)) | (PeekByte(SP + 1) << 8);
+            int val = PeekByte(SP) | (PeekByte(SP + 1) << 8);
             SP = (SP + 2) & 0xffff;
             //if (PopStackEvent != null)
             //    OnPopStackEvent(val);
@@ -1614,8 +1596,8 @@ namespace Speccy
             addr &= 0xffff;
             b &= 0xff;
 
-            int page = (addr) >> 13;
-            int offset = (addr) & 0x1FFF;
+            int page = addr >> 13;
+            int offset = addr & 0x1FFF;
 
             PageWritePointer[page][offset] = (byte)b;
         }
@@ -1626,8 +1608,8 @@ namespace Speccy
 
             for (int f = dataOffset; f < dataOffset + dataLength; f++, addr++) {
                 addr &= 0xffff;
-                page = (addr) >> 13;
-                offset = (addr) & 0x1FFF;
+                page = addr >> 13;
+                offset = addr & 0x1FFF;
                 PageWritePointer[page][offset] = data[f];
             }
         }
@@ -1684,11 +1666,11 @@ namespace Speccy
             }
 
             //the additional 1 tstate is required to get correct number of bytes to output in ircontention.sna
-            elapsedTStates = (_tstates + 1 - lastTState);
+            elapsedTStates = _tstates + 1 - lastTState;
 
             //It takes 4 tstates to write 1 byte. Or, 2 pixels per t-state.
 
-            int numBytes = (elapsedTStates >> 2) + ((elapsedTStates % 4) > 0 ? 1 : 0);
+            int numBytes = (elapsedTStates >> 2) + (elapsedTStates % 4 > 0 ? 1 : 0);
 
             int pixelData;
             int pixel2Data = 0xff;
@@ -1724,12 +1706,12 @@ namespace Speccy
                         */
                         bright = (attrData & 0x40) >> 3;
                         flash = (attrData & 0x80) >> 7;
-                        ink = (attrData & 0x07);
-                        paper = ((attrData >> 3) & 0x7);
+                        ink = attrData & 0x07;
+                        paper = (attrData >> 3) & 0x7;
                         int paletteInk = AttrColors[ink + bright];
                         int palettePaper = AttrColors[paper + bright];
 
-                        if (flashOn && (flash != 0)) //swap paper and ink when flash is on
+                        if (flashOn && flash != 0) //swap paper and ink when flash is on
                         {
                             int temp = paletteInk;
                             paletteInk = palettePaper;
@@ -1792,10 +1774,10 @@ namespace Speccy
                 needsPaint = true;
             }
             //the additional 1 tstate is required to get correct number of bytes to output in ircontention.sna
-            elapsedTStates = (_tstates + 1 - lastTState);
+            elapsedTStates = _tstates + 1 - lastTState;
 
             //It takes 4 tstates to write 1 byte.
-            int numBytes = (elapsedTStates >> 2) + ((elapsedTStates % 4) > 0 ? 1 : 0);
+            int numBytes = (elapsedTStates >> 2) + (elapsedTStates % 4 > 0 ? 1 : 0);
             {
                 int pixelData = 0;
                 int attrData = 0;
@@ -1835,8 +1817,8 @@ namespace Speccy
                             }
 
                             if (ULAPlusEnabled && ULAPaletteEnabled) {
-                                ink = ULAPlusColours[((flashBitOn ? 1 : 0) << 1 + (bright != 0 ? 1 : 0)) << 4 + (attrData & 0x07)];
-                                paper = ULAPlusColours[((flashBitOn ? 1 : 0) << 1 + (bright != 0 ? 1 : 0)) << 4 + ((attrData >> 3) & 0x7) + 8];
+                                ink = ULAPlusColours[(flashBitOn ? 1 : 0) << 1 + (bright != 0 ? 1 : 0) << 4 + (attrData & 0x07)];
+                                paper = ULAPlusColours[(flashBitOn ? 1 : 0) << 1 + (bright != 0 ? 1 : 0) << 4 + ((attrData >> 3) & 0x7) + 8];
                             }
 
                             lock (this) {
@@ -1878,33 +1860,33 @@ namespace Speccy
 #region Row 0: fefe - CAPS SHIFT, Z, X, C , V
 
             if (keyBuffer[(int)keyCode.SHIFT]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
+                keyLine[0] = keyLine[0] & ~0x1;
             } else {
-                keyLine[0] = keyLine[0] | (0x1);
+                keyLine[0] = keyLine[0] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.Z]) {
-                keyLine[0] = keyLine[0] & ~(0x02);
+                keyLine[0] = keyLine[0] & ~0x02;
             } else {
-                keyLine[0] = keyLine[0] | (0x02);
+                keyLine[0] = keyLine[0] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.X]) {
-                keyLine[0] = keyLine[0] & ~(0x04);
+                keyLine[0] = keyLine[0] & ~0x04;
             } else {
-                keyLine[0] = keyLine[0] | (0x04);
+                keyLine[0] = keyLine[0] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.C]) {
-                keyLine[0] = keyLine[0] & ~(0x08);
+                keyLine[0] = keyLine[0] & ~0x08;
             } else {
-                keyLine[0] = keyLine[0] | (0x08);
+                keyLine[0] = keyLine[0] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.V]) {
-                keyLine[0] = keyLine[0] & ~(0x10);
+                keyLine[0] = keyLine[0] & ~0x10;
             } else {
-                keyLine[0] = keyLine[0] | (0x10);
+                keyLine[0] = keyLine[0] | 0x10;
             }
 
 #endregion Row 0: fefe - CAPS SHIFT, Z, X, C , V
@@ -1912,33 +1894,33 @@ namespace Speccy
 #region Row 1: fdfe - A, S, D, F, G
 
             if (keyBuffer[(int)keyCode.A]) {
-                keyLine[1] = keyLine[1] & ~(0x1);
+                keyLine[1] = keyLine[1] & ~0x1;
             } else {
-                keyLine[1] = keyLine[1] | (0x1);
+                keyLine[1] = keyLine[1] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.S]) {
-                keyLine[1] = keyLine[1] & ~(0x02);
+                keyLine[1] = keyLine[1] & ~0x02;
             } else {
-                keyLine[1] = keyLine[1] | (0x02);
+                keyLine[1] = keyLine[1] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.D]) {
-                keyLine[1] = keyLine[1] & ~(0x04);
+                keyLine[1] = keyLine[1] & ~0x04;
             } else {
-                keyLine[1] = keyLine[1] | (0x04);
+                keyLine[1] = keyLine[1] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.F]) {
-                keyLine[1] = keyLine[1] & ~(0x08);
+                keyLine[1] = keyLine[1] & ~0x08;
             } else {
-                keyLine[1] = keyLine[1] | (0x08);
+                keyLine[1] = keyLine[1] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.G]) {
-                keyLine[1] = keyLine[1] & ~(0x10);
+                keyLine[1] = keyLine[1] & ~0x10;
             } else {
-                keyLine[1] = keyLine[1] | (0x10);
+                keyLine[1] = keyLine[1] | 0x10;
             }
 
 #endregion Row 1: fdfe - A, S, D, F, G
@@ -1946,33 +1928,33 @@ namespace Speccy
 #region Row 2: fbfe - Q, W, E, R, T
 
             if (keyBuffer[(int)keyCode.Q]) {
-                keyLine[2] = keyLine[2] & ~(0x1);
+                keyLine[2] = keyLine[2] & ~0x1;
             } else {
-                keyLine[2] = keyLine[2] | (0x1);
+                keyLine[2] = keyLine[2] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.W]) {
-                keyLine[2] = keyLine[2] & ~(0x02);
+                keyLine[2] = keyLine[2] & ~0x02;
             } else {
-                keyLine[2] = keyLine[2] | (0x02);
+                keyLine[2] = keyLine[2] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.E]) {
-                keyLine[2] = keyLine[2] & ~(0x04);
+                keyLine[2] = keyLine[2] & ~0x04;
             } else {
-                keyLine[2] = keyLine[2] | (0x04);
+                keyLine[2] = keyLine[2] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.R]) {
-                keyLine[2] = keyLine[2] & ~(0x08);
+                keyLine[2] = keyLine[2] & ~0x08;
             } else {
-                keyLine[2] = keyLine[2] | (0x08);
+                keyLine[2] = keyLine[2] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.T]) {
-                keyLine[2] = keyLine[2] & ~(0x10);
+                keyLine[2] = keyLine[2] & ~0x10;
             } else {
-                keyLine[2] = keyLine[2] | (0x10);
+                keyLine[2] = keyLine[2] | 0x10;
             }
 
 #endregion Row 2: fbfe - Q, W, E, R, T
@@ -1980,33 +1962,33 @@ namespace Speccy
 #region Row 3: f7fe - 1, 2, 3, 4, 5
 
             if (keyBuffer[(int)keyCode._1]) {
-                keyLine[3] = keyLine[3] & ~(0x1);
+                keyLine[3] = keyLine[3] & ~0x1;
             } else {
-                keyLine[3] = keyLine[3] | (0x1);
+                keyLine[3] = keyLine[3] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode._2]) {
-                keyLine[3] = keyLine[3] & ~(0x02);
+                keyLine[3] = keyLine[3] & ~0x02;
             } else {
-                keyLine[3] = keyLine[3] | (0x02);
+                keyLine[3] = keyLine[3] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode._3]) {
-                keyLine[3] = keyLine[3] & ~(0x04);
+                keyLine[3] = keyLine[3] & ~0x04;
             } else {
-                keyLine[3] = keyLine[3] | (0x04);
+                keyLine[3] = keyLine[3] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode._4]) {
-                keyLine[3] = keyLine[3] & ~(0x08);
+                keyLine[3] = keyLine[3] & ~0x08;
             } else {
-                keyLine[3] = keyLine[3] | (0x08);
+                keyLine[3] = keyLine[3] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode._5]) {
-                keyLine[3] = keyLine[3] & ~(0x10);
+                keyLine[3] = keyLine[3] & ~0x10;
             } else {
-                keyLine[3] = keyLine[3] | (0x10);
+                keyLine[3] = keyLine[3] | 0x10;
             }
 
 #endregion Row 3: f7fe - 1, 2, 3, 4, 5
@@ -2014,33 +1996,33 @@ namespace Speccy
 #region Row 4: effe - 0, 9, 8, 7, 6
 
             if (keyBuffer[(int)keyCode._0]) {
-                keyLine[4] = keyLine[4] & ~(0x1);
+                keyLine[4] = keyLine[4] & ~0x1;
             } else {
-                keyLine[4] = keyLine[4] | (0x1);
+                keyLine[4] = keyLine[4] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode._9]) {
-                keyLine[4] = keyLine[4] & ~(0x02);
+                keyLine[4] = keyLine[4] & ~0x02;
             } else {
-                keyLine[4] = keyLine[4] | (0x02);
+                keyLine[4] = keyLine[4] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode._8]) {
-                keyLine[4] = keyLine[4] & ~(0x04);
+                keyLine[4] = keyLine[4] & ~0x04;
             } else {
-                keyLine[4] = keyLine[4] | (0x04);
+                keyLine[4] = keyLine[4] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode._7]) {
-                keyLine[4] = keyLine[4] & ~(0x08);
+                keyLine[4] = keyLine[4] & ~0x08;
             } else {
-                keyLine[4] = keyLine[4] | (0x08);
+                keyLine[4] = keyLine[4] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode._6]) {
-                keyLine[4] = keyLine[4] & ~(0x10);
+                keyLine[4] = keyLine[4] & ~0x10;
             } else {
-                keyLine[4] = keyLine[4] | (0x10);
+                keyLine[4] = keyLine[4] | 0x10;
             }
 
 #endregion Row 4: effe - 0, 9, 8, 7, 6
@@ -2048,33 +2030,33 @@ namespace Speccy
 #region Row 5: dffe - P, O, I, U, Y
 
             if (keyBuffer[(int)keyCode.P]) {
-                keyLine[5] = keyLine[5] & ~(0x1);
+                keyLine[5] = keyLine[5] & ~0x1;
             } else {
-                keyLine[5] = keyLine[5] | (0x1);
+                keyLine[5] = keyLine[5] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.O]) {
-                keyLine[5] = keyLine[5] & ~(0x02);
+                keyLine[5] = keyLine[5] & ~0x02;
             } else {
-                keyLine[5] = keyLine[5] | (0x02);
+                keyLine[5] = keyLine[5] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.I]) {
-                keyLine[5] = keyLine[5] & ~(0x04);
+                keyLine[5] = keyLine[5] & ~0x04;
             } else {
-                keyLine[5] = keyLine[5] | (0x04);
+                keyLine[5] = keyLine[5] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.U]) {
-                keyLine[5] = keyLine[5] & ~(0x08);
+                keyLine[5] = keyLine[5] & ~0x08;
             } else {
-                keyLine[5] = keyLine[5] | (0x08);
+                keyLine[5] = keyLine[5] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.Y]) {
-                keyLine[5] = keyLine[5] & ~(0x10);
+                keyLine[5] = keyLine[5] & ~0x10;
             } else {
-                keyLine[5] = keyLine[5] | (0x10);
+                keyLine[5] = keyLine[5] | 0x10;
             }
 
 #endregion Row 5: dffe - P, O, I, U, Y
@@ -2082,33 +2064,33 @@ namespace Speccy
 #region Row 6: bffe - ENTER, L, K, J, H
 
             if (keyBuffer[(int)keyCode.ENTER]) {
-                keyLine[6] = keyLine[6] & ~(0x1);
+                keyLine[6] = keyLine[6] & ~0x1;
             } else {
-                keyLine[6] = keyLine[6] | (0x1);
+                keyLine[6] = keyLine[6] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.L]) {
-                keyLine[6] = keyLine[6] & ~(0x02);
+                keyLine[6] = keyLine[6] & ~0x02;
             } else {
-                keyLine[6] = keyLine[6] | (0x02);
+                keyLine[6] = keyLine[6] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.K]) {
-                keyLine[6] = keyLine[6] & ~(0x04);
+                keyLine[6] = keyLine[6] & ~0x04;
             } else {
-                keyLine[6] = keyLine[6] | (0x04);
+                keyLine[6] = keyLine[6] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.J]) {
-                keyLine[6] = keyLine[6] & ~(0x08);
+                keyLine[6] = keyLine[6] & ~0x08;
             } else {
-                keyLine[6] = keyLine[6] | (0x08);
+                keyLine[6] = keyLine[6] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.H]) {
-                keyLine[6] = keyLine[6] & ~(0x10);
+                keyLine[6] = keyLine[6] & ~0x10;
             } else {
-                keyLine[6] = keyLine[6] | (0x10);
+                keyLine[6] = keyLine[6] | 0x10;
             }
 
 #endregion Row 6: bffe - ENTER, L, K, J, H
@@ -2116,33 +2098,33 @@ namespace Speccy
 #region Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
 
             if (keyBuffer[(int)keyCode.SPACE]) {
-                keyLine[7] = keyLine[7] & ~(0x1);
+                keyLine[7] = keyLine[7] & ~0x1;
             } else {
-                keyLine[7] = keyLine[7] | (0x1);
+                keyLine[7] = keyLine[7] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.CTRL]) {
-                keyLine[7] = keyLine[7] & ~(0x02);
+                keyLine[7] = keyLine[7] & ~0x02;
             } else {
-                keyLine[7] = keyLine[7] | (0x02);
+                keyLine[7] = keyLine[7] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.M]) {
-                keyLine[7] = keyLine[7] & ~(0x04);
+                keyLine[7] = keyLine[7] & ~0x04;
             } else {
-                keyLine[7] = keyLine[7] | (0x04);
+                keyLine[7] = keyLine[7] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.N]) {
-                keyLine[7] = keyLine[7] & ~(0x08);
+                keyLine[7] = keyLine[7] & ~0x08;
             } else {
-                keyLine[7] = keyLine[7] | (0x08);
+                keyLine[7] = keyLine[7] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.B]) {
-                keyLine[7] = keyLine[7] & ~(0x10);
+                keyLine[7] = keyLine[7] & ~0x10;
             } else {
-                keyLine[7] = keyLine[7] | (0x010);
+                keyLine[7] = keyLine[7] | 0x010;
             }
 
 #endregion Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
@@ -2156,37 +2138,37 @@ namespace Speccy
             }
 
             if (CapsLockOn) {
-                keyLine[0] = keyLine[0] & ~(0x1);
+                keyLine[0] = keyLine[0] & ~0x1;
             }
 
             //Check if backspace key has been pressed (Caps Shift + 0 equivalent)
             if (keyBuffer[(int)keyCode.BACK]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
-                keyLine[4] = keyLine[0] & ~(0x1);
+                keyLine[0] = keyLine[0] & ~0x1;
+                keyLine[4] = keyLine[0] & ~0x1;
             }
 
             //Check if left cursor key has been pressed (Caps Shift + 5)
             if (keyBuffer[(int)keyCode.LEFT]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
-                keyLine[3] = keyLine[3] & ~(0x10);
+                keyLine[0] = keyLine[0] & ~0x1;
+                keyLine[3] = keyLine[3] & ~0x10;
             }
 
             //Check if right cursor key has been pressed (Caps Shift + 8)
             if (keyBuffer[(int)keyCode.RIGHT]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
-                keyLine[4] = keyLine[4] & ~(0x04);
+                keyLine[0] = keyLine[0] & ~0x1;
+                keyLine[4] = keyLine[4] & ~0x04;
             }
 
             //Check if up cursor key has been pressed (Caps Shift + 7)
             if (keyBuffer[(int)keyCode.UP]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
-                keyLine[4] = keyLine[4] & ~(0x08);
+                keyLine[0] = keyLine[0] & ~0x1;
+                keyLine[4] = keyLine[4] & ~0x08;
             }
 
             //Check if down cursor key has been pressed (Caps Shift + 6)
             if (keyBuffer[(int)keyCode.DOWN]) {
-                keyLine[0] = keyLine[0] & ~(0x1);
-                keyLine[4] = keyLine[4] & ~(0x10);
+                keyLine[0] = keyLine[0] & ~0x1;
+                keyLine[4] = keyLine[4] & ~0x10;
             }
 
 #endregion Misc utility key functions
@@ -2337,7 +2319,7 @@ namespace Speccy
             BC = szx.z80Regs.BC;
             IY = szx.z80Regs.IY;
             IX = szx.z80Regs.IX;
-            IFF1 = (szx.z80Regs.IFF1 != 0);
+            IFF1 = szx.z80Regs.IFF1 != 0;
             _R = szx.z80Regs.R;
             AF = szx.z80Regs.AF;
             SP = szx.z80Regs.SP;
@@ -2392,7 +2374,7 @@ namespace Speccy
         }
 
         private uint GetUIntFromString(string data) {
-            byte[] carray = System.Text.ASCIIEncoding.UTF8.GetBytes(data);
+            byte[] carray = System.Text.Encoding.UTF8.GetBytes(data);
             uint val = BitConverter.ToUInt32(carray, 0);
             return val;
         }
@@ -2462,7 +2444,7 @@ namespace Speccy
                 Array.Copy(RAMpage[f], 0, szx.RAM_BANK[f], 0, 8192);
             }
 
-            if (tape_readToPlay && (tapeFilename != "")) {
+            if (tape_readToPlay && tapeFilename != "") {
                 szx.InsertTape = true;
                 szx.externalTapeFile = tapeFilename;
             }
@@ -2474,19 +2456,19 @@ namespace Speccy
                 szx.palette.currentRegister = (byte)ULAPaletteGroup;
                 for (int f = 0; f < 64; f++) {
                     int rgb = ULAPlusColours[f];
-                    int bbyte = (rgb & 0xff);
+                    int bbyte = rgb & 0xff;
                     int gbyte = (rgb >> 8) & 0xff;
                     int rbyte = (rgb >> 16) & 0xff;
                     int bl = bbyte & 0x1;
                     int bm = bl;
                     int bh = (bbyte >> 4) & 0x1;
-                    int gl = (gbyte & 0x1);
+                    int gl = gbyte & 0x1;
                     int gm = (gbyte >> 1) & 0x1;
                     int gh = (gbyte >> 4) & 0x1;
-                    int rl = (rbyte & 0x1);
+                    int rl = rbyte & 0x1;
                     int rm = (rbyte >> 1) & 0x1;
                     int rh = (rbyte >> 4) & 0x1;
-                    byte val = (byte)(((gh << 7) | (gm << 6) | (gl << 5)) | ((rh << 4) | (rm << 3) | (rl << 2)) | ((bh << 1) | bl));
+                    byte val = (byte)((gh << 7) | (gm << 6) | (gl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (bh << 1) | bl);
                     szx.palette.paletteRegs[f] = val;
                 }
             }
@@ -2525,14 +2507,14 @@ namespace Speccy
                 int addrH = start >> 8; //div by 256
                 int addrL = start % 256;
 
-                int pixelY = (addrH & 0x07);
-                pixelY |= (addrL & (0xE0)) >> 2;
-                pixelY |= (addrH & (0x18)) << 3;
+                int pixelY = addrH & 0x07;
+                pixelY |= (addrL & 0xE0) >> 2;
+                pixelY |= (addrH & 0x18) << 3;
 
                 int attrIndex_Y = AttributeStart + ((pixelY >> 3) << 5);// pixel/8 * 32
 
                 addrL = start % 256;
-                int pixelX = addrL & (0x1F);
+                int pixelX = addrL & 0x1F;
 
                 attr[f] = (short)(attrIndex_Y + pixelX);
             }
@@ -2693,7 +2675,7 @@ namespace Speccy
                     if (soundSampleCounter >= soundSamples.Length) {
                         byte[] sndbuf = beeper.LockBuffer();
                         if (sndbuf != null) {
-                            System.Buffer.BlockCopy(soundSamples, 0, sndbuf, 0, sndbuf.Length);
+                            Buffer.BlockCopy(soundSamples, 0, sndbuf, 0, sndbuf.Length);
                             beeper.UnlockBuffer(sndbuf);
                         }
                         soundSampleCounter = 0;// (short)(soundSampleCounter - (soundSamples.Length));
@@ -2717,7 +2699,7 @@ namespace Speccy
         //The heart of the speccy. Executes opcodes till 69888 tstates (1 frame) have passed
         public void Process() {
             //Handle re-triggered interrupts!
-            if (IFF1 && (lastOpcodeWasEI == 0) && (totalTStates < InterruptPeriod)) {
+            if (IFF1 && lastOpcodeWasEI == 0 && totalTStates < InterruptPeriod) {
                 if (isRecordingRZX) {
                     /* rzxFrame = new RZXFile.RZX_Frame();
                      rzxFrame.inputCount = (ushort)rzxInputs.Count;
@@ -2769,7 +2751,7 @@ namespace Speccy
                     }
                 }
                 else if (lowROMis48K) {
-                     if ((PC >> 8) == 0x3d) {
+                     if (PC >> 8 == 0x3d) {
                         PageReadPointer[0] = ROMpage[4];
                         PageReadPointer[1] = ROMpage[5];
                         PageWritePointer[0] = JunkMemory[0];
@@ -2797,7 +2779,7 @@ namespace Speccy
             if (emulationSpeed > 0 && !tapeIsPlaying /*!isPauseBlockPreproccess*/) {
                 deltaTStates /= emulationSpeed;
                 if (deltaTStates < 1)
-                    deltaTStates = (tapeIsPlaying ? 0 : 1); //tape loading likes 0, sound emulation likes 1. WTF?
+                    deltaTStates = tapeIsPlaying ? 0 : 1; //tape loading likes 0, sound emulation likes 1. WTF?
 
                 totalTStates = oldTStates + deltaTStates;
                 if (tapeIsPlaying)
@@ -2856,7 +2838,7 @@ namespace Speccy
                         while (soundSampleCounter >= soundSamples.Length) {
                             byte[] sndbuf = beeper.LockBuffer();
                             if (sndbuf != null) {
-                                System.Buffer.BlockCopy(soundSamples, 0, sndbuf, 0, sndbuf.Length);
+                                Buffer.BlockCopy(soundSamples, 0, sndbuf, 0, sndbuf.Length);
                                 beeper.UnlockBuffer(sndbuf);
                             }
                             soundSampleCounter = 0;
@@ -3168,13 +3150,13 @@ namespace Speccy
                 case 0x02: //LD (BC), A
                     // Log("LD (BC), A");
                     PokeByte(BC, A);
-                    MemPtr = (((BC + 1) & 0xff) | (A << 8));
+                    MemPtr = ((BC + 1) & 0xff) | (A << 8);
                     break;
 
                 case 0x12:  //LD (DE), A
                     // Log("LD (DE), A");
                     PokeByte(DE, A);
-                    MemPtr = (((DE + 1) & 0xff) | (A << 8));
+                    MemPtr = ((DE + 1) & 0xff) | (A << 8);
                     break;
 
                 case 0x22:  //LD (nn), HL
@@ -3191,7 +3173,7 @@ namespace Speccy
                     // Log(String.Format("LD ({0,-6:X}), A", addr));
 
                     PokeByte(addr, A);
-                    MemPtr = (((addr + 1) & 0xff) | (A << 8));
+                    MemPtr = ((addr + 1) & 0xff) | (A << 8);
                     PC += 2;
                     break;
 
@@ -3630,14 +3612,14 @@ namespace Speccy
 
                 case 0x17:  //RLA
                     // Log("RLA");
-                    ac = ((A & F_SIGN) != 0);
+                    ac = (A & F_SIGN) != 0;
 
                     int msb = F & F_CARRY;
 
                     if (msb != 0) {
-                        A = ((A << 1) | F_CARRY);
+                        A = (A << 1) | F_CARRY;
                     } else {
-                        A = (A << 1);
+                        A = A << 1;
                     }
                     SetF3((A & F_3) != 0);
                     SetF5((A & F_5) != 0);
@@ -4192,7 +4174,7 @@ namespace Speccy
                     SetF5((A & F_5) != 0);
                     SetHalf((F & F_CARRY) != 0);
                     SetNeg(false);
-                    SetCarry(((F & F_CARRY) != 0) ? false : true);
+                    SetCarry((F & F_CARRY) != 0 ? false : true);
 
                     break;
 #endregion
@@ -4659,7 +4641,7 @@ namespace Speccy
                     
                     disp = PeekByte(PC);
                     int port = (A << 8) | disp;
-                    if (((disp & 0x1) == 0) &&  and_32_Or_64)
+                    if ((disp & 0x1) == 0 &&  and_32_Or_64)
                         CheckEdgeLoader2();
           
                     // Log(String.Format("IN A, ({0:X})", disp));
@@ -8585,7 +8567,7 @@ namespace Speccy
                             case 0xA1:  //CPI
                                 // Log("CPI");
                                 disp = PeekByte(HL);
-                                bool lastCarry = ((F & F_CARRY) != 0);
+                                bool lastCarry = (F & F_CARRY) != 0;
                                 Cp_R(disp);
                                 Contend(HL, 1, 5);
                                 HL++;
@@ -8594,8 +8576,8 @@ namespace Speccy
                                 MemPtr++;
                                 SetCarry(lastCarry);
                                 SetParity(BC != 0);
-                                SetF3((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_3) != 0);
-                                SetF5((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_NEG) != 0);
+                                SetF3(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_3) != 0);
+                                SetF5(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_NEG) != 0);
                                 break;
 
                             case 0xA2:  //INI
@@ -8607,10 +8589,10 @@ namespace Speccy
                                 B = Dec(B);
                                 HL++;
                                 SetNeg((result & F_SIGN) != 0);
-                                SetCarry(((((C + 1) & 0xff) + result) > 0xff));
+                                SetCarry(((C + 1) & 0xff) + result > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((result + ((C + 1) & 0xff)) & 0x7) ^ B)]);
+                                SetParity(parity[((result + ((C + 1) & 0xff)) & 0x7) ^ B]);
                                 break;
 
                             case 0xA3:  //OUTI
@@ -8624,10 +8606,10 @@ namespace Speccy
 
                                 HL++;
                                 SetNeg((disp & F_SIGN) != 0);
-                                SetCarry((disp + L) > 0xff);
+                                SetCarry(disp + L > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((disp + L) & 0x7) ^ B)]);
+                                SetParity(parity[((disp + L) & 0x7) ^ B]);
                                 //SetZero(B == 0);
                                 break;
 
@@ -8648,15 +8630,15 @@ namespace Speccy
 
                             case 0xA9:  //CPD
                                 // Log("CPD");
-                                lastCarry = ((F & F_CARRY) != 0);
+                                lastCarry = (F & F_CARRY) != 0;
                                 disp = PeekByte(HL);
                                 Cp_R(disp);
                                 Contend(HL, 1, 5);
                                 HL--;
                                 BC--;
                                 SetParity(BC != 0);
-                                SetF3((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_3) != 0);
-                                SetF5((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_NEG) != 0);
+                                SetF3(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_3) != 0);
+                                SetF5(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_NEG) != 0);
                                 SetCarry(lastCarry);
                                 MemPtr--;
                                 break;
@@ -8670,10 +8652,10 @@ namespace Speccy
                                 B = Dec(B); ;
                                 HL--;
                                 SetNeg((result & F_SIGN) != 0);
-                                SetCarry(((((C - 1) & 0xff) + result) > 0xff));
+                                SetCarry(((C - 1) & 0xff) + result > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((result + ((C - 1) & 0xff)) & 0x7) ^ B)]);
+                                SetParity(parity[((result + ((C - 1) & 0xff)) & 0x7) ^ B]);
                                 break;
 
                             case 0xAB:  //OUTD
@@ -8689,10 +8671,10 @@ namespace Speccy
                                 HL--;
 
                                 SetNeg((disp & F_SIGN) != 0);
-                                SetCarry((disp + L) > 0xff);
+                                SetCarry(disp + L > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((disp + L) & 0x7) ^ B)]);
+                                SetParity(parity[((disp + L) & 0x7) ^ B]);
                                 break;
 
                             case 0xB0:  //LDIR
@@ -8729,11 +8711,11 @@ namespace Speccy
 
                             case 0xB1:  //CPIR
                                 // Log("CPIR");
-                                lastCarry = ((F & F_CARRY) != 0);
+                                lastCarry = (F & F_CARRY) != 0;
                                 disp = PeekByte(HL);
                                 Cp_R(disp);
                                 Contend(HL, 1, 5);
-                                if ((BC == 1) || (A == disp)) {
+                                if (BC == 1 || A == disp) {
                                     MemPtr++;
                                 } else {
                                     MemPtr = PC - 1;
@@ -8741,9 +8723,9 @@ namespace Speccy
                                 BC--;
                                 SetCarry(lastCarry);
                                 SetParity(BC != 0);
-                                SetF3((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_3) != 0);
-                                SetF5((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_NEG) != 0);
-                                if ((BC != 0) && ((F & F_ZERO) == 0)) {
+                                SetF3(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_3) != 0);
+                                SetF5(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_NEG) != 0);
+                                if (BC != 0 && (F & F_ZERO) == 0) {
                                     Contend(HL, 1, 5);
                                     PC -= 2;
                                 }
@@ -8765,10 +8747,10 @@ namespace Speccy
                                 }
 
                                 SetNeg((result & F_SIGN) != 0);
-                                SetCarry(((((C + 1) & 0xff) + result) > 0xff));
+                                SetCarry(((C + 1) & 0xff) + result > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((result + ((C + 1) & 0xff)) & 0x7) ^ B)]);
+                                SetParity(parity[((result + ((C + 1) & 0xff)) & 0x7) ^ B]);
                                 break;
 
                             case 0xB3:  //OTIR
@@ -8786,10 +8768,10 @@ namespace Speccy
 
                                 HL++;
                                 SetNeg((disp & F_SIGN) != 0);
-                                SetCarry((disp + L) > 0xff);
+                                SetCarry(disp + L > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((disp + L) & 0x7) ^ B)]);
+                                SetParity(parity[((disp + L) & 0x7) ^ B]);
                                 break;
 
                             case 0xB8:  //LDDR
@@ -8820,11 +8802,11 @@ namespace Speccy
 
                             case 0xB9:  //CPDR
                                 // Log("CPDR");
-                                lastCarry = ((F & F_CARRY) != 0);
+                                lastCarry = (F & F_CARRY) != 0;
                                 disp = PeekByte(HL);
                                 Cp_R(disp);
                                 Contend(HL, 1, 5);
-                                if ((BC == 1) || (A == disp)) {
+                                if (BC == 1 || A == disp) {
                                     MemPtr--;
                                 } else {
                                     MemPtr = PC - 1;
@@ -8833,9 +8815,9 @@ namespace Speccy
                                 BC--;
                                 SetCarry(lastCarry);
                                 SetParity(BC != 0);
-                                SetF3((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_3) != 0);
-                                SetF5((((A - disp - ((F & F_HALF) >> 4)) & 0xff) & F_NEG) != 0);
-                                if ((BC != 0) && ((F & F_ZERO) == 0)) {
+                                SetF3(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_3) != 0);
+                                SetF5(((A - disp - ((F & F_HALF) >> 4)) & 0xff & F_NEG) != 0);
+                                if (BC != 0 && (F & F_ZERO) == 0) {
                                     Contend(HL, 1, 5);
                                     PC -= 2;
                                 }
@@ -8855,9 +8837,9 @@ namespace Speccy
                                 }
                                 HL--;
                                 SetNeg((result & F_SIGN) != 0);
-                                SetCarry(((((C - 1) & 0xff) + result) > 0xff));
+                                SetCarry(((C - 1) & 0xff) + result > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
-                                SetParity(parity[(((result + ((C - 1) & 0xff)) & 0x7) ^ B)]);
+                                SetParity(parity[((result + ((C - 1) & 0xff)) & 0x7) ^ B]);
                                 break;
 
                             case 0xBB:  //OTDR
@@ -8876,10 +8858,10 @@ namespace Speccy
 
                                 HL--;
                                 SetNeg((disp & F_SIGN) != 0);
-                                SetCarry((disp + L) > 0xff);
+                                SetCarry(disp + L > 0xff);
                                 SetHalf((F & F_CARRY) != 0);
 
-                                SetParity(parity[(((disp + L) & 0x7) ^ B)]);
+                                SetParity(parity[((disp + L) & 0x7) ^ B]);
                                 break;
 
                             default:
@@ -10981,7 +10963,7 @@ namespace Speccy
                     dataCounter = -1;
                     bitShifter = 0;
                     
-                    if (pulseLevel != (((PZXFile.DATA_Block)currentBlock).initialPulseLevel))
+                    if (pulseLevel != ((PZXFile.DATA_Block)currentBlock).initialPulseLevel)
                         FlipTapeBit();
 
                     if (!NextDataBit()) {
@@ -11002,7 +10984,7 @@ namespace Speccy
                     if (block.initialPulseLevel != pulseLevel)
                         FlipTapeBit();
                    
-                    edgeDuration = (block.duration);
+                    edgeDuration = block.duration;
 
                     int diff = (int)edgeDuration - tapeTStates;
                     if (diff > 0) {
@@ -11014,7 +10996,7 @@ namespace Speccy
                         tapeTStates = -diff;
                     }
                     continue;
-                } else if ((currentBlock is PZXFile.STOP_Block)) {
+                } else if (currentBlock is PZXFile.STOP_Block) {
                     TapeStopped();
                    // if (ziggyWin.zx.keyBuffer[(int)ZeroWin.Form1.keyCode.ALT])
                    //     ziggyWin.saveSnapshotMenuItem_Click(this, null);
@@ -11033,7 +11015,7 @@ namespace Speccy
             while (pulseCounter < block.pulse.Count - 1) {
                 pulseCounter++; //b'cos pulseCounter is -1 when it reaches here initially
                 repeatCount = block.pulse[pulseCounter].count;
-                if ((block.pulse[pulseCounter].duration == 0) && repeatCount > 0) {
+                if (block.pulse[pulseCounter].duration == 0 && repeatCount > 0) {
                     if ((repeatCount & 0x01) != 0) 
                          FlipTapeBit();                        
                     continue; //next pulse
@@ -11076,17 +11058,17 @@ namespace Speccy
                         dataByte = block.data[dataCounter];
                     }
                 }
-                currentBit = ((dataByte & bitShifter) == 0 ? 0 : 1);
+                currentBit = (dataByte & bitShifter) == 0 ? 0 : 1;
                 bitShifter >>= 1;
                 pulseCounter = 0;
                 int numPulses = 0;
 
                 if (currentBit == 0) {
-                    edgeDuration = (block.s0[0]);
+                    edgeDuration = block.s0[0];
                     numPulses = block.p0;
                 }
                 else {
-                    edgeDuration = (block.s1[0]);
+                    edgeDuration = block.s1[0];
                     numPulses = block.p1;
                 }
 
@@ -11110,7 +11092,7 @@ namespace Speccy
             //All bits done. Now do the tail pulse to finish off things
             if (block.tail > 0) {
                 currentBit = -1;
-                edgeDuration = (block.tail);
+                edgeDuration = block.tail;
 
                 if (edgeDuration > 0) {
                     int diff = (int)edgeDuration - tapeTStates;
@@ -11182,7 +11164,7 @@ namespace Speccy
             }
 
             PZXFile.DATA_Block dataBlock = (PZXFile.DATA_Block)PZXFile.blocks[blockCounter + 1];
-            edgeDuration = (1000);
+            edgeDuration = 1000;
             //if (pulse != dataBlock.initialPulseLevel)
             //    FlipTapeBit();
             H = 0;
@@ -11236,11 +11218,11 @@ namespace Speccy
             }
         }
 
-        private void DoTapeEvent(Speccy.TapeEventArgs e) {
+        private void DoTapeEvent(TapeEventArgs e) {
             if (tapeBitFlipAck)
                 tapeBitWasFlipped = false;
 
-            if (e.EventType == Speccy.TapeEventType.EDGE_LOAD) {
+            if (e.EventType == TapeEventType.EDGE_LOAD) {
                 FlipTapeBit();
 
 #region PULS
@@ -11252,7 +11234,7 @@ namespace Speccy
                     //Need to repeat?
                    // if (repeatCount < block.pulse[pulseCounter].count) {
                      if (repeatCount > 0) {
-                       edgeDuration = (block.pulse[pulseCounter].duration);
+                       edgeDuration = block.pulse[pulseCounter].duration;
                     } else {
                         if (!NextPULS()) //All pulses done for the block?
                         {
@@ -11272,7 +11254,7 @@ namespace Speccy
                     if (currentBit == 0) {
                         pulseCounter++;
                         if (pulseCounter < block.p0) {
-                            edgeDuration = (block.s0[pulseCounter]);
+                            edgeDuration = block.s0[pulseCounter];
                         } else {
                             //All pulses done for this bit so fetch next bit
                             if (!NextDataBit()) {
@@ -11283,7 +11265,7 @@ namespace Speccy
                     } else if (currentBit == 1) {
                         pulseCounter++;
                         if (pulseCounter < block.p1) {
-                            edgeDuration = (block.s1[pulseCounter]);
+                            edgeDuration = block.s1[pulseCounter];
                         } else {
                             //All pulses done for this bit so fetch next bit
                             if (!NextDataBit()) {
@@ -11322,18 +11304,18 @@ namespace Speccy
                 }
                 */
 #endregion PAUS
-            } else if (e.EventType == Speccy.TapeEventType.STOP_TAPE) //stop
+            } else if (e.EventType == TapeEventType.STOP_TAPE) //stop
             {
                 TapeStopped();
                 blockCounter--;
 
-            } else if (e.EventType == Speccy.TapeEventType.START_TAPE) {
+            } else if (e.EventType == TapeEventType.START_TAPE) {
                 if (TapeEvent != null)
                     OnTapeEvent(new TapeEventArgs(TapeEventType.START_TAPE));
 
                 NextPZXBlock();
                
-            } else if (e.EventType == Speccy.TapeEventType.FLASH_LOAD) {
+            } else if (e.EventType == TapeEventType.FLASH_LOAD) {
                 FlashLoad();
             }
         }

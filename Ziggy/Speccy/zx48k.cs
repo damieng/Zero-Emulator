@@ -5,7 +5,7 @@ using Peripherals;
 namespace Speccy
 {
     //Implements a zx 48k machine
-    public class zx48 : Speccy.zxmachine
+    public class zx48 : zxmachine
     {
         public zx48(IntPtr handle, bool lateTimingModel)
             : base(handle, lateTimingModel) {
@@ -60,7 +60,7 @@ namespace Speccy
         public override void Reset(bool coldBoot) {
             base.Reset(coldBoot);
             contentionStartPeriod = 14335 + LateTiming;
-            contentionEndPeriod = contentionStartPeriod + (ScreenHeight * TstatesPerScanline);//57324 + LateTiming;
+            contentionEndPeriod = contentionStartPeriod + ScreenHeight * TstatesPerScanline;//57324 + LateTiming;
 
             PageReadPointer[0] = ROMpage[0];
             PageReadPointer[1] = ROMpage[1];
@@ -89,7 +89,7 @@ namespace Speccy
             screenByteCtr = DisplayStart;
             ULAByteCtr = 0;
 
-            ActualULAStart = 14340 - 24 - (TstatesPerScanline * BorderTopHeight) + LateTiming;
+            ActualULAStart = 14340 - 24 - TstatesPerScanline * BorderTopHeight + LateTiming;
             lastTState = ActualULAStart;
             BuildAttributeMap();
             BuildContentionTable();
@@ -146,7 +146,7 @@ namespace Speccy
                     contentionTable[t++] = 0;
                     contentionTable[t++] = 0;
                 }
-                t += (TstatesPerScanline - 128); //24 tstates of right border + left border + 48 tstates of retrace
+                t += TstatesPerScanline - 128; //24 tstates of right border + left border + 48 tstates of retrace
             }
 
             //build top half of tstateToDisp table
@@ -155,7 +155,7 @@ namespace Speccy
                 tstateToDisp[t] = 0;
 
             //next 48 are actual border
-            while (t < ActualULAStart + (TstateAtTop)) {
+            while (t < ActualULAStart + TstateAtTop) {
                 //border(24t) + screen (128t) + border(24t) = 176 tstates
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
@@ -169,7 +169,7 @@ namespace Speccy
             int _x = 0;
             int _y = 0;
             int scrval = 2;
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline) {
                 //left border
                 for (int g = 0; g < 24; g++)
                     tstateToDisp[t++] = 1;
@@ -178,7 +178,7 @@ namespace Speccy
                 for (int g = 24; g < 24 + 128; g++) {
                     //Map screenaddr to tstate
                     if (g % 4 == 0) {
-                        scrval = (((((_y & 0xc0) >> 3) | (_y & 0x07) | (0x40)) << 8)) | (((_x >> 3) & 0x1f) | ((_y & 0x38) << 2));
+                        scrval = ((((_y & 0xc0) >> 3) | (_y & 0x07) | 0x40) << 8) | ((_x >> 3) & 0x1f) | ((_y & 0x38) << 2);
                         _x += 8;
                     }
                     tstateToDisp[t++] = (short)scrval;
@@ -198,16 +198,16 @@ namespace Speccy
             while (h < contentionEndPeriod + 3) {
                 for (int j = 0; j < 128; j += 8) {
                     floatingBusTable[h] = tstateToDisp[h + 2];                    //screen address
-                    floatingBusTable[h + 1] = attr[(tstateToDisp[h + 2] - 16384)];  //attr address
+                    floatingBusTable[h + 1] = attr[tstateToDisp[h + 2] - 16384];  //attr address
                     floatingBusTable[h + 2] = tstateToDisp[h + 2 + 4];             //screen address + 1
-                    floatingBusTable[h + 3] = attr[(tstateToDisp[h + 2 + 4] - 16384)]; //attr address + 1
+                    floatingBusTable[h + 3] = attr[tstateToDisp[h + 2 + 4] - 16384]; //attr address + 1
                     h += 8;
                 }
                 h += TstatesPerScanline - 128;
             }
 
             //build bottom border
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline) + (TstateAtBottom)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline + TstateAtBottom) {
                 //border(24t) + screen (128t) + border(24t) = 176 tstates
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
@@ -249,7 +249,7 @@ namespace Speccy
                 }
             }
             //ULA Plus
-            else if (ULAPlusEnabled && (port == 0xff3b)) {
+            else if (ULAPlusEnabled && port == 0xff3b) {
                 Contend(port, 3, 1); //Contend once;  add 3 tstates
                 result = lastULAPlusOut;
             }
@@ -287,23 +287,23 @@ namespace Speccy
 
                 if (tapeIsPlaying) {
                     if (pulseLevel == 0) {
-                        result &= ~(TAPE_BIT);    //reset is EAR off
+                        result &= ~TAPE_BIT;    //reset is EAR off
                     }
                     else {
-                        result |= (TAPE_BIT); //set is EAR on
+                        result |= TAPE_BIT; //set is EAR on
                     }
                 }
                 else {
                     if (Issue2Keyboard) {
                         if ((lastFEOut & (EAR_BIT + MIC_BIT)) == 0) {
-                            result &= ~(TAPE_BIT);
+                            result &= ~TAPE_BIT;
                         }
                         else
                             result |= TAPE_BIT;
                     }
                     else {
                         if ((lastFEOut & EAR_BIT) == 0) {
-                            result &= ~(TAPE_BIT);
+                            result &= ~TAPE_BIT;
                         }
                         else
                             result |= TAPE_BIT;
@@ -314,7 +314,7 @@ namespace Speccy
             else {
                 Contend(port, 1, 3); //T2, T3
 
-                if (ayIsAvailable && ((port & 0xc002) == 0xc000)) //AY register activate
+                if (ayIsAvailable && (port & 0xc002) == 0xc000) //AY register activate
                     result = aySound.PortRead();
                 else if (HasKempstonMouse)//Kempston Mouse
                 {
@@ -330,7 +330,7 @@ namespace Speccy
                     int _tstates = totalTStates - 1; //the floating bus is read on the last t-state
 
                     //if we're on the top or bottom border return 0xff
-                    if ((_tstates < contentionStartPeriod) || (_tstates > contentionEndPeriod))
+                    if (_tstates < contentionStartPeriod || _tstates > contentionEndPeriod)
                         result = 0xff;
                     else {
                         if (floatingBusTable[_tstates] < 0)
@@ -342,7 +342,7 @@ namespace Speccy
             }
 
             base.In(port, result & 0xff);
-            return (result & 0xff);
+            return result & 0xff;
         }
 
         // Contention| LowBitReset| Result
@@ -355,7 +355,7 @@ namespace Speccy
         public override void Out(int port, int val) {
             base.Out(port, val);
 
-            bool lowBitReset = ((port & 0x01) == 0);
+            bool lowBitReset = (port & 0x01) == 0;
 
             //T1
             //Contend(port, 1, 1);        //N:1 || C:1
@@ -381,7 +381,7 @@ namespace Speccy
 
                     if (beepVal != lastSoundOut) {
 
-                        if ((beepVal) == 0) {
+                        if (beepVal == 0) {
                             soundOut = MIN_SOUND_VOL;
                         } else {
                             soundOut = MAX_SOUND_VOL;
@@ -452,11 +452,8 @@ namespace Speccy
                         int gl = val & 0x01;
                         int gm = (val & 0x02) >> 1;
                         int gh = (val & 0x04) >> 2;
-                        int bgr = ( //each byte built as hmlhmlml bits from original 3 bit colour value
-                                    (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | (rl)) << 16)
-                                    | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | (gl)) << 8)
-                                    | (((bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | (bl)))
-                                    );
+                        int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
+                                  | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
                         ULAPlusColours[ULAPaletteGroup] = bgr;
                     }
 
@@ -615,7 +612,7 @@ namespace Speccy
 
                 for (int g = 0; g < 2; g++)
                     for (int f = 0; f < 8192; ++f) {
-                        ROMpage[g][f] = (buffer[f + 8192 * g]);
+                        ROMpage[g][f] = buffer[f + 8192 * g];
                     }
             }
             fs.Close();
@@ -640,7 +637,7 @@ namespace Speccy
                     IY = sna.HEADER.IY;
                     IX = sna.HEADER.IX;
 
-                    IFF1 = ((sna.HEADER.IFF2 & 0x04) != 0);
+                    IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
 
                     if (IFF1)
                         lastOpcodeWasEI = 1;        //force ignore re-triggered interrupts
@@ -703,11 +700,8 @@ namespace Speccy
                         int gl = val & 0x01;
                         int gm = (val & 0x02) >> 1;
                         int gh = (val & 0x04) >> 2;
-                        int bgr = ( //each byte built as hmlhmlml bits from original 3 bit colour value
-                                    (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | (rl)) << 16)
-                                    | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | (gl)) << 8)
-                                    | (((bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | (bl)))
-                                    );
+                        int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
+                                  | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
                         ULAPlusColours[f] = bgr;
                         Out(0xbf3b, szx.specRegs.Fe);
                     }

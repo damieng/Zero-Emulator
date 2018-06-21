@@ -4,7 +4,7 @@ using Peripherals;
 
 namespace Speccy
 {
-    public class zx128 : Speccy.zxmachine
+    public class zx128 : zxmachine
     {
             public zx128(IntPtr handle, bool lateTimingModel)
             : base(handle, lateTimingModel) {
@@ -52,7 +52,7 @@ namespace Speccy
         public override void Reset(bool coldBoot) {
             base.Reset(coldBoot);
             contentionStartPeriod = 14361 + LateTiming;
-            contentionEndPeriod = contentionStartPeriod + (ScreenHeight * TstatesPerScanline); //57324 + LateTiming;
+            contentionEndPeriod = contentionStartPeriod + ScreenHeight * TstatesPerScanline; //57324 + LateTiming;
 
             PageReadPointer[0] = ROMpage[0];  //128 editor default!
             PageReadPointer[1] = ROMpage[1];
@@ -89,7 +89,7 @@ namespace Speccy
             screen = GetPageData(5); //Bank 5 is a copy of the screen
             screenByteCtr = DisplayStart;
             ULAByteCtr = 0;
-            ActualULAStart = 14366 - 24 - (TstatesPerScanline * BorderTopHeight) + LateTiming;
+            ActualULAStart = 14366 - 24 - TstatesPerScanline * BorderTopHeight + LateTiming;
             lastTState = ActualULAStart;
             BuildAttributeMap();
 
@@ -110,7 +110,7 @@ namespace Speccy
                     contentionTable[t++] = 0;
                     contentionTable[t++] = 0;
                 }
-                t += (TstatesPerScanline - 128);
+                t += TstatesPerScanline - 128;
             }
 
             //build top half of tstateToDisp table
@@ -119,7 +119,7 @@ namespace Speccy
                 tstateToDisp[t] = 0;
 
             //next 48 are actual border
-            while (t < ActualULAStart + (TstateAtTop)) {
+            while (t < ActualULAStart + TstateAtTop) {
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
 
@@ -131,14 +131,14 @@ namespace Speccy
             int _x = 0;
             int _y = 0;
             int scrval = 2;
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline) {
                 for (int g = 0; g < 24; g++)
                     tstateToDisp[t++] = 1;
 
                 for (int g = 24; g < 24 + 128; g++) {
                     //Map screenaddr to tstate
                     if (g % 4 == 0) {
-                        scrval = (((((_y & 0xc0) >> 3) | (_y & 0x07) | (0x40)) << 8)) | (((_x >> 3) & 0x1f) | ((_y & 0x38) << 2));
+                        scrval = ((((_y & 0xc0) >> 3) | (_y & 0x07) | 0x40) << 8) | ((_x >> 3) & 0x1f) | ((_y & 0x38) << 2);
                         _x += 8;
                     }
                     tstateToDisp[t++] = (short)scrval;
@@ -156,16 +156,16 @@ namespace Speccy
             while (h < contentionEndPeriod + 3) {
                 for (int j = 0; j < 128; j += 8) {
                     floatingBusTable[h] = tstateToDisp[h + 2];
-                    floatingBusTable[h + 1] = attr[(tstateToDisp[h + 2] - 16384)];
+                    floatingBusTable[h + 1] = attr[tstateToDisp[h + 2] - 16384];
                     floatingBusTable[h + 2] = tstateToDisp[h + 2 + 4];
-                    floatingBusTable[h + 3] = attr[(tstateToDisp[h + 2 + 4] - 16384)];
+                    floatingBusTable[h + 3] = attr[tstateToDisp[h + 2 + 4] - 16384];
                     h += 8;
                 }
                 h += TstatesPerScanline - 128;
             }
 
             //build bottom half
-            while (t < ActualULAStart + (TstateAtTop) + (ScreenHeight * TstatesPerScanline) + (TstateAtBottom)) {
+            while (t < ActualULAStart + TstateAtTop + ScreenHeight * TstatesPerScanline + TstateAtBottom) {
                 for (int g = 0; g < 176; g++)
                     tstateToDisp[t++] = 1;
 
@@ -183,7 +183,7 @@ namespace Speccy
                 return true;
 
             //High port contention
-            if ((addr == 0xc000) && contendedBankPagedIn)
+            if (addr == 0xc000 && contendedBankPagedIn)
                 return true;
 
             return false;
@@ -215,7 +215,7 @@ namespace Speccy
             int result = 0xff;
             //bool portIsContended = IsContended(port);
 
-            bool lowBitReset = ((port & 0x01) == 0);
+            bool lowBitReset = (port & 0x01) == 0;
 
             Contend(port);
             totalTStates++; //T2
@@ -261,12 +261,12 @@ namespace Speccy
 
                     if (tapeIsPlaying) {
                         if (pulseLevel == 0)
-                            result &= ~(TAPE_BIT);    //reset is EAR off
+                            result &= ~TAPE_BIT;    //reset is EAR off
                         else
-                            result |= (TAPE_BIT);       //set is EAR On
+                            result |= TAPE_BIT;       //set is EAR On
                     }
                     else if ((lastFEOut & 0x10) == 0)
-                            result &= ~(0x40);
+                            result &= ~0x40;
                         else
                             result |= 0x40;
 
@@ -289,7 +289,7 @@ namespace Speccy
                         int _tstates = totalTStates - 1; //floating bus is sampled on the last cycle
 
                         //if we're on the top or bottom border return 0xff
-                        if ((_tstates < contentionStartPeriod) || (_tstates > contentionEndPeriod))
+                        if (_tstates < contentionStartPeriod || _tstates > contentionEndPeriod)
                             result = 0xff;
                         else {
                             if (floatingBusTable[_tstates] < 0)
@@ -308,7 +308,7 @@ namespace Speccy
                 }
           
             base.In(port, result & 0xff);
-            return (result & 0xff);
+            return result & 0xff;
         }
 
         private void Out_7ffd(int port, int val) {
@@ -464,12 +464,12 @@ namespace Speccy
                     UpdateScreenBuffer(totalTStates);
 
                 borderColour = val & BORDER_BIT;  //The LSB 3 bits of val hold the border colour
-                int beepVal = val & (EAR_BIT);// + MIC_BIT);
+                int beepVal = val & EAR_BIT;// + MIC_BIT);
 
                 if (!tapeIsPlaying) {
                     if (beepVal != lastSoundOut) {
 
-                        if ((beepVal) == 0)
+                        if (beepVal == 0)
                             soundOut = MIN_SOUND_VOL;
                         else
                             soundOut = MAX_SOUND_VOL;
@@ -575,11 +575,8 @@ namespace Speccy
                     int gl = val & 0x01;
                     int gm = (val & 0x02) >> 1;
                     int gh = (val & 0x04) >> 2;
-                    int bgr = ( //each byte built as hmlhmlml bits from original 3 bit colour value
-                                (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | (rl)) << 16)
-                                | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | (gl)) << 8)
-                                | (((bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | (bl)))
-                                );
+                    int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
+                              | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
                     ULAPlusColours[ULAPaletteGroup] = bgr;
                 }
 
@@ -628,7 +625,7 @@ namespace Speccy
 
                 for (int g = 0; g < 4; g++)
                     for (int f = 0; f < 8192; ++f)
-                        ROMpage[g][f] = (buffer[f + 8192 * g]);
+                        ROMpage[g][f] = buffer[f + 8192 * g];
             }
             fs.Close();
             return true;
@@ -651,7 +648,7 @@ namespace Speccy
                 IY = sna.HEADER.IY;
                 IX = sna.HEADER.IX;
 
-                IFF1 = ((sna.HEADER.IFF2 & 0x04) != 0);
+                IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
                 _R = sna.HEADER.R;
                 AF = sna.HEADER.AF;
                 SP = sna.HEADER.SP;
