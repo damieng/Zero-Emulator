@@ -11,13 +11,15 @@ using zlib;
 
 namespace Peripherals
 {
-    public enum RZX_State {
+    public enum RZX_State
+    {
         NONE,
         PLAYBACK,
         RECORDING
     }
 
-    public enum RZX_BlockType {
+    public enum RZX_BlockType
+    {
         CREATOR = 0x10,
         SECURITY_INFO = 0x20,
         SECURITY_SIG = 0x21,
@@ -27,7 +29,8 @@ namespace Peripherals
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Header {
+    public struct RZX_Header
+    {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public char[] signature;
 
@@ -37,13 +40,15 @@ namespace Peripherals
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Block {
+    public struct RZX_Block
+    {
         public byte id;
         public uint size;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Creator {
+    public struct RZX_Creator
+    {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 20)]
         public char[] author;
 
@@ -53,7 +58,8 @@ namespace Peripherals
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Snapshot {
+    public struct RZX_Snapshot
+    {
         public uint flags;
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
@@ -64,12 +70,14 @@ namespace Peripherals
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_SnapshotDescriptor {
+    public struct RZX_SnapshotDescriptor
+    {
         public uint checksum;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Record {
+    public struct RZX_Record
+    {
         public uint numFrames;
         public byte reserved;
         public uint tstatesAtStart;
@@ -78,13 +86,15 @@ namespace Peripherals
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RZX_Frame {
+    public struct RZX_Frame
+    {
         public ushort instructionCount;
         public ushort inputCount;
         public byte[] inputs;
     }
 
-    public class RZXInfo {
+    public class RZXInfo
+    {
         public RZX_Header header;
         public RZX_Creator creator;
         public List<RZX_Block> blocks;
@@ -93,11 +103,11 @@ namespace Peripherals
             System.Text.StringBuilder sb = new System.Text.StringBuilder(255);
             sb.Append(header.signature);
             sb.Append(" " + header.majorVersion + "." + header.minorVersion + "\nCreated by ");
-            sb.Append(new String(creator.author, 0 , creator.author.Length - 1));
-            sb.Append( creator.majorVersion + "." + creator.minorVersion);
+            sb.Append(new String(creator.author, 0, creator.author.Length - 1));
+            sb.Append(creator.majorVersion + "." + creator.minorVersion);
             sb.Append("\nBlocks:\n");
 
-            foreach(RZX_Block block in blocks) {
+            foreach (RZX_Block block in blocks) {
                 sb.Append("ID: " + block.id);
                 sb.Append(", Length: " + block.size);
                 sb.Append("\n");
@@ -106,12 +116,14 @@ namespace Peripherals
         }
     }
 
-    public class RZXSnapshotData {
+    public class RZXSnapshotData
+    {
         public String extension;
         public byte[] data;
     }
 
-    public class RZXFileEventArgs {
+    public class RZXFileEventArgs
+    {
         public RZXFile rzxInstance;
         public RZXInfo info;
         public RZXSnapshotData snapData;
@@ -121,7 +133,8 @@ namespace Peripherals
         public bool hasEnded;
     }
 
-    public class RZXFile {
+    public class RZXFile
+    {
         public System.Action<RZXFileEventArgs> RZXFileEventHandler;
         public RZX_Header header;
         public RZX_Creator creator;
@@ -148,13 +161,14 @@ namespace Peripherals
 
         private byte snapIndex = 0;
         private long currentRecordFilePos;
-        
+
         private const string rzxSessionContinue = "Zero RZX Continue\0";
         private const string rzxSessionFinal = "Zero RZX Final   \0";
         private const string tempFrameInfoFile = "ZeroRZXFrame_temp.bin";
 
         //RZX Playback & Recording
-        private class RollbackBookmark {
+        private class RollbackBookmark
+        {
             public SZXFile snapshot;
             public long irbFilePos;
             public uint tstates;
@@ -180,11 +194,11 @@ namespace Peripherals
 
         public RZX_Frame frame;
         public List<RZX_Frame> frames = new List<RZX_Frame>();
-        
+
         public int Progress {
-            get {return totalFramesPlayed;}
+            get { return totalFramesPlayed; }
         }
-        
+
         #region v1
         /*
             public bool LoadRZX(Stream fs) {
@@ -586,7 +600,7 @@ namespace Peripherals
         }
 
         private bool OpenFile(string filename) {
-            FileStream fs  = new FileStream(filename, FileMode.Open);
+            FileStream fs = new FileStream(filename, FileMode.Open);
             return OpenFile(fs);
         }
 
@@ -765,8 +779,7 @@ namespace Peripherals
                 readBlockIndex += blockSize;
 
                 switch (block.id) {
-                    case (int)RZX_BlockType.SNAPSHOT:
-                        {
+                    case (int)RZX_BlockType.SNAPSHOT: {
                             RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
                             rzxArgs.blockID = RZX_BlockType.SNAPSHOT;
                             rzxArgs.snapData = new RZXSnapshotData();
@@ -786,8 +799,7 @@ namespace Peripherals
                         }
                         return true;
 
-                    case (int)RZX_BlockType.RECORD:
-                        {
+                    case (int)RZX_BlockType.RECORD: {
                             if (frameInfoReader != null)
                                 frameInfoReader.Close();
 
@@ -860,7 +872,7 @@ namespace Peripherals
             }
         }
 
-        private int ReadFromZStream (BinaryReader reader, ref byte[] buffer, int numBytesToRead) {
+        private int ReadFromZStream(BinaryReader reader, ref byte[] buffer, int numBytesToRead) {
             zStream.next_out = buffer;
             zStream.avail_out = numBytesToRead;
             zStream.next_out_index = 0;
@@ -879,7 +891,7 @@ namespace Peripherals
                     zStream.next_in_index = 0;
                 }
 
-               err = zStream.inflate(zlibConst.Z_FINISH);
+                err = zStream.inflate(zlibConst.Z_FINISH);
             }
             return numBytesToRead - zStream.avail_out;
         }
@@ -889,7 +901,7 @@ namespace Peripherals
             zStream.avail_in = numBytesToWrite;
             zStream.next_in = buffer;
             zStream.next_in_index = 0;
-            
+
             while (zStream.avail_in > 0 && err == zlibConst.Z_OK) {
 
                 if (zStream.avail_out == 0) {
@@ -1200,16 +1212,16 @@ namespace Peripherals
                 isRecordingBlock = true;
                 frameCount = 0;
 
-                if (isCompressedFrames) 
+                if (isCompressedFrames)
                     OpenZStream(rzxFile, rzxFile.Position, false);
             }
 
             ushort inCount = 65535;
-                    
+
             if (oldInputs.Count == inputs.Count) {
 
                 for (int i = 0; i < inputs.Count; i++) {
-                    if (inputs[i] != oldInputs[i]) { 
+                    if (inputs[i] != oldInputs[i]) {
                         inCount = (ushort)inputs.Count;
                         break;
                     }
@@ -1238,7 +1250,7 @@ namespace Peripherals
 
             return true;
         }
-        
+
         public void AddSnapshot(byte[] snapshotData) {
             snap = new RZX_Snapshot();
             snap.extension = "szx\0".ToCharArray();
@@ -1247,12 +1259,12 @@ namespace Peripherals
             snap.uncompressedSize = (uint)snapshotData.Length;
 
             using (MemoryStream outMemoryStream = new MemoryStream())
-                using (ZOutputStream outZStream = new ZOutputStream(outMemoryStream, zlibConst.Z_DEFAULT_COMPRESSION))
-                    using (Stream inMemoryStream = new MemoryStream(snapshotData)) {
-                        CopyStream(inMemoryStream, outZStream);
-                        outZStream.finish();
-                        rawSZXData = outMemoryStream.ToArray();
-                    }
+            using (ZOutputStream outZStream = new ZOutputStream(outMemoryStream, zlibConst.Z_DEFAULT_COMPRESSION))
+            using (Stream inMemoryStream = new MemoryStream(snapshotData)) {
+                CopyStream(inMemoryStream, outZStream);
+                outZStream.finish();
+                rawSZXData = outMemoryStream.ToArray();
+            }
 
             RZX_Block block = new RZX_Block();
             block.id = 0x30;

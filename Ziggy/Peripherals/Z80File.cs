@@ -30,8 +30,9 @@ namespace Peripherals
         private static void GetPage(byte[] buffer, int counter, byte[] bank, int dataLength) {
             if (dataLength == 0xffff) {
                 Array.Copy(buffer, counter, bank, 0, 16384);
-            } else //Compressed data (needs testing!)
-            {
+            }
+            else //Compressed data (needs testing!)
+          {
                 int dataBlockOffset = counter;
                 int memStart = 0;
                 while ((counter - dataBlockOffset) < dataLength) {
@@ -52,7 +53,8 @@ namespace Peripherals
                         }
                         bank[memStart++] = bite;
                         continue;
-                    } else
+                    }
+                    else
                         bank[memStart++] = bite;
                     //   dataCounter = counter - dataBlockOffset;
                 }
@@ -206,8 +208,9 @@ namespace Peripherals
                                 if (snapshot.TYPE > 0) {
                                     Array.Copy(_bank, 0, snapshot.RAM_BANK[2], 0, 8192);
                                     Array.Copy(_bank, 8192, snapshot.RAM_BANK[3], 0, 8192);
-                                } else //48k
-                                {
+                                }
+                                else //48k
+                              {
                                     Array.Copy(_bank, 0, snapshot.RAM_BANK[4], 0, 8192);
                                     Array.Copy(_bank, 8192, snapshot.RAM_BANK[5], 0, 8192);
                                 }
@@ -217,8 +220,9 @@ namespace Peripherals
                                 if (snapshot.TYPE > 0) {
                                     Array.Copy(_bank, 0, snapshot.RAM_BANK[4], 0, 8192);
                                     Array.Copy(_bank, 8192, snapshot.RAM_BANK[5], 0, 8192);
-                                } else //48k
-                                {
+                                }
+                                else //48k
+                              {
                                     Array.Copy(_bank, 0, snapshot.RAM_BANK[0], 0, 8192);
                                     Array.Copy(_bank, 8192, snapshot.RAM_BANK[1], 0, 8192);
                                 }
@@ -253,8 +257,9 @@ namespace Peripherals
                                 break;
                         }
                     }
-                } else //Version 1
-                {
+                }
+                else //Version 1
+              {
                     snapshot.TYPE = 0;
                     //int screenAddr = GetPageAddress(10);
                     byte[] RAM_48K = new byte[49152];
@@ -262,7 +267,8 @@ namespace Peripherals
                     if (!isCompressed) {
                         //copy ram bank 5
                         Array.Copy(buffer, 30, RAM_48K, 0, 49152);
-                    } else {
+                    }
+                    else {
                         bool done = false;
                         int byteCounter = 30;
                         int memCounter = 0;
@@ -283,24 +289,26 @@ namespace Peripherals
                                     }
                                 }
                                 RAM_48K[memCounter++] = bite;
-                            } else
+                            }
+                            else
                                 if (bite == 0xED) {
-                                    byte bite2 = buffer[byteCounter];
-                                    if (bite2 == 0xED) {
-                                        byteCounter++;
-                                        int dataLength = buffer[byteCounter++];
-                                        byte data = buffer[byteCounter++];
+                                byte bite2 = buffer[byteCounter];
+                                if (bite2 == 0xED) {
+                                    byteCounter++;
+                                    int dataLength = buffer[byteCounter++];
+                                    byte data = buffer[byteCounter++];
 
-                                        //compressed data
-                                        for (int f = 0; f < dataLength; f++) {
-                                            RAM_48K[memCounter++] = data;
-                                        }
-                                        continue;
+                                    //compressed data
+                                    for (int f = 0; f < dataLength; f++) {
+                                        RAM_48K[memCounter++] = data;
                                     }
-                                    RAM_48K[memCounter++] = bite;
                                     continue;
-                                } else
-                                    RAM_48K[memCounter++] = bite;
+                                }
+                                RAM_48K[memCounter++] = bite;
+                                continue;
+                            }
+                            else
+                                RAM_48K[memCounter++] = bite;
                         } //while
                     } //compressed
 

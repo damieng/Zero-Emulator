@@ -55,13 +55,11 @@ namespace Peripherals
                 if (bytesRead == 0)
                     return null; //something bad happened!
 
-                if (bytesRead == 49179)
-                {
+                if (bytesRead == 49179) {
                     snapshot = new SNA_48K();
                     snapshot.TYPE = 0;
                 }
-                else if (bytesRead == 131103 || bytesRead == 147487)
-                {
+                else if (bytesRead == 131103 || bytesRead == 147487) {
                     snapshot = new SNA_128K();
                     snapshot.TYPE = 1;
                 }
@@ -91,7 +89,8 @@ namespace Peripherals
                 if (snapshot.TYPE == 0) {
                     ((SNA_48K)snapshot).RAM = new byte[49152];
                     Array.Copy(buffer, 27, ((SNA_48K)snapshot).RAM, 0, 49152);
-                } else {
+                }
+                else {
                     //128k snapshot
                     for (int f = 0; f < 16; f++) {
                         ((SNA_128K)snapshot).RAM_BANK[f] = new byte[8192];
@@ -148,20 +147,20 @@ namespace Peripherals
                 fs.Write(bytes, 0, bytes.Length);
 
                 if (sna is SNA_48K)
-                        fs.Write(((SNA_48K)sna).RAM, 0, ((SNA_48K)sna).RAM.Length);
+                    fs.Write(((SNA_48K)sna).RAM, 0, ((SNA_48K)sna).RAM.Length);
                 else {
-                        //Write speccy banks 5, 2 and n which are pre-prepared in snapshot ram 0 to 5
-                        for (int f = 0; f < 6; f++)
-                            fs.Write(((SNA_128K)sna).RAM_BANK[f], 0, 8192);
+                    //Write speccy banks 5, 2 and n which are pre-prepared in snapshot ram 0 to 5
+                    for (int f = 0; f < 6; f++)
+                        fs.Write(((SNA_128K)sna).RAM_BANK[f], 0, 8192);
 
-                        bytes = ByteUtililty.RawSerialize(((SNA_128K)sna).PC);
-                        fs.Write(bytes, 0, bytes.Length);
-                        fs.WriteByte(((SNA_128K)sna).PORT_7FFD);
-                        fs.WriteByte(((SNA_128K)sna).TR_DOS);
+                    bytes = ByteUtililty.RawSerialize(((SNA_128K)sna).PC);
+                    fs.Write(bytes, 0, bytes.Length);
+                    fs.WriteByte(((SNA_128K)sna).PORT_7FFD);
+                    fs.WriteByte(((SNA_128K)sna).TR_DOS);
 
-                        //Write remaining banks
-                        for (int f = 6; f < 16; f++)
-                            fs.Write(((SNA_128K)sna).RAM_BANK[f], 0, 8192);
+                    //Write remaining banks
+                    for (int f = 6; f < 16; f++)
+                        fs.Write(((SNA_128K)sna).RAM_BANK[f], 0, 8192);
                 }
             }
         }

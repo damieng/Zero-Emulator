@@ -97,7 +97,7 @@ namespace Peripherals
                 ChannelCenter = 2;
                 ChannelRight = 1;
             }
-                //ABC
+            //ABC
             else {
                 ChannelCenter = 1;
                 ChannelRight = 2;
@@ -207,7 +207,8 @@ namespace Peripherals
                         /* if Continue = 0, map the shape to the equivalent one which has Continue = 1 */
                         sustain = true;
                         alternate = (attack != 0);
-                    } else {
+                    }
+                    else {
                         sustain = (val & 0x01) != 0;
                         alternate = (val & 0x02) != 0;
                     }
@@ -250,7 +251,8 @@ namespace Peripherals
                 averagedChannelSamples[0] = (short)((averagedChannelSamples[ChannelLeft] + averagedChannelSamples[ChannelCenter]) / soundSampleCounter);
                 averagedChannelSamples[1] = (short)((averagedChannelSamples[ChannelRight] + averagedChannelSamples[ChannelCenter]) / soundSampleCounter);
                 averagedChannelSamples[2] = 0;// beeperSound;
-            } else {
+            }
+            else {
                 averagedChannelSamples[0] = (short)((averagedChannelSamples[ChannelLeft] + averagedChannelSamples[ChannelCenter] + averagedChannelSamples[ChannelRight]) / soundSampleCounter);
                 averagedChannelSamples[1] = (short)((averagedChannelSamples[ChannelLeft] + averagedChannelSamples[ChannelCenter] + averagedChannelSamples[ChannelRight]) / soundSampleCounter);
                 averagedChannelSamples[2] = 0;// (averagedChannelSamples[ChannelLeft] + averagedChannelSamples[ChannelCenter] + averagedChannelSamples[ChannelRight]) / soundSampleCounter + beeperSound;
@@ -364,7 +366,8 @@ namespace Peripherals
                                 attack ^= 0x0f;
                             sustaining = true;
                             envelopeStep = 0;
-                        } else {
+                        }
+                        else {
                             /* if CountEnv has looped an odd number of times (usually 1), */
                             /* invert the output. */
                             if (alternate && ((envelopeStep & (0x0f + 1)) != 0) && (envelopeCount > 4))
@@ -419,8 +422,7 @@ namespace Peripherals
 
                 //if ((((regs[AY_A_VOL + 0] & 0x10) >> 4) & (((regs[AY_A_VOL + 1] & 0x10) >> 4) & ((regs[AY_A_VOL + 2] & 0x10) >> 4))) != 1)
                 //if ((((regs[AY_A_VOL + 0] >> 4) & 0x1) & (((regs[AY_A_VOL + 1] >> 4) & 0x1) & ((regs[AY_A_VOL + 2] >> 4) & 0x1))) != 0)
-                if (((regs[AY_A_VOL + 0] & 0x10) & (regs[AY_A_VOL + 1] & 0x10) & (regs[AY_A_VOL + 2] & 0x10)) != 1)
-                {
+                if (((regs[AY_A_VOL + 0] & 0x10) & (regs[AY_A_VOL + 1] & 0x10) & (regs[AY_A_VOL + 2] & 0x10)) != 1) {
                     /* update envelope */
                     if (!sustaining) {
                         //envelopeClock++;
@@ -434,7 +436,8 @@ namespace Peripherals
                                         attack ^= 0x0f;
                                     sustaining = true;
                                     envelopeStep = 0;
-                                } else {
+                                }
+                                else {
                                     /* if CountEnv has looped an odd number of times (usually 1), */
                                     /* invert the output. */
                                     if (alternate && ((envelopeStep & (0x0f + 1)) != 0) && (envelopeCount > 4))

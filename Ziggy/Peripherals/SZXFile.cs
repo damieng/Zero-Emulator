@@ -5,7 +5,8 @@ using zlib;
 
 namespace Peripherals
 {
-    public class ByteUtililty {
+    public class ByteUtililty
+    {
         public static byte[] RawSerialize(object anything) {
             int rawsize = Marshal.SizeOf(anything);
             IntPtr buffer = Marshal.AllocHGlobal(rawsize);
@@ -323,12 +324,14 @@ namespace Peripherals
                                         compressedData.Close();
                                         uncompressedData.Close();
                                     }
-                                } else {
+                                }
+                                else {
                                     embeddedTapeData = new byte[tape.compressedSize];
                                     Array.Copy(buffer, offset, embeddedTapeData, 0, tape.compressedSize);
                                 }
-                            } else //external tape file
-                            {
+                            }
+                            else //external tape file
+                          {
                                 int offset = bufferCounter + Marshal.SizeOf(tape);
                                 char[] file2 = new char[tape.compressedSize - 1];
                                 Array.Copy(buffer, offset, file2, 0, tape.compressedSize - 1); //leave out the \0 terminator
@@ -359,7 +362,8 @@ namespace Peripherals
                                     compressedData.Close();
                                     uncompressedData.Close();
                                 }
-                            } else {
+                            }
+                            else {
                                 int bufferOffset = bufferCounter + Marshal.SizeOf(ramPages);
                                 {
                                     Array.Copy(buffer, bufferOffset, RAM_BANK[ramPages.chPageNo * 2], 0, 8192);
@@ -392,7 +396,8 @@ namespace Peripherals
                 using (FileStream fs = new FileStream(filename, FileMode.Open)) {
                     readSZX = LoadSZX(fs);
                 }
-            } catch {
+            }
+            catch {
                 readSZX = false;
             }
             return readSZX;
@@ -475,8 +480,9 @@ namespace Peripherals
                             }
                             r.Write(ram);
                         }
-                    } else //48k
-                    {
+                    }
+                    else //48k
+                  {
                         byte[] ram = new byte[16384];
                         //page 0
                         ZXST_RAMPage ramPage = new ZXST_RAMPage();
@@ -548,7 +554,7 @@ namespace Peripherals
                         r.Write(buf);
                         buf = ByteUtililty.RawSerialize(tape);
                         r.Write(buf);
-                     
+
                         char[] tapeName = externalTapeFile.ToCharArray();
 
                         r.Write(tapeName);

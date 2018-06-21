@@ -323,7 +323,7 @@ namespace Peripherals
             }
             return readPZX;
         }
-        
+
         private static String GetStringFromData(byte[] _buffer, int _from, int _length) {
             System.Text.StringBuilder s = new System.Text.StringBuilder();
             for (int f = _from; f < _from + _length; f++) {
@@ -338,14 +338,18 @@ namespace Peripherals
 
                 if (PZXFile.blocks[f] is PZXFile.BRWS_Block) {
                     info.Info = ((PZXFile.BRWS_Block)PZXFile.blocks[f]).text;
-                } else if (PZXFile.blocks[f] is PZXFile.PAUS_Block) {
+                }
+                else if (PZXFile.blocks[f] is PZXFile.PAUS_Block) {
                     info.Info = ((PZXFile.PAUS_Block)PZXFile.blocks[f]).duration.ToString() + " t-states   (" +
                                  Math.Ceiling(((double)(((PZXFile.PAUS_Block)PZXFile.blocks[f]).duration) / (double)(69888 * 50))).ToString() + " secs)";
-                } else if (PZXFile.blocks[f] is PZXFile.PULS_Block) {
+                }
+                else if (PZXFile.blocks[f] is PZXFile.PULS_Block) {
                     info.Info = ((PZXFile.PULS_Block)PZXFile.blocks[f]).pulse[0].duration.ToString() + " t-states   ";
-                } else if (PZXFile.blocks[f] is PZXFile.STOP_Block) {
+                }
+                else if (PZXFile.blocks[f] is PZXFile.STOP_Block) {
                     info.Info = "Stop the tape.";
-                } else if (PZXFile.blocks[f] is PZXFile.DATA_Block) {
+                }
+                else if (PZXFile.blocks[f] is PZXFile.DATA_Block) {
 
                     PZXFile.DATA_Block _data = (PZXFile.DATA_Block)PZXFile.blocks[f];
                     int d = (int)(_data.count / 8);
@@ -376,24 +380,30 @@ namespace Peripherals
                                 ushort _line = System.BitConverter.ToUInt16(_data.data.ToArray(), 14);
                                 if (_line > 0)
                                     info.Info += " LINE " + _line.ToString();
-                            } else if (type == 1) {
+                            }
+                            else if (type == 1) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Num Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 32) + "(" + _data.data[12].ToString() + ")";
-                            } else if (type == 2) {
+                            }
+                            else if (type == 2) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Char Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 96) + "$(" + _data.data[12].ToString() + ")";
-                            } else if (type == 3) {
+                            }
+                            else if (type == 3) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Bytes: \"" + _name + "\"";
                                 ushort _start = System.BitConverter.ToUInt16(_data.data.ToArray(), 14);
                                 ushort _length = System.BitConverter.ToUInt16(_data.data.ToArray(), 12);
                                 info.Info += " CODE " + _start.ToString() + "," + _length.ToString();
-                            } else {
+                            }
+                            else {
                                 info.Info = ((PZXFile.DATA_Block)PZXFile.blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((PZXFile.DATA_Block)PZXFile.blocks[f]).count) / (double)8).ToString() + " bytes)";
                             }
-                        } else
+                        }
+                        else
                             info.Info = "";
-                    } else
+                    }
+                    else
                         info.Info = ((PZXFile.DATA_Block)PZXFile.blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((PZXFile.DATA_Block)PZXFile.blocks[f]).count) / (double)8).ToString() + " bytes)";
                 }
                 else if (PZXFile.blocks[f] is PZXFile.PZXT_Header) {
