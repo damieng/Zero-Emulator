@@ -152,7 +152,6 @@ namespace Peripherals
         private uint tstatesAtRecordStart = 0;
         private uint frameDataSize = 0;
         public int frameCount = 0;
-        private int totalFramesPlayed = 0;
         private RZX_State state = RZX_State.NONE;
         private bool isRecordingBlock = false;
 
@@ -195,9 +194,7 @@ namespace Peripherals
         public RZX_Frame frame;
         public List<RZX_Frame> frames = new List<RZX_Frame>();
 
-        public int Progress {
-            get { return totalFramesPlayed; }
-        }
+        public int Progress { get; private set; } = 0;
 
         #region v1
         /*
@@ -549,7 +546,7 @@ namespace Peripherals
         #endregion
 
         public int GetNumFramesPlayed() {
-            return totalFramesPlayed;
+            return Progress;
         }
 
         public static void CopyStream(System.IO.Stream input, System.IO.Stream output) {
@@ -1104,7 +1101,7 @@ namespace Peripherals
             if (!OpenFile(fs))
                 return false;
 
-            totalFramesPlayed = 0;
+            Progress = 0;
             return ReadFile();
         }
 
@@ -1112,7 +1109,7 @@ namespace Peripherals
             if (!OpenFile(filename))
                 return false;
 
-            totalFramesPlayed = 0;
+            Progress = 0;
             return ReadFile();
         }
 
@@ -1179,7 +1176,7 @@ namespace Peripherals
             inputCount = 0;
             fetchCount = 0;
             frameCount--;
-            totalFramesPlayed++;
+            Progress++;
             return true;
         }
 

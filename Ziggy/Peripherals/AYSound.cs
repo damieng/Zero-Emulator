@@ -54,12 +54,7 @@ namespace Peripherals
 
         public ushort soundSampleCounter;
 
-        private bool stereoSound = true;
-
-        public bool StereoSound {
-            get { return stereoSound; }
-            set { stereoSound = value; }
-        }
+        public bool StereoSound { get; set; } = true;
 
         public int SelectedRegister {
             get { return selectedRegister; }
@@ -247,7 +242,7 @@ namespace Peripherals
         }
 
         public void EndSampleAY() {
-            if (stereoSound) {
+            if (StereoSound) {
                 averagedChannelSamples[0] = (short)((averagedChannelSamples[ChannelLeft] + averagedChannelSamples[ChannelCenter]) / soundSampleCounter);
                 averagedChannelSamples[1] = (short)((averagedChannelSamples[ChannelRight] + averagedChannelSamples[ChannelCenter]) / soundSampleCounter);
                 averagedChannelSamples[2] = 0;// beeperSound;

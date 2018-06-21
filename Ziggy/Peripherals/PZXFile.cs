@@ -4,14 +4,10 @@ namespace Peripherals
 {
     public class PZX_TapeInfo
     {
-        private String block;
         private String more = null;
         public bool IsStandardBlock = false;
 
-        public String Block {
-            get { return block; }
-            set { block = value; }
-        }
+        public String Block { get; set; }
 
         public String Info {
             get { return more; }
