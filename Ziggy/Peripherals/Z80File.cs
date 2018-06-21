@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Peripherals
 {
@@ -35,7 +36,7 @@ namespace Peripherals
             {
                 int dataBlockOffset = counter;
                 int memStart = 0;
-                while ((counter - dataBlockOffset) < dataLength) {
+                while (counter - dataBlockOffset < dataLength) {
                     byte bite = buffer[counter++];
 
                     if (bite == 0xED) {
@@ -52,7 +53,6 @@ namespace Peripherals
                             continue;
                         }
                         bank[memStart++] = bite;
-                        continue;
                     }
                     else
                         bank[memStart++] = bite;
@@ -61,9 +61,9 @@ namespace Peripherals
             }
         }
 
-        public static Z80_SNAPSHOT LoadZ80(System.IO.Stream fs) {
+        public static Z80_SNAPSHOT LoadZ80(Stream fs) {
             Z80_SNAPSHOT snapshot = new Z80_SNAPSHOT();
-            using (System.IO.BinaryReader r = new System.IO.BinaryReader(fs)) {
+            using (BinaryReader r = new BinaryReader(fs)) {
                 int bytesToRead = (int)fs.Length;
 
                 byte[] buffer = new byte[bytesToRead];
@@ -74,10 +74,10 @@ namespace Peripherals
 
                 snapshot.AF = buffer[0] << 8;
                 snapshot.AF |= buffer[1];
-                snapshot.BC = (buffer[2] | (buffer[3] << 8));
-                snapshot.HL = (buffer[4] | (buffer[5] << 8));
-                snapshot.PC = (buffer[6] | (buffer[7] << 8));
-                snapshot.SP = (buffer[8] | (buffer[9] << 8));
+                snapshot.BC = buffer[2] | (buffer[3] << 8);
+                snapshot.HL = buffer[4] | (buffer[5] << 8);
+                snapshot.PC = buffer[6] | (buffer[7] << 8);
+                snapshot.SP = buffer[8] | (buffer[9] << 8);
                 snapshot.I = buffer[10];
                 snapshot.R = buffer[11];
 
@@ -87,24 +87,24 @@ namespace Peripherals
 
                 snapshot.R |= (byte)((byte12 & 0x01) << 7);
                 snapshot.BORDER = (byte)((byte12 >> 1) & 0x07);
-                bool isCompressed = ((byte12 & 0x20) != 0);
+                bool isCompressed = (byte12 & 0x20) != 0;
 
-                snapshot.DE = (buffer[13] | (buffer[14] << 8));
-                snapshot.BC_ = (buffer[15] | (buffer[16] << 8));
-                snapshot.DE_ = (buffer[17] | (buffer[18] << 8));
-                snapshot.HL_ = (buffer[19] | (buffer[20] << 8));
-                snapshot.AF_ = ((buffer[21] << 8) | buffer[22]);
+                snapshot.DE = buffer[13] | (buffer[14] << 8);
+                snapshot.BC_ = buffer[15] | (buffer[16] << 8);
+                snapshot.DE_ = buffer[17] | (buffer[18] << 8);
+                snapshot.HL_ = buffer[19] | (buffer[20] << 8);
+                snapshot.AF_ = (buffer[21] << 8) | buffer[22];
 
-                snapshot.IY = (buffer[23] | (buffer[24] << 8));
-                snapshot.IX = (buffer[25] | (buffer[26] << 8));
+                snapshot.IY = buffer[23] | (buffer[24] << 8);
+                snapshot.IX = buffer[25] | (buffer[26] << 8);
 
-                snapshot.IFF1 = (buffer[27] != 0);
-                snapshot.IFF2 = (buffer[28] != 0);
+                snapshot.IFF1 = buffer[27] != 0;
+                snapshot.IFF2 = buffer[28] != 0;
 
                 byte byte29 = buffer[29];
 
                 snapshot.IM = (byte)(byte29 & 0x3);
-                snapshot.ISSUE2 = ((byte29 & 0x08) != 0);
+                snapshot.ISSUE2 = (byte29 & 0x08) != 0;
 
                 for (int f = 0; f < 16; f++) {
                     snapshot.RAM_BANK[f] = new byte[8192];
@@ -113,7 +113,7 @@ namespace Peripherals
                 //Version 2 or 3
                 if (snapshot.PC == 0) {
                     int headerLength = buffer[30];
-                    snapshot.PC = (buffer[32] | (buffer[33] << 8));
+                    snapshot.PC = buffer[32] | (buffer[33] << 8);
                     switch (buffer[34]) {
                         case 0:
                             snapshot.TYPE = 0;
@@ -185,7 +185,7 @@ namespace Peripherals
 
                         //copies page data to temporary RAM array
                         GetPage(buffer, counter, _bank, dataLength);
-                        counter += (dataLength == 0xffff ? 16384 : dataLength);
+                        counter += dataLength == 0xffff ? 16384 : dataLength;
 
                         switch (page) {
                             //Ignore any ROM pages.
@@ -327,7 +327,7 @@ namespace Peripherals
 
         public static Z80_SNAPSHOT LoadZ80(string filename) {
             Z80_SNAPSHOT snapshot;
-            using (System.IO.FileStream fs = new System.IO.FileStream(filename, System.IO.FileMode.Open)) {
+            using (FileStream fs = new FileStream(filename, FileMode.Open)) {
                 snapshot = LoadZ80(fs);
             }
             return snapshot;

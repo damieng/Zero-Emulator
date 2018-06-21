@@ -162,9 +162,6 @@ namespace Peripherals
                         string comment = GetString(_buffer, ref _counter, baseCount + size);
                         header.Comments.Add(comment);
                         break;
-
-                    default:
-                        break;
                 }
             }
             return header;
@@ -204,7 +201,7 @@ namespace Peripherals
             while (_counter < baseCount + size) {
                 block.count = BitConverter.ToUInt32(_buffer, _counter);
                 block.initialPulseLevel = (uint)((block.count & 0x80000000) == 0 ? 0 : 1);
-                block.count = (uint)(block.count & 0x7FFFFFFF);
+                block.count = block.count & 0x7FFFFFFF;
                 _counter += 4;
                 block.tail = BitConverter.ToUInt16(_buffer, _counter);
                 _counter += 2;
@@ -301,9 +298,6 @@ namespace Peripherals
                             stopBlock.size = blockSize;
                             blocks.Add(stopBlock);
                             break;
-
-                        default:
-                            break;
                     }
                     counter += (int)blockSize;
                 }
@@ -335,11 +329,11 @@ namespace Peripherals
                     info.Info = ((BRWS_Block)blocks[f]).text;
                 }
                 else if (blocks[f] is PAUS_Block) {
-                    info.Info = ((PAUS_Block)blocks[f]).duration.ToString() + " t-states   (" +
-                                 Math.Ceiling(((double)(((PAUS_Block)blocks[f]).duration) / (double)(69888 * 50))).ToString() + " secs)";
+                    info.Info = ((PAUS_Block)blocks[f]).duration + " t-states   (" +
+                                 Math.Ceiling((((PAUS_Block)blocks[f]).duration / (double)(69888 * 50))) + " secs)";
                 }
                 else if (blocks[f] is PULS_Block) {
-                    info.Info = ((PULS_Block)blocks[f]).pulse[0].duration.ToString() + " t-states   ";
+                    info.Info = ((PULS_Block)blocks[f]).pulse[0].duration + " t-states   ";
                 }
                 else if (blocks[f] is STOP_Block) {
                     info.Info = "Stop the tape.";
@@ -374,32 +368,32 @@ namespace Peripherals
                                 info.Info = "Program: \"" + _name + "\"";
                                 ushort _line = BitConverter.ToUInt16(_data.data.ToArray(), 14);
                                 if (_line > 0)
-                                    info.Info += " LINE " + _line.ToString();
+                                    info.Info += " LINE " + _line;
                             }
                             else if (type == 1) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Num Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 32) + "(" + _data.data[12].ToString() + ")";
+                                info.Info = "Num Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 32) + "(" + _data.data[12] + ")";
                             }
                             else if (type == 2) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Char Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 96) + "$(" + _data.data[12].ToString() + ")";
+                                info.Info = "Char Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 96) + "$(" + _data.data[12] + ")";
                             }
                             else if (type == 3) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Bytes: \"" + _name + "\"";
                                 ushort _start = BitConverter.ToUInt16(_data.data.ToArray(), 14);
                                 ushort _length = BitConverter.ToUInt16(_data.data.ToArray(), 12);
-                                info.Info += " CODE " + _start.ToString() + "," + _length.ToString();
+                                info.Info += " CODE " + _start + "," + _length;
                             }
                             else {
-                                info.Info = ((DATA_Block)blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((DATA_Block)blocks[f]).count) / (double)8).ToString() + " bytes)";
+                                info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
                             }
                         }
                         else
                             info.Info = "";
                     }
                     else
-                        info.Info = ((DATA_Block)blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((DATA_Block)blocks[f]).count) / (double)8).ToString() + " bytes)";
+                        info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
                 }
                 else if (blocks[f] is PZXT_Header) {
                     //info.Info = ((PZXFile.PZXT_Header)(PZXFile.blocks[f])).Title;

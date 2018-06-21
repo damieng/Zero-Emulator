@@ -859,7 +859,7 @@ namespace Peripherals
             bw.Write((ushort)fetchCount);
             bw.Write(inCount);
 
-            frameDataSize += (uint)(2 + 2);
+            frameDataSize += 2 + 2;
 
             if (inputs != null && inputs.Length > 0) {
                 bw.Write(inputs);
@@ -1137,7 +1137,7 @@ namespace Peripherals
 
             if (isCompressedFrames) {
                 byte[] buffer = new byte[4];
-                bool err = false;
+                bool err;
                 err = ReadFromZStream(frameInfoReader, ref buffer, 4) <= 0;
 
                 if (!err) {
