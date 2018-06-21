@@ -149,11 +149,11 @@ namespace Peripherals
         private BinaryReader rzxFileReader;
         private BinaryReader frameInfoReader;
 
-        private uint tstatesAtRecordStart = 0;
-        private uint frameDataSize = 0;
-        public int frameCount = 0;
+        private uint tstatesAtRecordStart;
+        private uint frameDataSize;
+        public int frameCount;
         private RZX_State state = RZX_State.NONE;
-        private bool isRecordingBlock = false;
+        private bool isRecordingBlock;
 
         private FileStream rzxFile;
         private FileStream frameInfoFile;
@@ -180,21 +180,21 @@ namespace Peripherals
         private byte[] fileBuffer;
         private ZStream zStream;
         private GCHandle pinnedBuffer;
-        private bool isReading = false;
-        private bool isReadingIRB = false;
-        private int readBlockIndex = 0;
+        private bool isReading;
+        private bool isReadingIRB;
+        private int readBlockIndex;
         public int fetchCount;
         public int inputCount;
-        private int snapsLoaded = 0;
+        private int snapsLoaded;
 
         //Used for rollbacks
-        private int currentBookmark = 0;
+        private int currentBookmark;
         private readonly List<RollbackBookmark> bookmarks = new List<RollbackBookmark>();
 
         public RZX_Frame frame;
         public List<RZX_Frame> frames = new List<RZX_Frame>();
 
-        public int Progress { get; private set; } = 0;
+        public int Progress { get; private set; }
 
         #region v1
         /*

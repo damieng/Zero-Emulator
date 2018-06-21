@@ -4,11 +4,11 @@ namespace Peripherals
 {
     public class PZX_TapeInfo
     {
-        public bool IsStandardBlock = false;
+        public bool IsStandardBlock;
 
         public String Block { get; set; }
 
-        public String Info { get; set; } = null;
+        public String Info { get; set; }
     }
 
     public static class PZXFile
@@ -23,15 +23,15 @@ namespace Peripherals
         {
             public byte MajorVersion;
             public byte MinorVersion;
-            public string Title = null;
-            public string Publisher = null;
+            public string Title;
+            public string Publisher;
             public System.Collections.Generic.List<String> Authors = new System.Collections.Generic.List<string>();
-            public string YearOfPublication = null;
-            public string Language = null;
-            public string Type = null;
-            public string Price = null;
-            public string ProtectionScheme = null;
-            public string Origin = null;
+            public string YearOfPublication;
+            public string Language;
+            public string Type;
+            public string Price;
+            public string ProtectionScheme;
+            public string Origin;
             public System.Collections.Generic.List<string> Comments = new System.Collections.Generic.List<string>();
         }
 

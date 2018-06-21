@@ -49,7 +49,7 @@ namespace Peripherals
         private readonly short[] channel_mix = new short[3];
 
         private ulong randomSeed;
-        private byte envelopeClock = 0;
+        private byte envelopeClock;
         private int selectedRegister;
 
         public ushort soundSampleCounter;

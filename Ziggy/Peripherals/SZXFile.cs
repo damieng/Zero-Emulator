@@ -203,11 +203,11 @@ namespace Peripherals
         public byte[] embeddedTapeData;
         public String externalTapeFile;
 
-        public byte numDrivesPresent = 0;
-        public bool InsertTape = false;
+        public byte numDrivesPresent;
+        public bool InsertTape;
         public bool[] InsertDisk;
         public String[] externalDisk;
-        public bool paletteLoaded = false;
+        public bool paletteLoaded;
 
         public string GetID(uint id) {
             byte[] b = System.BitConverter.GetBytes(id);
