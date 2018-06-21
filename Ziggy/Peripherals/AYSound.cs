@@ -29,24 +29,24 @@ namespace Peripherals
         private const byte AY_PORT_B = 15;
 
         //This is the default ACB configuration.
-        private int ChannelLeft = 0;
+        private readonly int ChannelLeft = 0;
 
         private int ChannelRight = 1;   //2 if ABC
         private int ChannelCenter = 2;  //1 if ABC
 
-        private int[] regs = new int[16];
+        private readonly int[] regs = new int[16];
         private int noiseOut;
         private int envelopeVolume;
         private int noiseCount;
         public int envelopeCount;
-        private int[] channel_out = new int[3];
-        private int[] channel_count = new int[3];
+        private readonly int[] channel_out = new int[3];
+        private readonly int[] channel_count = new int[3];
 
         //public float[] averagedChannelSamples = new float[3];
         public int[] averagedChannelSamples = new int[3];
 
         //private float[] channel_mix = new float[3];
-        private short[] channel_mix = new short[3];
+        private readonly short[] channel_mix = new short[3];
 
         private ulong randomSeed;
         private byte envelopeClock = 0;
@@ -67,7 +67,7 @@ namespace Peripherals
         // private int hold;
         private int attack, envelopeStep;
 
-        private short[] AY_SpecVolumes =
+        private readonly short[] AY_SpecVolumes =
         {
          //This volume set taken from SpecEmu
          0/2, 108/2, 159/2, 223/2, 335/2, 511/2, 703/2, 1119/2, 1343/2, 2143/2, 2943/2, 3679/2, 4655/2, 5759/2, 6911/2, 8191/2
@@ -77,7 +77,7 @@ namespace Peripherals
         };
 
         // based on the measurements posted to comp.sys.sinclair in Dec 2001 by Matthew Westcott
-        private float[] AY_Volumes =
+        private readonly float[] AY_Volumes =
         {
              0.0000f, 0.0137f, 0.0205f, 0.0291f, 0.0423f, 0.0618f, 0.0847f, 0.1369f, 0.1691f, 0.2647f, 0.3527f, 0.4499f, 0.5704f, 0.6873f, 0.8482f, 1.0000f
         };

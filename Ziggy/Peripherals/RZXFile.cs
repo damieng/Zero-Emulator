@@ -143,7 +143,7 @@ namespace Peripherals
         public char[][] snapshotExtension = new char[2][];
         public byte[][] snapshotData = new byte[2][];
 
-        private bool isCompressedFrames = true;
+        private readonly bool isCompressedFrames = true;
 
         private BinaryWriter rzxFileWrite;
         private BinaryReader rzxFileReader;
@@ -189,7 +189,7 @@ namespace Peripherals
 
         //Used for rollbacks
         private int currentBookmark = 0;
-        private List<RollbackBookmark> bookmarks = new List<RollbackBookmark>();
+        private readonly List<RollbackBookmark> bookmarks = new List<RollbackBookmark>();
 
         public RZX_Frame frame;
         public List<RZX_Frame> frames = new List<RZX_Frame>();
