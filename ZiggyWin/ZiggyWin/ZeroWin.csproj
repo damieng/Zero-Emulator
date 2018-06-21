@@ -340,10 +340,6 @@
     <EmbeddedResource Include="CodeProfiler.resx">
       <DependentUpon>CodeProfiler.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Form1.af-ZA.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -479,9 +475,6 @@
     </None>
     <None Include="Resources\scanlines2.png" />
     <Content Include="Ziggy Emulator.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
