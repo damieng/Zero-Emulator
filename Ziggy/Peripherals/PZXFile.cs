@@ -4,15 +4,11 @@ namespace Peripherals
 {
     public class PZX_TapeInfo
     {
-        private String more = null;
         public bool IsStandardBlock = false;
 
         public String Block { get; set; }
 
-        public String Info {
-            get { return more; }
-            set { more = value; }
-        }
+        public String Info { get; set; } = null;
     }
 
     public static class PZXFile
