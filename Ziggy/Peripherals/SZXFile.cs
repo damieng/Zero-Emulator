@@ -210,13 +210,13 @@ namespace Peripherals
         public bool paletteLoaded;
 
         public string GetID(uint id) {
-            byte[] b = System.BitConverter.GetBytes(id);
+            byte[] b = BitConverter.GetBytes(id);
             string idString = String.Format("{0}{1}{2}{3}", (char)b[0], (char)b[1], (char)b[2], (char)b[3]);
             return idString;
         }
 
         private uint GetUIntFromString(string data) {
-            byte[] carray = System.Text.ASCIIEncoding.UTF8.GetBytes(data);
+            byte[] carray = System.Text.Encoding.UTF8.GetBytes(data);
             uint val = BitConverter.ToUInt32(carray, 0);
             return val;
         }
@@ -539,7 +539,7 @@ namespace Peripherals
                         tape = new ZXST_Tape();
                         block.Id = GetUIntFromString("TAPE");
 
-                        char[] ext = System.IO.Path.GetExtension(externalTapeFile).ToLower().ToCharArray();
+                        char[] ext = Path.GetExtension(externalTapeFile).ToLower().ToCharArray();
                         tape.fileExtension = new char[16];
                         for (int f = 1; f < ext.Length; f++)
                             tape.fileExtension[f - 1] = ext[f];

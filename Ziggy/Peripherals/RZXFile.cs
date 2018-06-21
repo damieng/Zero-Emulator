@@ -7,8 +7,6 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using zlib;
 
-
-
 namespace Peripherals
 {
     public enum RZX_State
@@ -135,7 +133,7 @@ namespace Peripherals
 
     public class RZXFile
     {
-        public System.Action<RZXFileEventArgs> RZXFileEventHandler;
+        public Action<RZXFileEventArgs> RZXFileEventHandler;
         public RZX_Header header;
         public RZX_Creator creator;
         public RZX_Record record;
@@ -549,7 +547,7 @@ namespace Peripherals
             return Progress;
         }
 
-        public static void CopyStream(System.IO.Stream input, System.IO.Stream output) {
+        public static void CopyStream(Stream input, Stream output) {
             byte[] buffer = new byte[2000];
             int len;
             while ((len = input.Read(buffer, 0, 2000)) > 0) {

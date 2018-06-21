@@ -1,35 +1,37 @@
-﻿namespace Peripherals
+﻿using System.Runtime.InteropServices;
+
+namespace Peripherals
 {
     public class UDP765
     {
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern System.IntPtr u765_Initialise();
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_Shutdown(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_ResetDevice(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_InsertDisk(System.IntPtr fdc, string filename, byte unit);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_EjectDisk(System.IntPtr fdc, byte unit);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_SetMotorState(System.IntPtr fdc, byte state);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern byte u765_StatusPortRead(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern byte u765_DataPortRead(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern void u765_DataPortWrite(System.IntPtr fdc, byte data);
 
-        [System.Runtime.InteropServices.DllImport(@"fdc765.DLL")]
+        [DllImport(@"fdc765.DLL")]
         private static extern int u765_DiskInserted(System.IntPtr fdc, byte unit);
 
         protected System.IntPtr fdc = System.IntPtr.Zero;

@@ -1,53 +1,55 @@
-﻿namespace Peripherals
+﻿using System.Runtime.InteropServices;
+
+namespace Peripherals
 {
     public class WD1793
     {
-        [System.Runtime.InteropServices.DllImport(@"wd1793.dll")]
+        [DllImport(@"wd1793.dll")]
         public static extern System.IntPtr wd1793_Initialise();
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.dll")]
+        [DllImport(@"wd1793.dll")]
         private static extern void wd1793_ShutDown(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.dll")]
+        [DllImport(@"wd1793.dll")]
         private static extern bool wd1793_InsertDisk(System.IntPtr fdc, byte unit, string filename);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.dll")]
+        [DllImport(@"wd1793.dll")]
         private static extern void wd1793_EjectDisks(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_EjectDisk(System.IntPtr fdc, byte _unit);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern byte wd1793_ReadStatusReg(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern byte wd1793_ReadTrackReg(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern byte wd1793_ReadSectorReg(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern byte wd1793_ReadDataReg(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern byte wd1793_ReadSystemReg(System.IntPtr fdc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_WriteTrackReg(System.IntPtr fdc, byte _data);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_WriteSectorReg(System.IntPtr fdc, byte _data);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_WriteDataReg(System.IntPtr fdc, byte _data);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_WriteSystemReg(System.IntPtr fdc, byte _data);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern void wd1793_WriteCommandReg(System.IntPtr fdc, byte _data, ushort _pc);
 
-        [System.Runtime.InteropServices.DllImport(@"wd1793.DLL")]
+        [DllImport(@"wd1793.DLL")]
         private static extern bool wd1793_DiskInserted(System.IntPtr fdc, byte _unit);
 
         //[DllImport(@"wd1793.DLL")]

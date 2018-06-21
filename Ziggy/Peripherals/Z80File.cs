@@ -32,7 +32,7 @@ namespace Peripherals
                 Array.Copy(buffer, counter, bank, 0, 16384);
             }
             else //Compressed data (needs testing!)
-          {
+            {
                 int dataBlockOffset = counter;
                 int memStart = 0;
                 while ((counter - dataBlockOffset) < dataLength) {

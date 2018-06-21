@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 
 namespace Peripherals
 {
@@ -25,14 +28,14 @@ namespace Peripherals
             public byte MinorVersion;
             public string Title;
             public string Publisher;
-            public System.Collections.Generic.List<String> Authors = new System.Collections.Generic.List<string>();
+            public List<String> Authors = new List<string>();
             public string YearOfPublication;
             public string Language;
             public string Type;
             public string Price;
             public string ProtectionScheme;
             public string Origin;
-            public System.Collections.Generic.List<string> Comments = new System.Collections.Generic.List<string>();
+            public List<string> Comments = new List<string>();
         }
 
         public class Pulse
@@ -43,7 +46,7 @@ namespace Peripherals
 
         public class PULS_Block : Block
         {
-            public System.Collections.Generic.List<Pulse> pulse = new System.Collections.Generic.List<Pulse>();
+            public List<Pulse> pulse = new List<Pulse>();
         }
 
         public class DATA_Block : Block
@@ -53,9 +56,9 @@ namespace Peripherals
             public ushort tail;
             public byte p0;
             public byte p1;
-            public System.Collections.Generic.List<ushort> s0 = new System.Collections.Generic.List<ushort>();
-            public System.Collections.Generic.List<ushort> s1 = new System.Collections.Generic.List<ushort>();
-            public System.Collections.Generic.List<byte> data = new System.Collections.Generic.List<byte>();
+            public List<ushort> s0 = new List<ushort>();
+            public List<ushort> s1 = new List<ushort>();
+            public List<byte> data = new List<byte>();
         }
 
         public class PAUS_Block : Block
@@ -75,13 +78,13 @@ namespace Peripherals
         }
 
         // PZX_Tape tapeInfo;
-        public static System.ComponentModel.BindingList<PZX_TapeInfo> tapeBlockInfo = new System.ComponentModel.BindingList<PZX_TapeInfo>();
+        public static BindingList<PZX_TapeInfo> tapeBlockInfo = new BindingList<PZX_TapeInfo>();
 
         //All the blocks in the tape
-        public static System.Collections.Generic.List<Block> blocks = new System.Collections.Generic.List<Block>();
+        public static List<Block> blocks = new List<Block>();
 
         public static string GetTag(uint id) {
-            byte[] b = System.BitConverter.GetBytes(id);
+            byte[] b = BitConverter.GetBytes(id);
             string idString = String.Format("{0}{1}{2}{3}", (char)b[0], (char)b[1], (char)b[2], (char)b[3]);
             return idString;
         }
@@ -175,17 +178,17 @@ namespace Peripherals
             while (_counter < baseCount + size) {
                 Pulse p = new Pulse();
                 p.count = 1;
-                p.duration = (System.BitConverter.ToUInt16(_buffer, _counter));
+                p.duration = (BitConverter.ToUInt16(_buffer, _counter));
                 _counter += 2;
                 if (p.duration > 0x8000) {
                     p.count = (ushort)(p.duration & 0x7FFF);
-                    p.duration = System.BitConverter.ToUInt16(_buffer, _counter);
+                    p.duration = BitConverter.ToUInt16(_buffer, _counter);
                     _counter += 2;
                 }
                 if (p.duration >= 0x8000) {
                     p.duration &= 0x7FFF;
                     p.duration <<= 16;
-                    p.duration |= System.BitConverter.ToUInt16(_buffer, _counter);
+                    p.duration |= BitConverter.ToUInt16(_buffer, _counter);
                     _counter += 2;
                 }
 
@@ -199,21 +202,21 @@ namespace Peripherals
             int baseCount = _counter;
 
             while (_counter < baseCount + size) {
-                block.count = System.BitConverter.ToUInt32(_buffer, _counter);
+                block.count = BitConverter.ToUInt32(_buffer, _counter);
                 block.initialPulseLevel = (uint)((block.count & 0x80000000) == 0 ? 0 : 1);
                 block.count = (uint)(block.count & 0x7FFFFFFF);
                 _counter += 4;
-                block.tail = System.BitConverter.ToUInt16(_buffer, _counter);
+                block.tail = BitConverter.ToUInt16(_buffer, _counter);
                 _counter += 2;
                 block.p0 = _buffer[_counter++];
                 block.p1 = _buffer[_counter++];
                 for (int i = 0; i < block.p0; i++) {
-                    ushort s = System.BitConverter.ToUInt16(_buffer, _counter);
+                    ushort s = BitConverter.ToUInt16(_buffer, _counter);
                     _counter += 2;
                     block.s0.Add(s);
                 }
                 for (int i = 0; i < block.p1; i++) {
-                    ushort s = System.BitConverter.ToUInt16(_buffer, _counter);
+                    ushort s = BitConverter.ToUInt16(_buffer, _counter);
                     _counter += 2;
                     block.s1.Add(s);
                 }
@@ -225,10 +228,10 @@ namespace Peripherals
             return block;
         }
 
-        public static bool LoadPZX(System.IO.Stream fs) {
+        public static bool LoadPZX(Stream fs) {
             blocks.Clear();
             tapeBlockInfo.Clear();
-            using (System.IO.BinaryReader r = new System.IO.BinaryReader(fs)) {
+            using (BinaryReader r = new BinaryReader(fs)) {
                 int bytesToRead = (int)fs.Length;
 
                 byte[] buffer = new byte[bytesToRead];
@@ -246,7 +249,7 @@ namespace Peripherals
                         blockTag += (char)(buffer[counter++]);
                     }
 
-                    uint blockSize = System.BitConverter.ToUInt32(buffer, counter);
+                    uint blockSize = BitConverter.ToUInt32(buffer, counter);
                     counter += 4;
 
                     switch (blockTag) {
@@ -274,7 +277,7 @@ namespace Peripherals
                         case "PAUS":
                             PAUS_Block pauseBlock = new PAUS_Block();
                             pauseBlock.tag = "PAUS";
-                            uint d = System.BitConverter.ToUInt32(buffer, counter);
+                            uint d = BitConverter.ToUInt32(buffer, counter);
                             pauseBlock.initialPulseLevel = ((d & 0x80000000) == 0 ? 0 : 1);
                             pauseBlock.duration = (d & 0x7FFFFFFF);
                             pauseBlock.size = blockSize;
@@ -294,7 +297,7 @@ namespace Peripherals
                         case "STOP":
                             STOP_Block stopBlock = new STOP_Block();
                             stopBlock.tag = "STOP";
-                            stopBlock.flag = System.BitConverter.ToUInt16(buffer, counter);
+                            stopBlock.flag = BitConverter.ToUInt16(buffer, counter);
                             stopBlock.size = blockSize;
                             blocks.Add(stopBlock);
                             break;
@@ -310,7 +313,7 @@ namespace Peripherals
 
         public static bool LoadPZX(string filename) {
             bool readPZX;
-            using (System.IO.FileStream fs = new System.IO.FileStream(filename, System.IO.FileMode.Open)) {
+            using (FileStream fs = new FileStream(filename, FileMode.Open)) {
                 readPZX = LoadPZX(fs);
             }
             return readPZX;
@@ -325,25 +328,25 @@ namespace Peripherals
         }
 
         public static void ReadTapeInfo(String filename) {
-            for (int f = 0; f < PZXFile.blocks.Count; f++) {
+            for (int f = 0; f < blocks.Count; f++) {
                 PZX_TapeInfo info = new PZX_TapeInfo();
 
-                if (PZXFile.blocks[f] is PZXFile.BRWS_Block) {
-                    info.Info = ((PZXFile.BRWS_Block)PZXFile.blocks[f]).text;
+                if (blocks[f] is BRWS_Block) {
+                    info.Info = ((BRWS_Block)blocks[f]).text;
                 }
-                else if (PZXFile.blocks[f] is PZXFile.PAUS_Block) {
-                    info.Info = ((PZXFile.PAUS_Block)PZXFile.blocks[f]).duration.ToString() + " t-states   (" +
-                                 Math.Ceiling(((double)(((PZXFile.PAUS_Block)PZXFile.blocks[f]).duration) / (double)(69888 * 50))).ToString() + " secs)";
+                else if (blocks[f] is PAUS_Block) {
+                    info.Info = ((PAUS_Block)blocks[f]).duration.ToString() + " t-states   (" +
+                                 Math.Ceiling(((double)(((PAUS_Block)blocks[f]).duration) / (double)(69888 * 50))).ToString() + " secs)";
                 }
-                else if (PZXFile.blocks[f] is PZXFile.PULS_Block) {
-                    info.Info = ((PZXFile.PULS_Block)PZXFile.blocks[f]).pulse[0].duration.ToString() + " t-states   ";
+                else if (blocks[f] is PULS_Block) {
+                    info.Info = ((PULS_Block)blocks[f]).pulse[0].duration.ToString() + " t-states   ";
                 }
-                else if (PZXFile.blocks[f] is PZXFile.STOP_Block) {
+                else if (blocks[f] is STOP_Block) {
                     info.Info = "Stop the tape.";
                 }
-                else if (PZXFile.blocks[f] is PZXFile.DATA_Block) {
+                else if (blocks[f] is DATA_Block) {
 
-                    PZXFile.DATA_Block _data = (PZXFile.DATA_Block)PZXFile.blocks[f];
+                    DATA_Block _data = (DATA_Block)blocks[f];
                     int d = (int)(_data.count / 8);
 
                     //Determine if it's a standard data block suitable for flashloading
@@ -369,7 +372,7 @@ namespace Peripherals
                             if (type == 0) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Program: \"" + _name + "\"";
-                                ushort _line = System.BitConverter.ToUInt16(_data.data.ToArray(), 14);
+                                ushort _line = BitConverter.ToUInt16(_data.data.ToArray(), 14);
                                 if (_line > 0)
                                     info.Info += " LINE " + _line.ToString();
                             }
@@ -384,26 +387,26 @@ namespace Peripherals
                             else if (type == 3) {
                                 String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
                                 info.Info = "Bytes: \"" + _name + "\"";
-                                ushort _start = System.BitConverter.ToUInt16(_data.data.ToArray(), 14);
-                                ushort _length = System.BitConverter.ToUInt16(_data.data.ToArray(), 12);
+                                ushort _start = BitConverter.ToUInt16(_data.data.ToArray(), 14);
+                                ushort _length = BitConverter.ToUInt16(_data.data.ToArray(), 12);
                                 info.Info += " CODE " + _start.ToString() + "," + _length.ToString();
                             }
                             else {
-                                info.Info = ((PZXFile.DATA_Block)PZXFile.blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((PZXFile.DATA_Block)PZXFile.blocks[f]).count) / (double)8).ToString() + " bytes)";
+                                info.Info = ((DATA_Block)blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((DATA_Block)blocks[f]).count) / (double)8).ToString() + " bytes)";
                             }
                         }
                         else
                             info.Info = "";
                     }
                     else
-                        info.Info = ((PZXFile.DATA_Block)PZXFile.blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((PZXFile.DATA_Block)PZXFile.blocks[f]).count) / (double)8).ToString() + " bytes)";
+                        info.Info = ((DATA_Block)blocks[f]).count.ToString() + " bits  (" + Math.Ceiling((double)(((DATA_Block)blocks[f]).count) / (double)8).ToString() + " bytes)";
                 }
-                else if (PZXFile.blocks[f] is PZXFile.PZXT_Header) {
+                else if (blocks[f] is PZXT_Header) {
                     //info.Info = ((PZXFile.PZXT_Header)(PZXFile.blocks[f])).Title;
                     continue;
                 }
 
-                info.Block = PZXFile.blocks[f].tag;
+                info.Block = blocks[f].tag;
                 tapeBlockInfo.Add(info);
             }
         }

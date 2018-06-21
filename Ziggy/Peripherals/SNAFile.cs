@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Peripherals
@@ -43,10 +43,10 @@ namespace Peripherals
     public class SNAFile
     {
         //Will return a filled snapshot structure from buffer
-        public static SNA_SNAPSHOT LoadSNA(System.IO.Stream fs) {
+        public static SNA_SNAPSHOT LoadSNA(Stream fs) {
             SNA_SNAPSHOT snapshot;
 
-            using (System.IO.BinaryReader r = new System.IO.BinaryReader(fs)) {
+            using (BinaryReader r = new BinaryReader(fs)) {
                 int bytesToRead = (int)fs.Length;
 
                 byte[] buffer = new byte[bytesToRead];
@@ -133,7 +133,7 @@ namespace Peripherals
         //Will return a filled snapshot structure from file
         public static SNA_SNAPSHOT LoadSNA(string filename) {
             SNA_SNAPSHOT sna;
-            using (System.IO.FileStream fs = new System.IO.FileStream(filename, System.IO.FileMode.Open)) {
+            using (FileStream fs = new FileStream(filename, FileMode.Open)) {
                 sna = LoadSNA(fs);
             }
             return sna;
@@ -141,7 +141,7 @@ namespace Peripherals
 
         public static void SaveSNA(string filename, SNA_SNAPSHOT sna) {
 
-            using (System.IO.FileStream fs = new System.IO.FileStream(filename, System.IO.FileMode.Create)) {
+            using (FileStream fs = new FileStream(filename, FileMode.Create)) {
 
                 byte[] bytes = ByteUtililty.RawSerialize(sna.HEADER);
                 fs.Write(bytes, 0, bytes.Length);
