@@ -124,10 +124,7 @@ namespace Peripherals
                             break;
 
                         case 3:
-                            if (headerLength == 23)
-                                snapshot.TYPE = 1;
-                            else
-                                snapshot.TYPE = 0;
+                            snapshot.TYPE = headerLength == 23 ? 1 : 0;
                             break;
 
                         case 4:
@@ -252,9 +249,6 @@ namespace Peripherals
                                 Array.Copy(_bank, 0, snapshot.RAM_BANK[14], 0, 8192);
                                 Array.Copy(_bank, 8192, snapshot.RAM_BANK[15], 0, 8192);
                                 break;
-
-                            default:
-                                break;
                         }
                     }
                 }
@@ -269,11 +263,10 @@ namespace Peripherals
                         Array.Copy(buffer, 30, RAM_48K, 0, 49152);
                     }
                     else {
-                        bool done = false;
                         int byteCounter = 30;
                         int memCounter = 0;
 
-                        while (!done) {
+                        while (true) {
                             byte bite = buffer[byteCounter++];
                             if (bite == 0) {
                                 //check if this is the end marker
@@ -283,7 +276,6 @@ namespace Peripherals
                                     if (bite3 == 0xED) {
                                         byte bite4 = buffer[byteCounter + 2];
                                         if (bite4 == 0) {
-                                            done = true;
                                             break;
                                         }
                                     }
@@ -305,7 +297,6 @@ namespace Peripherals
                                     continue;
                                 }
                                 RAM_48K[memCounter++] = bite;
-                                continue;
                             }
                             else
                                 RAM_48K[memCounter++] = bite;
@@ -326,11 +317,9 @@ namespace Peripherals
         }
 
         public static Z80_SNAPSHOT LoadZ80(string filename) {
-            Z80_SNAPSHOT snapshot;
             using (FileStream fs = new FileStream(filename, FileMode.Open)) {
-                snapshot = LoadZ80(fs);
+                return LoadZ80(fs);
             }
-            return snapshot;
-        } //LoadZ80
+        }
     }
 }

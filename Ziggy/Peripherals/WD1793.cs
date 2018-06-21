@@ -1,68 +1,69 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Peripherals
 {
     public class WD1793
     {
         [DllImport(@"wd1793.dll")]
-        public static extern System.IntPtr wd1793_Initialise();
+        public static extern IntPtr wd1793_Initialise();
 
         [DllImport(@"wd1793.dll")]
-        private static extern void wd1793_ShutDown(System.IntPtr fdc);
+        private static extern void wd1793_ShutDown(IntPtr fdc);
 
         [DllImport(@"wd1793.dll")]
-        private static extern bool wd1793_InsertDisk(System.IntPtr fdc, byte unit, string filename);
+        private static extern bool wd1793_InsertDisk(IntPtr fdc, byte unit, string filename);
 
         [DllImport(@"wd1793.dll")]
-        private static extern void wd1793_EjectDisks(System.IntPtr fdc);
+        private static extern void wd1793_EjectDisks(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_EjectDisk(System.IntPtr fdc, byte _unit);
+        private static extern void wd1793_EjectDisk(IntPtr fdc, byte _unit);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern byte wd1793_ReadStatusReg(System.IntPtr fdc);
+        private static extern byte wd1793_ReadStatusReg(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern byte wd1793_ReadTrackReg(System.IntPtr fdc);
+        private static extern byte wd1793_ReadTrackReg(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern byte wd1793_ReadSectorReg(System.IntPtr fdc);
+        private static extern byte wd1793_ReadSectorReg(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern byte wd1793_ReadDataReg(System.IntPtr fdc);
+        private static extern byte wd1793_ReadDataReg(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern byte wd1793_ReadSystemReg(System.IntPtr fdc);
+        private static extern byte wd1793_ReadSystemReg(IntPtr fdc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_WriteTrackReg(System.IntPtr fdc, byte _data);
+        private static extern void wd1793_WriteTrackReg(IntPtr fdc, byte _data);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_WriteSectorReg(System.IntPtr fdc, byte _data);
+        private static extern void wd1793_WriteSectorReg(IntPtr fdc, byte _data);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_WriteDataReg(System.IntPtr fdc, byte _data);
+        private static extern void wd1793_WriteDataReg(IntPtr fdc, byte _data);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_WriteSystemReg(System.IntPtr fdc, byte _data);
+        private static extern void wd1793_WriteSystemReg(IntPtr fdc, byte _data);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern void wd1793_WriteCommandReg(System.IntPtr fdc, byte _data, ushort _pc);
+        private static extern void wd1793_WriteCommandReg(IntPtr fdc, byte _data, ushort _pc);
 
         [DllImport(@"wd1793.DLL")]
-        private static extern bool wd1793_DiskInserted(System.IntPtr fdc, byte _unit);
+        private static extern bool wd1793_DiskInserted(IntPtr fdc, byte _unit);
 
         //[DllImport(@"wd1793.DLL")]
         //private static extern void wd1793_SCL2TRD(IntPtr fdc, byte _unit);
 
-        protected System.IntPtr fdc = System.IntPtr.Zero;
+        protected IntPtr fdc = IntPtr.Zero;
 
         public void DiskInsert(string filename, byte _unit) {
             wd1793_InsertDisk(fdc, _unit, filename);
         }
 
         public void DiskEject(byte _unit) {
-            if (fdc != System.IntPtr.Zero)
+            if (fdc != IntPtr.Zero)
                 wd1793_EjectDisk(fdc, _unit);
         }
 
@@ -107,14 +108,14 @@ namespace Peripherals
         }
 
         public void DiskInitialise() {
-            if (fdc != System.IntPtr.Zero)
+            if (fdc != IntPtr.Zero)
                 wd1793_ShutDown(fdc);
 
             fdc = wd1793_Initialise();
         }
 
         public void DiskShutdown() {
-            if (fdc != System.IntPtr.Zero)
+            if (fdc != IntPtr.Zero)
                 wd1793_ShutDown(fdc);
 
             //OnDiskEvent(new DiskEventArgs(0));

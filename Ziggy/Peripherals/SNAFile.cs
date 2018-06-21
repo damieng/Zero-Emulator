@@ -52,19 +52,23 @@ namespace Peripherals
                 byte[] buffer = new byte[bytesToRead];
                 int bytesRead = r.Read(buffer, 0, bytesToRead);
 
-                if (bytesRead == 0)
-                    return null; //something bad happened!
-
-                if (bytesRead == 49179) {
-                    snapshot = new SNA_48K();
-                    snapshot.TYPE = 0;
+                switch (bytesRead) {
+                    case 0:
+                        return null; //something bad happened!
+                    case 49179:
+                        snapshot = new SNA_48K();
+                        snapshot.TYPE = 0;
+                        break;
+                    case 131103:
+                    case 147487:
+                        snapshot = new SNA_128K
+                        {
+                            TYPE = 1
+                        };
+                        break;
+                    default:
+                        return null;
                 }
-                else if (bytesRead == 131103 || bytesRead == 147487) {
-                    snapshot = new SNA_128K();
-                    snapshot.TYPE = 1;
-                }
-                else
-                    return null;
 
                 snapshot.HEADER.I = buffer[0];
                 snapshot.HEADER.HL_ = (ushort)(buffer[1] | (buffer[2] << 8));
@@ -132,11 +136,9 @@ namespace Peripherals
 
         //Will return a filled snapshot structure from file
         public static SNA_SNAPSHOT LoadSNA(string filename) {
-            SNA_SNAPSHOT sna;
             using (FileStream fs = new FileStream(filename, FileMode.Open)) {
-                sna = LoadSNA(fs);
+                return LoadSNA(fs);
             }
-            return sna;
         }
 
         public static void SaveSNA(string filename, SNA_SNAPSHOT sna) {
@@ -146,8 +148,8 @@ namespace Peripherals
                 byte[] bytes = ByteUtililty.RawSerialize(sna.HEADER);
                 fs.Write(bytes, 0, bytes.Length);
 
-                if (sna is SNA_48K)
-                    fs.Write(((SNA_48K)sna).RAM, 0, ((SNA_48K)sna).RAM.Length);
+                if (sna is SNA_48K sna48k)
+                    fs.Write(sna48k.RAM, 0, sna48k.RAM.Length);
                 else {
                     //Write speccy banks 5, 2 and n which are pre-prepared in snapshot ram 0 to 5
                     for (int f = 0; f < 6; f++)

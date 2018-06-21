@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Text;
 
 namespace Peripherals
 {
@@ -85,14 +86,13 @@ namespace Peripherals
 
         public static string GetTag(uint id) {
             byte[] b = BitConverter.GetBytes(id);
-            string idString = String.Format("{0}{1}{2}{3}", (char)b[0], (char)b[1], (char)b[2], (char)b[3]);
-            return idString;
+            return String.Format("{0}{1}{2}{3}", (char)b[0], (char)b[1], (char)b[2], (char)b[3]);
         }
 
         public static string GetString(byte[] array, ref int _counter, uint limit) {
             string newString = null;
-            while ((_counter < limit) && (array[_counter] != 0)) {
-                char c = (char)(array[_counter++]);
+            while (_counter < limit && array[_counter] != 0) {
+                char c = (char)array[_counter++];
                 newString += c;
             }
             _counter++; //point to next valid data
@@ -100,11 +100,13 @@ namespace Peripherals
         }
 
         public static PZXT_Header GetHeader(byte[] _buffer, int _counter, uint size) {
-            PZXT_Header header = new PZXT_Header();
-
             uint baseCount = (uint)_counter;
-            header.MajorVersion = _buffer[_counter++];
-            header.MinorVersion = _buffer[_counter++];
+
+            PZXT_Header header = new PZXT_Header
+            {
+                MajorVersion = _buffer[_counter++],
+                MinorVersion = _buffer[_counter++]
+            };
 
             //Only Version 1 files supported ATM
             if (header.MajorVersion != 1)
@@ -119,8 +121,6 @@ namespace Peripherals
                 //if we haven't read the header do that now
                 if (header.Title == null) {
                     header.Title = info;
-                    if (header.Title == null)
-                        header.Title = "No title found!";
                     continue;
                 }
 
@@ -173,9 +173,11 @@ namespace Peripherals
             int baseCount = _counter;
 
             while (_counter < baseCount + size) {
-                Pulse p = new Pulse();
-                p.count = 1;
-                p.duration = (BitConverter.ToUInt16(_buffer, _counter));
+                Pulse p = new Pulse
+                {
+                    count = 1,
+                    duration = BitConverter.ToUInt16(_buffer, _counter)
+                };
                 _counter += 2;
                 if (p.duration > 0x8000) {
                     p.count = (ushort)(p.duration & 0x7FFF);
@@ -243,7 +245,7 @@ namespace Peripherals
                     //Read tag first (in a really lame way)
                     string blockTag = null;
                     for (int i = 0; i < 4; i++) {
-                        blockTag += (char)(buffer[counter++]);
+                        blockTag += (char)buffer[counter++];
                     }
 
                     uint blockSize = BitConverter.ToUInt32(buffer, counter);
@@ -275,8 +277,8 @@ namespace Peripherals
                             PAUS_Block pauseBlock = new PAUS_Block();
                             pauseBlock.tag = "PAUS";
                             uint d = BitConverter.ToUInt32(buffer, counter);
-                            pauseBlock.initialPulseLevel = ((d & 0x80000000) == 0 ? 0 : 1);
-                            pauseBlock.duration = (d & 0x7FFFFFFF);
+                            pauseBlock.initialPulseLevel = (d & 0x80000000) == 0 ? 0 : 1;
+                            pauseBlock.duration = d & 0x7FFFFFFF;
                             pauseBlock.size = blockSize;
                             blocks.Add(pauseBlock);
                             break;
@@ -306,98 +308,103 @@ namespace Peripherals
         }
 
         public static bool LoadPZX(string filename) {
-            bool readPZX;
             using (FileStream fs = new FileStream(filename, FileMode.Open)) {
-                readPZX = LoadPZX(fs);
+                return LoadPZX(fs);
             }
-            return readPZX;
         }
 
         private static String GetStringFromData(byte[] _buffer, int _from, int _length) {
-            System.Text.StringBuilder s = new System.Text.StringBuilder();
-            for (int f = _from; f < _from + _length; f++) {
-                s.Append((char)_buffer[f]);
-            }
-            return s.ToString();
+            return Encoding.ASCII.GetString(_buffer, _from, _length);
         }
 
         public static void ReadTapeInfo(String filename) {
             for (int f = 0; f < blocks.Count; f++) {
                 PZX_TapeInfo info = new PZX_TapeInfo();
 
-                if (blocks[f] is BRWS_Block) {
-                    info.Info = ((BRWS_Block)blocks[f]).text;
-                }
-                else if (blocks[f] is PAUS_Block) {
-                    info.Info = ((PAUS_Block)blocks[f]).duration + " t-states   (" +
-                                 Math.Ceiling((((PAUS_Block)blocks[f]).duration / (double)(69888 * 50))) + " secs)";
-                }
-                else if (blocks[f] is PULS_Block) {
-                    info.Info = ((PULS_Block)blocks[f]).pulse[0].duration + " t-states   ";
-                }
-                else if (blocks[f] is STOP_Block) {
-                    info.Info = "Stop the tape.";
-                }
-                else if (blocks[f] is DATA_Block) {
+                switch (blocks[f])
+                {
+                    case BRWS_Block _:
+                        info.Info = ((BRWS_Block)blocks[f]).text;
+                        break;
+                    case PAUS_Block _:
+                        info.Info = ((PAUS_Block)blocks[f]).duration + " t-states   (" +
+                                    Math.Ceiling(((PAUS_Block)blocks[f]).duration / (double)(69888 * 50)) + " secs)";
+                        break;
+                    case PULS_Block _:
+                        info.Info = ((PULS_Block)blocks[f]).pulse[0].duration + " t-states   ";
+                        break;
+                    case STOP_Block _:
+                        info.Info = "Stop the tape.";
+                        break;
+                    case DATA_Block _:
+                        DATA_Block _data = (DATA_Block)blocks[f];
+                        int d = (int)(_data.count / 8);
 
-                    DATA_Block _data = (DATA_Block)blocks[f];
-                    int d = (int)(_data.count / 8);
+                        //Determine if it's a standard data block suitable for flashloading
+                        //Taken from PZX FAQ:
+                        // In the common case of the standard loaders you would simply test that 
+                        //each sequence consists of two non-zero pulses, and that the total duration 
+                        // of the sequence s0 is less than the total duration of sequence s1
+                        if (_data.p0 == 2 && _data.p1 == 2 && _data.s0[0] != 0 && _data.s0[1] != 0 && _data.s1[0] != 0 && _data.s1[1] != 0 && _data.s0[0] + _data.s0[1] < _data.s1[0] + _data.s1[1])
+                            info.IsStandardBlock = true;
 
-                    //Determine if it's a standard data block suitable for flashloading
-                    //Taken from PZX FAQ:
-                    // In the common case of the standard loaders you would simply test that 
-                    //each sequence consists of two non-zero pulses, and that the total duration 
-                    // of the sequence s0 is less than the total duration of sequence s1
-                    if ((_data.p0 == 2 && _data.p1 == 2) &&
-                        (_data.s0[0] != 0 && _data.s0[1] != 0 && _data.s1[0] != 0 && _data.s1[1] != 0) &&
-                        (_data.s0[0] + _data.s0[1] < _data.s1[0] + _data.s1[1]))
-                        info.IsStandardBlock = true;
+                        //Check for standard header
+                        if (d == 19 && _data.data[0] == 0) {
+                            //Check checksum to ensure it's a standard header
+                            byte checksum = 0;
+                            for (int x = 0; x < _data.data.Count - 1; x++) {
+                                checksum ^= _data.data[x];
+                            }
 
-                    //Check for standard header
-                    if ((d == 19) && (_data.data[0] == 0)) {
-                        //Check checksum to ensure it's a standard header
-                        byte checksum = 0;
-                        for (int x = 0; x < _data.data.Count - 1; x++) {
-                            checksum ^= _data.data[x];
-                        }
-
-                        if (checksum == _data.data[18]) {
-                            int type = _data.data[1];
-                            if (type == 0) {
-                                String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Program: \"" + _name + "\"";
-                                ushort _line = BitConverter.ToUInt16(_data.data.ToArray(), 14);
-                                if (_line > 0)
-                                    info.Info += " LINE " + _line;
+                            if (checksum == _data.data[18])
+                            {
+                                switch (_data.data[1])
+                                {
+                                    case 0:
+                                    {
+                                        String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
+                                        info.Info = "Program: \"" + _name + "\"";
+                                        ushort _line = BitConverter.ToUInt16(_data.data.ToArray(), 14);
+                                        if (_line > 0)
+                                            info.Info += " LINE " + _line;
+                                        break;
+                                    }
+                                    case 1:
+                                    {
+                                        String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
+                                        info.Info = "Num Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 32) + "(" + _data.data[12] + ")";
+                                        break;
+                                    }
+                                    case 2:
+                                    {
+                                        String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
+                                        info.Info = "Char Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 96) + "$(" + _data.data[12] + ")";
+                                        break;
+                                    }
+                                    case 3:
+                                    {
+                                        String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
+                                        info.Info = "Bytes: \"" + _name + "\"";
+                                        ushort _start = BitConverter.ToUInt16(_data.data.ToArray(), 14);
+                                        ushort _length = BitConverter.ToUInt16(_data.data.ToArray(), 12);
+                                        info.Info += " CODE " + _start + "," + _length;
+                                        break;
+                                    }
+                                    default:
+                                        info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
+                                        break;
+                                }
                             }
-                            else if (type == 1) {
-                                String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Num Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 32) + "(" + _data.data[12] + ")";
-                            }
-                            else if (type == 2) {
-                                String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Char Array: \"" + _name + "\"" + "  " + Convert.ToChar(_data.data[15] - 96) + "$(" + _data.data[12] + ")";
-                            }
-                            else if (type == 3) {
-                                String _name = GetStringFromData(_data.data.ToArray(), 2, 10);
-                                info.Info = "Bytes: \"" + _name + "\"";
-                                ushort _start = BitConverter.ToUInt16(_data.data.ToArray(), 14);
-                                ushort _length = BitConverter.ToUInt16(_data.data.ToArray(), 12);
-                                info.Info += " CODE " + _start + "," + _length;
-                            }
-                            else {
-                                info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
-                            }
+                            else
+                                info.Info = "";
                         }
                         else
-                            info.Info = "";
-                    }
-                    else
-                        info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
-                }
-                else if (blocks[f] is PZXT_Header) {
-                    //info.Info = ((PZXFile.PZXT_Header)(PZXFile.blocks[f])).Title;
-                    continue;
+                            info.Info = ((DATA_Block)blocks[f]).count + " bits  (" + Math.Ceiling(((DATA_Block)blocks[f]).count / (double)8) + " bytes)";
+
+                        break;
+                    case PZXT_Header _:
+                        //info.Info = ((PZXFile.PZXT_Header)(PZXFile.blocks[f])).Title;
+                        continue;
                 }
 
                 info.Block = blocks[f].tag;

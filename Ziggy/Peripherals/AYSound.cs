@@ -57,7 +57,7 @@ namespace Peripherals
         public bool StereoSound { get; set; } = true;
 
         public int SelectedRegister {
-            get { return selectedRegister; }
+            get => selectedRegister;
             set { if (value < 16) selectedRegister = value; }
         }
 
@@ -196,12 +196,12 @@ namespace Peripherals
 
                 case AY_E_SHAPE:
                     val &= 0x0f;
-                    attack = ((val & 0x04) != 0 ? 0x0f : 0x00);
+                    attack = (val & 0x04) != 0 ? 0x0f : 0x00;
                     // envelopeCount = 0;
                     if ((val & 0x08) == 0) {
                         /* if Continue = 0, map the shape to the equivalent one which has Continue = 1 */
                         sustain = true;
-                        alternate = (attack != 0);
+                        alternate = attack != 0;
                     }
                     else {
                         sustain = (val & 0x01) != 0;
@@ -209,7 +209,7 @@ namespace Peripherals
                     }
                     envelopeStep = 0x0f;
                     sustaining = false;
-                    envelopeVolume = (envelopeStep ^ attack);
+                    envelopeVolume = envelopeStep ^ attack;
                     break;
 
                 case AY_PORT_A:
@@ -256,9 +256,7 @@ namespace Peripherals
         }
 
         public void SampleAY() {
-            int ah;
-
-            ah = regs[AY_ENABLE];
+            int ah = regs[AY_ENABLE];
 
             channel_mix[(int)Channel.A] = MixChannel(ah, regs[AY_A_VOL], (int)Channel.A);
 
@@ -276,56 +274,54 @@ namespace Peripherals
 
         private short MixChannel(int ah, int cl, int chan) {
             int al = channel_out[chan];
-            int bl, bh;
-            bl = ah;
-            bh = ah;
+            int bl = ah, bh = ah;
             bh &= 0x1;
             bl >>= 3;
 
-            al |= (bh); //Tone | AY_ENABLE
-            bl |= (noiseOut); //Noise | AY_ENABLE
+            al |= bh; //Tone | AY_ENABLE
+            bl |= noiseOut; //Noise | AY_ENABLE
             al &= bl;
 
-            if ((al != 0)) {
+            if (al != 0) {
                 if ((cl & 16) != 0)
                     cl = envelopeVolume;
 
                 cl &= 15;
 
                 //return (AY_Volumes[cl]);
-                return (AY_SpecVolumes[cl]);
+                return AY_SpecVolumes[cl];
             }
             return 0;
         }
 
         private int TonePeriod(int channel) {
-            return (regs[(channel) << 1] | ((regs[((channel) << 1) | 1] & 0x0f) << 8));
+            return regs[channel << 1] | ((regs[(channel << 1) | 1] & 0x0f) << 8);
         }
 
         private int NoisePeriod() {
-            return (regs[AY_NOISEPER] & 0x1f);
+            return regs[AY_NOISEPER] & 0x1f;
         }
 
         private int EnvelopePeriod() {
-            return ((regs[AY_E_FINE] | (regs[AY_E_COARSE] << 8)));
+            return regs[AY_E_FINE] | (regs[AY_E_COARSE] << 8);
         }
 
         private int NoiseEnable(int channel) {
-            return ((regs[AY_ENABLE] >> (3 + channel)) & 1);
+            return (regs[AY_ENABLE] >> (3 + channel)) & 1;
         }
 
         private int ToneEnable(int channel) {
-            return ((regs[AY_ENABLE] >> (channel)) & 1);
+            return (regs[AY_ENABLE] >> channel) & 1;
         }
 
         private int ToneEnvelope(int channel) {
             //return ((regs[AY_A_VOL + channel] & 0x10) >> 4);
-            return ((regs[AY_A_VOL + channel] >> 4) & 0x1);
+            return (regs[AY_A_VOL + channel] >> 4) & 0x1;
         }
 
         private void UpdateNoise() {
             noiseCount++;
-            if (noiseCount >= NoisePeriod() && (noiseCount > 4)) {
+            if (noiseCount >= NoisePeriod() && noiseCount > 4) {
                 /* Is noise output going to change? */
                 if (((randomSeed + 1) & 2) != 0) /* (bit0^bit1)? */ {
                     noiseOut ^= 1;
@@ -351,7 +347,7 @@ namespace Peripherals
             /* update envelope */
             if (!sustaining) {
                 envelopeCount++;
-                if ((envelopeCount >= EnvelopePeriod())) {
+                if (envelopeCount >= EnvelopePeriod()) {
                     envelopeStep--;
 
                     /* check envelope current position */
@@ -365,7 +361,7 @@ namespace Peripherals
                         else {
                             /* if CountEnv has looped an odd number of times (usually 1), */
                             /* invert the output. */
-                            if (alternate && ((envelopeStep & (0x0f + 1)) != 0) && (envelopeCount > 4))
+                            if (alternate && (envelopeStep & (0x0f + 1)) != 0 && envelopeCount > 4)
                                 attack ^= 0x0f;
 
                             envelopeStep &= 0x0f;
@@ -374,7 +370,7 @@ namespace Peripherals
                     envelopeCount = 0;
                 }
             }
-            envelopeVolume = (envelopeStep ^ attack);
+            envelopeVolume = envelopeStep ^ attack;
         }
 
         //This version has been optimised to make minimum function calls. This is how it looks like with function calls:
@@ -417,7 +413,7 @@ namespace Peripherals
 
                 //if ((((regs[AY_A_VOL + 0] & 0x10) >> 4) & (((regs[AY_A_VOL + 1] & 0x10) >> 4) & ((regs[AY_A_VOL + 2] & 0x10) >> 4))) != 1)
                 //if ((((regs[AY_A_VOL + 0] >> 4) & 0x1) & (((regs[AY_A_VOL + 1] >> 4) & 0x1) & ((regs[AY_A_VOL + 2] >> 4) & 0x1))) != 0)
-                if (((regs[AY_A_VOL + 0] & 0x10) & (regs[AY_A_VOL + 1] & 0x10) & (regs[AY_A_VOL + 2] & 0x10)) != 1) {
+                if ((regs[AY_A_VOL + 0] & 0x10 & regs[AY_A_VOL + 1] & 0x10 & regs[AY_A_VOL + 2] & 0x10) != 1) {
                     /* update envelope */
                     if (!sustaining) {
                         //envelopeClock++;
@@ -435,7 +431,7 @@ namespace Peripherals
                                 else {
                                     /* if CountEnv has looped an odd number of times (usually 1), */
                                     /* invert the output. */
-                                    if (alternate && ((envelopeStep & (0x0f + 1)) != 0) && (envelopeCount > 4))
+                                    if (alternate && (envelopeStep & (0x0f + 1)) != 0 && envelopeCount > 4)
                                         attack ^= 0x0f;
 
                                     envelopeStep &= 0x0f;
@@ -444,14 +440,14 @@ namespace Peripherals
                             envelopeCount = 0;
                         }
                     }
-                    envelopeVolume = (envelopeStep ^ attack);
+                    envelopeVolume = envelopeStep ^ attack;
                 }
             }
 
             //Update noise
             if ((regs[AY_ENABLE] & 0x38) != 0x38) {
                 noiseCount++;
-                if ((noiseCount >= (regs[AY_NOISEPER] & 0x1f)) && (noiseCount > 4)) {
+                if (noiseCount >= (regs[AY_NOISEPER] & 0x1f) && noiseCount > 4) {
                     /* Is noise output going to change? */
                     if (((randomSeed + 1) & 2) != 0) /* (bit0^bit1)? */ {
                         noiseOut ^= 1;
@@ -476,21 +472,21 @@ namespace Peripherals
             //Update channels
             channel_count[0]++;
             int regs1 = (regs[1] & 0x0f) << 8;
-            if (((regs[0] | regs1) > 4) && (channel_count[0] >= (regs[0] | regs1))) {
+            if ((regs[0] | regs1) > 4 && channel_count[0] >= (regs[0] | regs1)) {
                 channel_out[0] ^= 1;
                 channel_count[0] = 0;
             }
 
             int regs3 = (regs[3] & 0x0f) << 8;
             channel_count[1]++;
-            if (((regs[2] | regs3) > 4) && (channel_count[1] >= (regs[2] | regs3))) {
+            if ((regs[2] | regs3) > 4 && channel_count[1] >= (regs[2] | regs3)) {
                 channel_out[1] ^= 1;
                 channel_count[1] = 0;
             }
 
             int regs5 = (regs[5] & 0x0f) << 8;
             channel_count[2]++;
-            if (((regs[4] | regs5) > 4) && (channel_count[2] >= (regs[4] | regs5))) {
+            if ((regs[4] | regs5) > 4 && channel_count[2] >= (regs[4] | regs5)) {
                 channel_out[2] ^= 1;
                 channel_count[2] = 0;
             }

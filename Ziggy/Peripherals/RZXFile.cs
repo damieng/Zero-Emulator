@@ -548,11 +548,7 @@ namespace Peripherals
         }
 
         public static void CopyStream(Stream input, Stream output) {
-            byte[] buffer = new byte[2000];
-            int len;
-            while ((len = input.Read(buffer, 0, 2000)) > 0) {
-                output.Write(buffer, 0, len);
-            }
+            input.CopyTo(output);
             output.Flush();
         }
 
@@ -595,8 +591,7 @@ namespace Peripherals
         }
 
         private bool OpenFile(string filename) {
-            FileStream fs = new FileStream(filename, FileMode.Open);
-            return OpenFile(fs);
+            return OpenFile(new FileStream(filename, FileMode.Open));
         }
 
         public void SaveSession(byte[] szxData, bool isFinalise) {
@@ -638,17 +633,19 @@ namespace Peripherals
                 rzxFileReader = null;
             }
 
-            if (rzxFile != null)
-                rzxFile.Close();
-
+            rzxFile?.Close();
             rzxFile = null;
         }
 
         public List<RZX_Block> Scan() {
-            RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
-            rzxArgs.info = new RZXInfo();
-            rzxArgs.info.header = header;
-            rzxArgs.info.blocks = new List<RZX_Block>();
+            RZXFileEventArgs rzxArgs = new RZXFileEventArgs
+            {
+                info = new RZXInfo
+                {
+                    header = header,
+                    blocks = new List<RZX_Block>()
+                }
+            };
 
             while (rzxFileReader.BaseStream.Position != rzxFileReader.BaseStream.Length) {
                 if (rzxFileReader.Read(fileBuffer, 0, 5) < 1)
@@ -678,8 +675,7 @@ namespace Peripherals
                 }
             }
 
-            if (RZXFileEventHandler != null)
-                RZXFileEventHandler(rzxArgs);
+            RZXFileEventHandler?.Invoke(rzxArgs);
 
             rzxFile.Seek(10, SeekOrigin.Begin);
             readBlockIndex = 10;
@@ -702,23 +698,21 @@ namespace Peripherals
             long len = currentPos - currentRecordFilePos;
             rzxFile.Seek(currentRecordFilePos, SeekOrigin.Begin);
 
-            record = new RZX_Record();
-            record.numFrames = (uint)frameCount;
+            record = new RZX_Record { numFrames = (uint)frameCount };
 
             if (isCompressedFrames)
                 record.flags |= 0x2;
 
             record.tstatesAtStart = tstatesAtRecordStart;
 
-            RZX_Block block = new RZX_Block();
-            block.id = 0x80;
-            block.size = (uint)len;
-            byte[] buf;
-            buf = RawSerialize(block);
+            RZX_Block block = new RZX_Block
+            {
+                id = 0x80,
+                size = (uint)len
+            };
 
-            rzxFileWrite.Write(buf);
-            buf = RawSerialize(record);
-            rzxFileWrite.Write(buf);
+            rzxFileWrite.Write(RawSerialize(block));
+            rzxFileWrite.Write(RawSerialize(record));
 
             rzxFile.Seek(currentPos, SeekOrigin.Begin);
             currentRecordFilePos = currentPos;
@@ -736,19 +730,16 @@ namespace Peripherals
             if ((snapshot.flags & 0x2) != 0) {
                 int snapSize = dataSize - snapDataOffset;
 
-                MemoryStream compressedData = new MemoryStream(fileBuffer, snapDataOffset, snapSize);
-                MemoryStream uncompressedData = new MemoryStream();
-
+                using (MemoryStream compressedData = new MemoryStream(fileBuffer, snapDataOffset, snapSize))
+                using (MemoryStream uncompressedData = new MemoryStream())
                 using (ZInputStream zipStream = new ZInputStream(compressedData)) {
                     byte[] tempBuffer = new byte[2048];
-                    int bytesUnzipped = 0;
+                    int bytesUnzipped;
 
                     while ((bytesUnzipped = zipStream.read(tempBuffer, 0, 2048)) > 0)
                         uncompressedData.Write(tempBuffer, 0, bytesUnzipped);
 
                     snapdata = uncompressedData.ToArray();
-                    compressedData.Close();
-                    uncompressedData.Close();
                 }
             }
             else {
@@ -760,9 +751,7 @@ namespace Peripherals
         }
 
         private bool SeekIRB() {
-
             while (rzxFileReader.BaseStream.Position != rzxFileReader.BaseStream.Length) {
-
                 //Read in the block header
                 if (rzxFileReader.Read(fileBuffer, 0, 5) < 1)
                     return false;
@@ -773,12 +762,14 @@ namespace Peripherals
 
                 readBlockIndex += blockSize;
 
-                switch (block.id) {
-                    case (int)RZX_BlockType.SNAPSHOT: {
-                            RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
-                            rzxArgs.blockID = RZX_BlockType.SNAPSHOT;
-                            rzxArgs.snapData = new RZXSnapshotData();
-                            rzxArgs.rzxInstance = this;
+                switch ((RZX_BlockType)block.id) {
+                    case RZX_BlockType.SNAPSHOT: {
+                            RZXFileEventArgs rzxArgs = new RZXFileEventArgs
+                            {
+                                blockID = RZX_BlockType.SNAPSHOT,
+                                snapData = new RZXSnapshotData(),
+                                rzxInstance = this
+                            };
                             snap = ReadSnapshot(blockDataSize, out rzxArgs.snapData.data);
 
                             rzxArgs.snapData.extension = new String(snap.extension).ToLower();
@@ -787,37 +778,34 @@ namespace Peripherals
                             if (snapsLoaded > 0)
                                 break;
 
-                            if (RZXFileEventHandler != null)
-                                RZXFileEventHandler(rzxArgs);
+                            RZXFileEventHandler?.Invoke(rzxArgs);
 
                             snapsLoaded++;
                         }
                         return true;
 
-                    case (int)RZX_BlockType.RECORD: {
-                            if (frameInfoReader != null)
-                                frameInfoReader.Close();
-
-                            if (frameInfoFile != null)
-                                frameInfoFile.Close();
+                    case RZX_BlockType.RECORD: {
+                            frameInfoReader?.Close();
+                            frameInfoFile?.Close();
 
                             int recordSize = Marshal.SizeOf(new RZX_Record());
                             rzxFileReader.Read(fileBuffer, 0, recordSize);
 
                             record = (RZX_Record)Marshal.PtrToStructure(Marshal.UnsafeAddrOfPinnedArrayElement(fileBuffer, 0),
-                                                                         typeof(RZX_Record));
+                                                                            typeof(RZX_Record));
                             frameCount = (int)record.numFrames;
                             isReadingIRB = true;
 
-                            RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
-                            rzxArgs.blockID = RZX_BlockType.RECORD;
-                            rzxArgs.tstates = record.tstatesAtStart;
-                            rzxArgs.rzxInstance = this;
+                            RZXFileEventArgs rzxArgs = new RZXFileEventArgs
+                            {
+                                blockID = RZX_BlockType.RECORD,
+                                tstates = record.tstatesAtStart,
+                                rzxInstance = this
+                            };
 
                             readBlockIndex += blockDataSize;
 
-                            if (RZXFileEventHandler != null)
-                                RZXFileEventHandler(rzxArgs);
+                            RZXFileEventHandler?.Invoke(rzxArgs);
 
                             byte[] tempInfo = new byte[blockDataSize - recordSize];
                             rzxFileReader.Read(tempInfo, 0, blockDataSize - recordSize);
@@ -854,16 +842,16 @@ namespace Peripherals
             return false;
         }
 
-        private void WriteFrame(byte[] inputs, ushort inCount) {
+        private void WriteFrame(byte[] _inputs, ushort inCount) {
             BinaryWriter bw = new BinaryWriter(rzxFile);
             bw.Write((ushort)fetchCount);
             bw.Write(inCount);
 
             frameDataSize += 2 + 2;
 
-            if (inputs != null && inputs.Length > 0) {
-                bw.Write(inputs);
-                frameDataSize += (uint)(inputs.Length);
+            if (inputs != null && _inputs.Length > 0) {
+                bw.Write(_inputs);
+                frameDataSize += (uint)_inputs.Length;
             }
         }
 
@@ -912,13 +900,12 @@ namespace Peripherals
         }
 
         private int CloseZStream() {
-            int len, err;
             bool done = false;
 
             zStream.avail_in = 0;
 
             while (!isReading) {
-                len = ZBUFLEN - zStream.avail_out;
+                var len = ZBUFLEN - zStream.avail_out;
 
                 if (len > 0) {
                     rzxFileWrite.Write(zBuffer, 0, len);
@@ -930,8 +917,8 @@ namespace Peripherals
                 if (done)
                     break;
 
-                err = zStream.deflate(zlibConst.Z_FINISH);
-                done = (zStream.avail_out > 0 || err == zlibConst.Z_STREAM_END);
+                var err = zStream.deflate(zlibConst.Z_FINISH);
+                done = zStream.avail_out > 0 || err == zlibConst.Z_STREAM_END;
             }
 
             zBuffer = null;
@@ -1039,20 +1026,23 @@ namespace Peripherals
 
             inputs = new List<byte>();
             return true;
-
         }
 
         public bool Record(string filename) {
-            header = new RZX_Header();
-            header.majorVersion = 0;
-            header.minorVersion = 12;
-            header.flags = 0;
-            header.signature = "RZX!".ToCharArray();
+            header = new RZX_Header
+            {
+                majorVersion = 0,
+                minorVersion = 12,
+                flags = 0,
+                signature = "RZX!".ToCharArray()
+            };
 
-            creator = new RZX_Creator();
-            creator.author = "Zero Emulator      \0".ToCharArray();
-            creator.majorVersion = 6;
-            creator.minorVersion = 0;
+            creator = new RZX_Creator
+            {
+                author = "Zero Emulator      \0".ToCharArray(),
+                majorVersion = 6,
+                minorVersion = 0
+            };
 
             frameCount = 0;
             fetchCount = 0;
@@ -1061,17 +1051,15 @@ namespace Peripherals
             try {
                 rzxFile = new FileStream(filename, FileMode.Create);
                 rzxFileWrite = new BinaryWriter(rzxFile);
-                byte[] buf;
-                buf = RawSerialize(header);
-                rzxFileWrite.Write(buf);
+                rzxFileWrite.Write(RawSerialize(header));
 
-                RZX_Block block = new RZX_Block();
-                block.id = 0x10;
-                block.size = (uint)Marshal.SizeOf(creator) + 5;
-                buf = RawSerialize(block);
-                rzxFileWrite.Write(buf);
-                buf = RawSerialize(creator);
-                rzxFileWrite.Write(buf);
+                RZX_Block block = new RZX_Block
+                {
+                    id = 0x10,
+                    size = (uint)Marshal.SizeOf(creator) + 5
+                };
+                rzxFileWrite.Write(RawSerialize(block));
+                rzxFileWrite.Write(RawSerialize(creator));
                 state = RZX_State.RECORDING;
             }
             catch {
@@ -1090,8 +1078,7 @@ namespace Peripherals
 
             state = RZX_State.PLAYBACK;
             fetchCount = 0;
-            frame = new RZX_Frame();
-            frame.inputCount = 0xffff;
+            frame = new RZX_Frame { inputCount = 0xffff };
             return true;
         }
 
@@ -1115,7 +1102,7 @@ namespace Peripherals
             if (state != RZX_State.PLAYBACK)
                 return false;
 
-            if (isReadingIRB && (fetchCount == 0))
+            if (isReadingIRB && fetchCount == 0)
                 isReadingIRB = false;
 
             if (!isReadingIRB) {
@@ -1124,9 +1111,11 @@ namespace Peripherals
                     state = RZX_State.NONE;
 
                     if (RZXFileEventHandler != null) {
-                        RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
-                        rzxArgs.hasEnded = true;
-                        rzxArgs.rzxInstance = this;
+                        RZXFileEventArgs rzxArgs = new RZXFileEventArgs
+                        {
+                            hasEnded = true,
+                            rzxInstance = this
+                        };
                         RZXFileEventHandler(rzxArgs);
                         RZXFileEventHandler = null;
                     }
@@ -1137,15 +1126,16 @@ namespace Peripherals
 
             if (isCompressedFrames) {
                 byte[] buffer = new byte[4];
-                bool err;
-                err = ReadFromZStream(frameInfoReader, ref buffer, 4) <= 0;
+                bool err = ReadFromZStream(frameInfoReader, ref buffer, 4) <= 0;
 
                 if (!err) {
-                    RZX_Frame newFrame = new RZX_Frame();
-                    newFrame.instructionCount = BitConverter.ToUInt16(buffer, 0);
-                    newFrame.inputCount = BitConverter.ToUInt16(buffer, 2);
+                    RZX_Frame newFrame = new RZX_Frame
+                    {
+                        instructionCount = BitConverter.ToUInt16(buffer, 0),
+                        inputCount = BitConverter.ToUInt16(buffer, 2)
+                    };
 
-                    if (newFrame.inputCount > 0 && (newFrame.inputCount != 0xffff)) {
+                    if (newFrame.inputCount > 0 && newFrame.inputCount != 0xffff) {
                         frame = newFrame;
                         frame.inputs = new byte[frame.inputCount];
                         err = ReadFromZStream(frameInfoReader, ref frame.inputs, frame.inputCount) <= 0;
@@ -1186,23 +1176,24 @@ namespace Peripherals
                 currentRecordFilePos = rzxFile.Position;
                 tstatesAtRecordStart = (uint)tstates;
 
-                record = new RZX_Record();
-                record.numFrames = (uint)frameCount;           //This will be adjusted later when closing the record
+                record = new RZX_Record { numFrames = (uint)frameCount };
+                //This will be adjusted later when closing the record
 
                 if (isCompressedFrames)
                     record.flags |= 0x2;
 
                 record.tstatesAtStart = tstatesAtRecordStart;
 
-                RZX_Block block = new RZX_Block();
-                block.id = 0x80;
-                block.size = (uint)Marshal.SizeOf(record) + 5; //This will be adjusted later when closing the record
+                RZX_Block block = new RZX_Block
+                {
+                    id = 0x80,
+                    size = (uint)Marshal.SizeOf(record) + 5
+                };
+                //This will be adjusted later when closing the record
                 byte[] buf;
-                buf = RawSerialize(block);
 
-                rzxFileWrite.Write(buf);
-                buf = RawSerialize(record);
-                rzxFileWrite.Write(buf);
+                rzxFileWrite.Write(RawSerialize(block));
+                rzxFileWrite.Write(RawSerialize(record));
 
                 isRecordingBlock = true;
                 frameCount = 0;
@@ -1234,7 +1225,7 @@ namespace Peripherals
             if (isCompressedFrames)
                 WriteToZStream(frameHeader, 4);
 
-            if ((inCount > 0) && (inCount != 65535))
+            if (inCount > 0 && inCount != 65535)
                 WriteToZStream(inputs.ToArray(), inputs.Count);
 
             fetchCount = 0;
@@ -1247,8 +1238,7 @@ namespace Peripherals
         }
 
         public void AddSnapshot(byte[] snapshotData) {
-            snap = new RZX_Snapshot();
-            snap.extension = "szx\0".ToCharArray();
+            snap = new RZX_Snapshot { extension = "szx\0".ToCharArray() };
             snap.flags |= 0x2;
             byte[] rawSZXData;
             snap.uncompressedSize = (uint)snapshotData.Length;
@@ -1261,15 +1251,14 @@ namespace Peripherals
                 rawSZXData = outMemoryStream.ToArray();
             }
 
-            RZX_Block block = new RZX_Block();
-            block.id = 0x30;
-            block.size = (uint)Marshal.SizeOf(snap) + (uint)rawSZXData.Length + 5;
-            byte[] buf;
-            buf = RawSerialize(block);
+            RZX_Block block = new RZX_Block
+            {
+                id = 0x30,
+                size = (uint) Marshal.SizeOf(snap) + (uint) rawSZXData.Length + 5
+            };
 
-            rzxFileWrite.Write(buf);
-            buf = RawSerialize(snap);
-            rzxFileWrite.Write(buf);
+            rzxFileWrite.Write(RawSerialize(block));
+            rzxFileWrite.Write(RawSerialize(snap));
             rzxFileWrite.Write(rawSZXData);
         }
 
@@ -1284,10 +1273,12 @@ namespace Peripherals
                 if (isRecordingBlock)
                     CloseIRB();
 
-                RollbackBookmark bookmark = new RollbackBookmark();
-                bookmark.snapshot = szx;
-                bookmark.tstates = tstatesAtRecordStart;
-                bookmark.irbFilePos = currentRecordFilePos;
+                RollbackBookmark bookmark = new RollbackBookmark
+                {
+                    snapshot = szx,
+                    tstates = tstatesAtRecordStart,
+                    irbFilePos = currentRecordFilePos
+                };
                 bookmarks.Add(bookmark);
                 currentBookmark = bookmarks.Count - 1;
             }
@@ -1312,15 +1303,18 @@ namespace Peripherals
                 CloseIRB();
                 rzxFile.Seek(bookmark.irbFilePos, SeekOrigin.Begin);
                 currentRecordFilePos = bookmark.irbFilePos;
-                RZXFileEventArgs arg = new RZXFileEventArgs();
-                arg.blockID = RZX_BlockType.SNAPSHOT;
-                arg.tstates = bookmark.tstates;
-                arg.snapData = new RZXSnapshotData();
-                arg.snapData.extension = "szx\0";
-                arg.snapData.data = bookmark.snapshot.GetSZXData();
+                RZXFileEventArgs arg = new RZXFileEventArgs
+                {
+                    blockID = RZX_BlockType.SNAPSHOT,
+                    tstates = bookmark.tstates,
+                    snapData = new RZXSnapshotData
+                    {
+                        extension = "szx\0",
+                        data = bookmark.snapshot.GetSZXData()
+                    }
+                };
 
-                if (RZXFileEventHandler != null)
-                    RZXFileEventHandler(arg);
+                RZXFileEventHandler?.Invoke(arg);
             }
         }
 
