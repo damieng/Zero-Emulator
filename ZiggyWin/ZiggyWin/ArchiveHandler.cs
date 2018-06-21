@@ -1,40 +1,39 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO.Compression;
 using System.Windows.Forms;
 
 namespace ZeroWin
 {
     public partial class ArchiveHandler : Form
     {
-        public string FileToOpen = "";
+        public ZipArchiveEntry FileToOpen { get; set; }
 
-        public ArchiveHandler(String[] fileList) {
+        public ArchiveHandler(IEnumerable<ZipArchiveEntry> entries)
+        {
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
                 c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             listView1.Columns.Add("File");
-            listView1.Columns.Add("Size (bytes)");
+            listView1.Columns.Add("Size (bytes)").TextAlign = HorizontalAlignment.Right;
 
-            for (int f = 0; f < fileList.Length; ) {
-                ListViewItem listItem = new ListViewItem();
-                listItem.Text = fileList[f++];
-                ListViewItem.ListViewSubItem subItem = new ListViewItem.ListViewSubItem(listItem, fileList[f++]);
+            foreach (ZipArchiveEntry entry in entries) {
+                ListViewItem listItem = new ListViewItem { Text = entry.FullName, Tag = entry };
+                ListViewItem.ListViewSubItem subItem = new ListViewItem.ListViewSubItem(listItem, entry.Length.ToString());
                 listItem.SubItems.Add(subItem);
                 listView1.Items.Add(listItem);
             }
-            listView1.AutoResizeColumn(0,
-                ColumnHeaderAutoResizeStyle.ColumnContent);
-            listView1.AutoResizeColumn(1,
-               ColumnHeaderAutoResizeStyle.HeaderSize);
+            listView1.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
+            listView1.AutoResizeColumn(1, ColumnHeaderAutoResizeStyle.HeaderSize);
         }
 
-        private void button1_Click(object sender, EventArgs e) {
-            //ListView.SelectedListViewItemCollection itemList = listView1.SelectedItems;
-            ListViewItem li = listView1.SelectedItems[0];
-            FileToOpen = li.Text;
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+        private void button1_Click(object sender, EventArgs e)
+        {
+            FileToOpen = (ZipArchiveEntry)listView1.SelectedItems[0].Tag;
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

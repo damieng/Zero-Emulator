@@ -1,9 +1,13 @@
 ﻿#define ENABLE_WM_EXCHANGE
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using System.Text;
 using System.Windows.Forms;
 using Speccy;
@@ -120,7 +124,6 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         private SpectrumKeyboard speccyKeyboard;
         public ZeroConfig config = new ZeroConfig();
         private PrecisionTimer timer = new PrecisionTimer();
-        private ComponentAce.Compression.ZipForge.ZipForge archiver;
         private MouseController mouse = new MouseController();
         private MRUManager mruManager;
         public Logger logger = new Logger();
@@ -3576,210 +3579,191 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
         private void OpenZXArchive(String zipFileName)
         {
-            if (archiver == null)
-                archiver = new ComponentAce.Compression.ZipForge.ZipForge();
-            archiver.FileName = zipFileName;
-            ComponentAce.Compression.Archiver.ArchiveItem archiveItem =
-                new ComponentAce.Compression.Archiver.ArchiveItem();
+            string[] supportedExtensions = { ".sna", ".z80", ".szx", ".pzx", ".tzx", ".tap", ".csw", ".dsk", ".trd", ".scl", ".rzx", ".scr" };
 
-            System.Collections.Generic.List<String> fileNameAndSizeList = new System.Collections.Generic.List<string>();
-            String fileToOpen = "";
             try {
-                archiver.OpenArchive(FileMode.Open);
+                using (ZipArchive archive = ZipFile.OpenRead(zipFileName)) {
+                    List<ZipArchiveEntry> supportedEntries = archive.Entries
+                        .Where(e => !String.IsNullOrEmpty(e.Name) && supportedExtensions.Contains(Path.GetExtension(e.Name).ToLower()))
+                        .ToList();
 
-                // string[] fileNameAndSizeList = new string[archiver.FileCount * 2];
-                if (archiver.FindFirst("*.*", ref archiveItem)) {
-                    do {
-                        if (archiveItem.FileName != "") {
-                            String ext = archiveItem.FileName.Substring(archiveItem.FileName.Length - 3).ToLower();
-                            if (ext == "sna" | ext == "z80" || ext == "szx" || ext == "pzx" || ext == "tzx"
-                                    || ext == "tap" || ext == "csw" || ext == "dsk" || ext == "trd"
-                                    || ext == "scl" || ext == "rzx" || ext == "scr") {
-                                fileNameAndSizeList.Add(archiveItem.FileName);
-                                fileNameAndSizeList.Add((archiveItem.UncompressedSize).ToString());
-                            }
-                        }
-                    }
-                    while (archiver.FindNext(ref archiveItem));
-                }
-
-                if (fileNameAndSizeList.Count == 0) {
-                    MessageBox.Show("Couldn't find any suitable file to load in this archive!", "No suitable file", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                if (fileNameAndSizeList.Count == 2) {
-                    fileToOpen = fileNameAndSizeList[0];
-                }
-                else if (fileNameAndSizeList.Count > 2) {
-                    ArchiveHandler archiveHandler = new ArchiveHandler(fileNameAndSizeList.ToArray());
-                    if (archiveHandler.ShowDialog() != DialogResult.OK) {
-                        fileNameAndSizeList.Clear();
-                        archiver.CloseArchive();
+                    if (supportedEntries.Count == 0) {
+                        MessageBox.Show("Couldn't find any suitable file to load in this archive!", "No suitable file", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
-                    fileToOpen = archiveHandler.FileToOpen;
-                }
 
-                String ext2 = fileToOpen.Substring(fileToOpen.Length - 3).ToLower();
+                    ZipArchiveEntry fileToOpen = supportedEntries[0];
 
-                System.IO.MemoryStream stream = new MemoryStream();
+                    if (supportedEntries.Count > 1) {
+                        ArchiveHandler archiveHandler = new ArchiveHandler(supportedEntries);
+                        if (archiveHandler.ShowDialog() != DialogResult.OK) {
+                            archive.Dispose();
+                            return;
+                        }
 
-                archiver.Options.CreateDirs = false;
-                if ((ext2 == "dsk") || (ext2 == "trd") || (ext2 == "scl")) {
-                    if (diskArchivePath[0] != null) {
-                        zx.DiskEject(0);
-                        File.Delete(diskArchivePath[0]);
+                        fileToOpen = archiveHandler.FileToOpen;
                     }
-                    byte[] tempBuffer;
-                    archiver.ExtractToBuffer(fileToOpen, out tempBuffer);
-                    if (ext2 == "scl") {
-                        string _tmpFile = Application.StartupPath + @"/tempDiskA." + ext2;
-                        File.WriteAllBytes(_tmpFile, tempBuffer);
-                        string _file = SCL2TRD(_tmpFile);
-                        if (_file != null) {
-                            LoadDSK(_file, 0);
+
+                    String ext2 = Path.GetExtension(fileToOpen.Name).ToLower();
+
+                    if (ext2 == ".dsk" || ext2 == ".trd" || ext2 == ".scl") {
+                        if (diskArchivePath[0] != null) {
+                            zx.DiskEject(0);
+                            File.Delete(diskArchivePath[0]);
                         }
-                        else {
-                            MessageBox.Show("Unable to open file!", "File error", MessageBoxButtons.OK);
-                        }
-                        File.Delete(_tmpFile);
-                    }
-                    else {
-                        diskArchivePath[0] = Application.StartupPath + @"/tempDiskA." + ext2;
-                        File.WriteAllBytes(diskArchivePath[0], tempBuffer);
-                        LoadDSK(diskArchivePath[0], 0);
-                    }
-                    fileNameAndSizeList.Clear();
-                    archiver.CloseArchive();
-                    return;
-                }
-                archiver.ExtractToStream(fileToOpen, stream);
-                stream.Position = 0;
-                switch (ext2) {
-                    case "rzx":
-                        LoadRZX(stream, false);
-                        break;
 
-                    case "sna":
-                        LoadSNA(stream);
-                        if (tapeDeck.Visible)
-                            tapeDeck.Hide();
-                        break;
+                        string _tmpFile = Application.StartupPath + @"/tempDiskA" + ext2;
+                        fileToOpen.ExtractToFile(_tmpFile);
 
-                    case "szx":
-                        LoadSZX(stream);
-                        if (tapeDeck.Visible)
-                            tapeDeck.Hide();
-                        break;
-
-                    case "z80":
-                        LoadZ80(stream);
-                        if (tapeDeck.Visible)
-                            tapeDeck.Hide();
-                        break;
-
-                    case "pzx":
-                        tapeDeck.InsertTape(fileToOpen, stream);
-                        //tapeDeck.Show();
-                        if (tapeDeck.DoAutoTapeLoad) {
-                            doAutoLoadTape = true;
-                            hardResetToolStripMenuItem1_Click(this, null);
-                        }
-                        break;
-
-                    case "scr":
-                        byte[] _buffer = stream.ToArray();
-
-                        if (_buffer.Length > 6912) {
-                            MessageBox.Show("This file seems to have an unsupported screen format.", "File error", MessageBoxButtons.OK);
-                        }
-                        else {
-                            for (int f = 0; f < 6912; f++) {
-                                zx.PokeByteNoContend(16384 + f, _buffer[f]);
+                        if (ext2 == "scl") {
+                            string _file = SCL2TRD(_tmpFile);
+                            if (_file != null) {
+                                LoadDSK(_file, 0);
                             }
+                            else {
+                                MessageBox.Show("Unable to open file!", "File error", MessageBoxButtons.OK);
+                            }
+
+                            File.Delete(_tmpFile);
                         }
-                        break;
-
-                    case "tzx":
-                    case "tap":
-                    case "csw":
-                        byte[] tempBuffer = stream.ToArray();
-                        //archiver.ExtractToBuffer(fileToOpen, out tempBuffer);
-                        IntPtr _p;
-                        uint _sz = 0;
-                        uint _buffSize = (uint)tempBuffer.Length;
-                        if (ext2 == "tzx")
-                            _p = tzx2pzx_buff(tempBuffer, _buffSize, ref _sz);
-                        else if (ext2 == "tap")
-                            _p = tap2pzx_buff(tempBuffer, _buffSize, ref _sz);
-                        else
-                            _p = csw2pzx_buff(tempBuffer, _buffSize, ref _sz);
-
-                        if (_p == (IntPtr)0) {
-                            MessageBox.Show("Unable to open the file.", "File Error", MessageBoxButtons.OK);
-                            break;
+                        else {
+                            diskArchivePath[0] = _tmpFile;
+                            LoadDSK(diskArchivePath[0], 0);
                         }
-                        Byte[] _b = new Byte[_sz];
-                        Marshal.Copy(_p, _b, 0, (int)_sz);
-                        Stream _st = new MemoryStream(_b);
-                        tapeDeck.InsertTape(fileToOpen, _st);
-                        pzx_close();
-                        fileNameAndSizeList.Clear();
-                        archiver.CloseArchive();
-                        if (tapeDeck.DoAutoTapeLoad) {
-                            doAutoLoadTape = true;
-                            hardResetToolStripMenuItem1_Click(this, null);
+
+                        archive.Dispose();
+                        return;
+                    }
+
+                    using (Stream stream = fileToOpen.Open()) {
+                        switch (ext2) {
+                            case ".rzx":
+                                LoadRZX(stream, false);
+                                break;
+
+                            case ".sna":
+                                LoadSNA(stream);
+                                if (tapeDeck.Visible)
+                                    tapeDeck.Hide();
+                                break;
+
+                            case ".szx":
+                                LoadSZX(stream);
+                                if (tapeDeck.Visible)
+                                    tapeDeck.Hide();
+                                break;
+
+                            case ".z80":
+                                LoadZ80(stream);
+                                if (tapeDeck.Visible)
+                                    tapeDeck.Hide();
+                                break;
+
+                            case ".pzx":
+                                tapeDeck.InsertTape(fileToOpen.FullName, stream);
+                                //tapeDeck.Show();
+                                if (tapeDeck.DoAutoTapeLoad) {
+                                    doAutoLoadTape = true;
+                                    hardResetToolStripMenuItem1_Click(this, null);
+                                }
+
+                                break;
+
+                            case ".scr":
+                                byte[] _buffer = new byte[6912];
+                                int bytesRead = stream.Read(_buffer, 0, 6912);
+                                if (bytesRead != 6912) {
+                                    MessageBox.Show("This file seems to have an unsupported screen format.", "File error", MessageBoxButtons.OK);
+                                }
+                                else
+                                {
+                                    for (int f = 0; f < 6912; f++)
+                                    {
+                                        zx.PokeByteNoContend(16384 + f, _buffer[f]);
+                                    }
+                                }
+                                break;
+
+                            case ".tzx":
+                            case ".tap":
+                            case ".csw":
+                                using (MemoryStream tempStream = new MemoryStream())
+                                {
+                                    stream.CopyTo(tempStream);
+                                    byte[] tempBuffer = tempStream.ToArray();
+                                    IntPtr _p;
+                                    uint _sz = 0;
+                                    uint _buffSize = (uint) tempBuffer.Length;
+                                    if (ext2 == ".tzx")
+                                        _p = tzx2pzx_buff(tempBuffer, _buffSize, ref _sz);
+                                    else if (ext2 == ".tap")
+                                        _p = tap2pzx_buff(tempBuffer, _buffSize, ref _sz);
+                                    else
+                                        _p = csw2pzx_buff(tempBuffer, _buffSize, ref _sz);
+
+                                    if (_p == (IntPtr) 0)
+                                    {
+                                        MessageBox.Show("Unable to open the file.", "File Error", MessageBoxButtons.OK);
+                                        break;
+                                    }
+
+                                    Byte[] _b = new Byte[_sz];
+                                    Marshal.Copy(_p, _b, 0, (int) _sz);
+                                    Stream _st = new MemoryStream(_b);
+                                    tapeDeck.InsertTape(fileToOpen.FullName, _st);
+                                    pzx_close();
+                                    if (tapeDeck.DoAutoTapeLoad)
+                                    {
+                                        doAutoLoadTape = true;
+                                        hardResetToolStripMenuItem1_Click(this, null);
+                                    }
+                                }
+
+                                break;
+                                /*
+                                archiver.BaseDir = Application.StartupPath;
+                                //Tricky this. First extract file to local folder then perform usual operations..
+                                archiver.Options.CreateDirs = false;
+                                archiver.ExtractFiles(fileToOpen);
+                                //Call the external pzx tool to convert tzx to pzx
+                                System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                                proc.EnableRaisingEvents = false;
+                                string pzxfile = fileToOpen.Substring(0, fileToOpen.Length - 3);
+                                pzxfile = pzxfile + "pzx";
+
+                                if (ext2 == "tzx")
+                                    proc.StartInfo.FileName = Application.StartupPath + @"\tzx2pzx";
+                                else if (ext2 == "tap")
+                                    proc.StartInfo.FileName = Application.StartupPath + @"\tap2pzx";
+                                else
+                                    proc.StartInfo.FileName = Application.StartupPath + @"\csw2pzx";
+
+                                proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                                proc.StartInfo.Arguments = "\"" + archiver.BaseDir + "\\" + fileToOpen + "\" -o \"" + archiver.BaseDir + "\\" + pzxfile + "\"";
+                                proc.Start();
+                                proc.WaitForExit();
+
+                                //now call pzx loader with correct extension
+                                if (System.IO.File.Exists(archiver.BaseDir + "\\" + pzxfile))
+                                {
+                                    tapeDeck.InsertTape(archiver.BaseDir + "\\" + pzxfile);
+                                   // tapeDeck.Show();
+
+                                    //Finally delete PZX file to avoid littering disk with multiple copies of same game.
+                                    File.Delete(archiver.BaseDir + "\\" + pzxfile);
+                                    File.Delete(archiver.BaseDir + "\\" + fileToOpen);
+                                }
+                                else
+                                    MessageBox.Show("File not found.", "The PZX file is missing!", MessageBoxButtons.OK);
+                                break;
+                                 */
                         }
-                        break;
-                        /*
-                        archiver.BaseDir = Application.StartupPath;
-                        //Tricky this. First extract file to local folder then perform usual operations..
-                        archiver.Options.CreateDirs = false;
-                        archiver.ExtractFiles(fileToOpen);
-                        //Call the external pzx tool to convert tzx to pzx
-                        System.Diagnostics.Process proc = new System.Diagnostics.Process();
-                        proc.EnableRaisingEvents = false;
-                        string pzxfile = fileToOpen.Substring(0, fileToOpen.Length - 3);
-                        pzxfile = pzxfile + "pzx";
-
-                        if (ext2 == "tzx")
-                            proc.StartInfo.FileName = Application.StartupPath + @"\tzx2pzx";
-                        else if (ext2 == "tap")
-                            proc.StartInfo.FileName = Application.StartupPath + @"\tap2pzx";
-                        else
-                            proc.StartInfo.FileName = Application.StartupPath + @"\csw2pzx";
-
-                        proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                        proc.StartInfo.Arguments = "\"" + archiver.BaseDir + "\\" + fileToOpen + "\" -o \"" + archiver.BaseDir + "\\" + pzxfile + "\"";
-                        proc.Start();
-                        proc.WaitForExit();
-
-                        //now call pzx loader with correct extension
-                        if (System.IO.File.Exists(archiver.BaseDir + "\\" + pzxfile))
-                        {
-                            tapeDeck.InsertTape(archiver.BaseDir + "\\" + pzxfile);
-                           // tapeDeck.Show();
-
-                            //Finally delete PZX file to avoid littering disk with multiple copies of same game.
-                            File.Delete(archiver.BaseDir + "\\" + pzxfile);
-                            File.Delete(archiver.BaseDir + "\\" + fileToOpen);
-                        }
-                        else
-                            MessageBox.Show("File not found.", "The PZX file is missing!", MessageBoxButtons.OK);
-                        break;
-                         */
+                    }
                 }
             }
             catch (Exception e) {
-                System.Windows.Forms.MessageBox.Show(e.Message,
-                        "Archive failure", System.Windows.Forms.MessageBoxButtons.OK);
+                MessageBox.Show(e.Message, "Archive failure", MessageBoxButtons.OK);
             }
-
-            fileNameAndSizeList.Clear();
-            archiver.CloseArchive();
-            archiver.Dispose();
-            archiver = null;
         }
 
         //Updates the insert disk file menu
@@ -3962,7 +3946,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
         private void LoadZXFile(string filename)
         {
-            String ext = System.IO.Path.GetExtension(filename).ToLower();
+            String ext = Path.GetExtension(filename).ToLower();
 
             if (ext == ".scr") {
                 using (FileStream fs = new FileStream(filename, FileMode.Open)) {
@@ -4391,49 +4375,22 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 String ext = System.IO.Path.GetExtension(openFileDialog1.FileName).ToLower();
                 if (ext == ".zip") //handle zip archives
                 {
-                    if (archiver == null)
-                        archiver = new ComponentAce.Compression.ZipForge.ZipForge();
                     pauseEmulation = true;
-                    archiver.FileName = openFileDialog1.FileName;
-                    ComponentAce.Compression.Archiver.ArchiveItem archiveItem =
-                        new ComponentAce.Compression.Archiver.ArchiveItem();
-
-                    String fileToOpen = "";
                     try {
-                        archiver.OpenArchive(FileMode.Open);
-                        System.Collections.Generic.List<String> fileNameAndSizeList = new System.Collections.Generic.List<string>();
+                        ZipArchive archive = ZipFile.OpenRead(openFileDialog1.FileName);
+                        string[] supportedExtensions = zx is zxPlus3 ? new[] { ".dsk" } : new[] { ".trd", ".scl" };
+                        List<ZipArchiveEntry> supportedEntries = archive.Entries
+                            .Where(e => !String.IsNullOrEmpty(e.Name) && supportedExtensions.Contains(Path.GetExtension(e.Name).ToLower()))
+                            .ToList();
 
-                        if (archiver.FindFirst("*.*", ref archiveItem)) {
-                            do {
-                                if (archiveItem.FileName != "") {
-                                    String ext2 = archiveItem.FileName.Substring(archiveItem.FileName.Length - 3).ToLower();
-                                    if (zx is zxPlus3) {
-                                        if (ext2 == "dsk") {
-                                            fileNameAndSizeList.Add(archiveItem.FileName);
-                                            fileNameAndSizeList.Add((archiveItem.UncompressedSize).ToString());
-                                        }
-                                    }
-                                    else if (zx is Pentagon128K) {
-                                        if ((ext2 == "trd") || (ext2 == "scl")) {
-                                            fileNameAndSizeList.Add(archiveItem.FileName);
-                                            fileNameAndSizeList.Add((archiveItem.UncompressedSize).ToString());
-                                        }
-                                    }
-                                }
-                            }
-                            while (archiver.FindNext(ref archiveItem));
-                        }
-
-                        if (fileNameAndSizeList.Count == 0) {
+                        if (supportedEntries.Count == 0) {
                             MessageBox.Show("Couldn't find any suitable file to load in this archive.", "No suitable file", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             isError = true;
                         }
                         else {
-                            if (fileNameAndSizeList.Count == 2) {
-                                fileToOpen = fileNameAndSizeList[0];
-                            }
-                            else if (fileNameAndSizeList.Count > 2) {
-                                ArchiveHandler archiveHandler = new ArchiveHandler(fileNameAndSizeList.ToArray());
+                            ZipArchiveEntry fileToOpen = supportedEntries[0];
+                            if (supportedEntries.Count > 2) {
+                                ArchiveHandler archiveHandler = new ArchiveHandler(supportedEntries);
                                 if (archiveHandler.ShowDialog() == DialogResult.OK) {
                                     fileToOpen = archiveHandler.FileToOpen;
                                 }
@@ -4442,27 +4399,17 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                             }
 
                             if (!isError) {
-                                String ext2 = fileToOpen.Substring(fileToOpen.Length - 3).ToLower();
-                                System.IO.MemoryStream stream = new MemoryStream();
-                                archiver.Options.CreateDirs = false;
-                                byte[] tempBuffer;
-                                archiver.ExtractToBuffer(fileToOpen, out tempBuffer);
-                                diskArchivePath[_unit] = Application.StartupPath + @"/tempDisk" + _unit.ToString() + "." + ext2;
-                                File.WriteAllBytes(diskArchivePath[_unit], tempBuffer);
-                                InsertDisk(fileToOpen, _unit);
-                                fileToOpen = diskArchivePath[_unit];
-                                LoadDSK(fileToOpen, _unit); //All is well then!
+                                String extractedFile = Application.StartupPath + @"/tempDisk" + _unit + Path.GetExtension(fileToOpen.Name);
+                                fileToOpen.ExtractToFile(extractedFile);
+                                InsertDisk(fileToOpen.FullName, _unit);
+                                diskArchivePath[_unit] = extractedFile;
+                                LoadDSK(extractedFile, _unit); //All is well then!
                             }
                         }
-                        // We don't need the opened archive info anymore, so clean up
-                        fileNameAndSizeList.Clear();
-                        archiver.CloseArchive();
-                        archiver.Dispose();
-                        archiver = null;
+                        archive.Dispose();
                     }
                     catch (Exception e) {
-                        System.Windows.Forms.MessageBox.Show(e.Message,
-                                "Archive failure", System.Windows.Forms.MessageBoxButtons.OK);
+                        MessageBox.Show(e.Message, "Archive failure", MessageBoxButtons.OK);
                         isError = true;
                     }
                     pauseEmulation = false;
