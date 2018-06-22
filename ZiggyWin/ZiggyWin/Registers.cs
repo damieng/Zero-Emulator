@@ -5,7 +5,7 @@ namespace ZeroWin
 {
     public partial class Registers : Form
     {
-        private Monitor monitor = null;
+        private readonly Monitor monitor;
 
         public Registers(Monitor _monitor) {
             InitializeComponent();
@@ -102,45 +102,21 @@ namespace ZeroWin
             int low = Low(monitor.ValueAF);
             int hi = High(monitor.ValueAF);
 
-            if ((low & 0x01) != 0)
-                FlagCCheck.Checked = true;
-            else
-                FlagCCheck.Checked = false;
+            FlagCCheck.Checked = (low & 0x01) != 0;
 
-            if ((low & 0x02) != 0)
-                FlagNCheck.Checked = true;
-            else
-                FlagNCheck.Checked = false;
+            FlagNCheck.Checked = (low & 0x02) != 0;
 
-            if ((low & 0x04) != 0)
-                FlagVCheck.Checked = true;
-            else
-                FlagVCheck.Checked = false;
+            FlagVCheck.Checked = (low & 0x04) != 0;
 
-            if ((low & 0x08) != 0)
-                Flag3Check.Checked = true;
-            else
-                Flag3Check.Checked = false;
+            Flag3Check.Checked = (low & 0x08) != 0;
 
-            if ((low & 0x10) != 0)
-                FlagHCheck.Checked = true;
-            else
-                FlagHCheck.Checked = false;
+            FlagHCheck.Checked = (low & 0x10) != 0;
 
-            if ((low & 0x20) != 0)
-                Flag5Check.Checked = true;
-            else
-                Flag5Check.Checked = false;
+            Flag5Check.Checked = (low & 0x20) != 0;
 
-            if ((low & 0x40) != 0)
-                FlagZCheck.Checked = true;
-            else
-                FlagZCheck.Checked = false;
+            FlagZCheck.Checked = (low & 0x40) != 0;
 
-            if ((low & 0x80) != 0)
-                FlagSCheck.Checked = true;
-            else
-                FlagSCheck.Checked = false;
+            FlagSCheck.Checked = (low & 0x80) != 0;
 
             interruptCheckBox.Checked = monitor.ziggyWin.zx.IFF1;
         }

@@ -13,14 +13,14 @@ namespace ZeroWin
     {
         //Encapsulates the capabilities of the machine
 
-        private string wos_select = "http://www.worldofspectrum.org/api/infoseek_select_xml.cgi?";
+        private const string wos_select = "http://www.worldofspectrum.org/api/infoseek_select_xml.cgi?";
         private XmlTextReader xmlReader;
         private XmlDocument xmlDoc = new XmlDocument();
         private InfoDetails details;
-        private List<String> fileList = new List<String>();
-        private int fileDownloadCount = 0;
-        private int filesToDownload = 0;
-        private string autoLoadFilePath = null;
+        private readonly List<String> fileList = new List<String>();
+        private int fileDownloadCount;
+        private int filesToDownload;
+        private string autoLoadFilePath;
 
         private delegate void UpdateLabelInfoCallback(Control lst, String _info);
         private delegate void EnableDownloadButtonCallback(bool enable);
@@ -29,8 +29,7 @@ namespace ZeroWin
         public event FileDownloadHandler DownloadCompleteEvent;
 
         public void OnFileDownloadEvent(Object sender, AutoLoadArgs arg) {
-            if (DownloadCompleteEvent != null)
-                DownloadCompleteEvent(this, arg);
+            DownloadCompleteEvent?.Invoke(this, arg);
         }
 
         private String lastURL = "";
@@ -91,9 +90,10 @@ namespace ZeroWin
 
         private void UpdateCheckbox(Control lst, String _info) {
             if (lst.InvokeRequired) {
-                UpdateCheckBoxCallback d = new UpdateCheckBoxCallback(UpdateCheckbox);
-                lst.Invoke(d, new object[] { lst, _info });
-            } else {
+                UpdateCheckBoxCallback d = UpdateCheckbox;
+                lst.Invoke(d, lst, _info);
+            }
+            else {
                 CheckedListBox cb = (CheckedListBox)lst;
                 cb.Items.Add(_info);
             }
@@ -101,32 +101,31 @@ namespace ZeroWin
 
         private void UpdateLabelInfo(Control lst, String _info) {
             if (lst.InvokeRequired) {
-                UpdateLabelInfoCallback d = new UpdateLabelInfoCallback(UpdateLabelInfo);
-                lst.Invoke(d, new object[] { lst, _info });
-            } else {
-                if (lst is ScrollableLabel) {
-                    ScrollableLabel lbl = (ScrollableLabel)lst;
-                    lbl.scrollLabel.Text = _info;
-                } else if (lst is Label) {
-                    Label lbl = (Label)lst;
-                    lbl.Text = _info;
+                UpdateLabelInfoCallback d = UpdateLabelInfo;
+                lst.Invoke(d, lst, _info);
+            }
+            else {
+                switch (lst) {
+                    case ScrollableLabel lbl1:
+                        lbl1.scrollLabel.Text = _info;
+                        break;
+                    case Label lbl:
+                        lbl.Text = _info;
+                        break;
                 }
             }
         }
 
-        private void EnableDownloadButton(bool enable)
-        {
+        private void EnableDownloadButton(bool enable) {
             // InvokeRequired required compares the thread ID of the
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
-            if (this.button1.InvokeRequired)
-            {
-                EnableDownloadButtonCallback d = new EnableDownloadButtonCallback(EnableDownloadButton);
-                this.Invoke(d, new object[] { enable });
+            if (button1.InvokeRequired) {
+                EnableDownloadButtonCallback d = EnableDownloadButton;
+                Invoke(d, enable);
             }
-            else
-            {
-                this.button1.Enabled = enable;
+            else {
+                button1.Enabled = enable;
             }
         }
 
@@ -134,10 +133,10 @@ namespace ZeroWin
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
-            this.loadingScreen.Image = ZeroWin.Properties.Resources.NoImage;
-            this.ingameScreen.Image = ZeroWin.Properties.Resources.NoImage;
+            loadingScreen.Image = Properties.Resources.NoImage;
+            ingameScreen.Image = Properties.Resources.NoImage;
             fileDownloadCount = 0;
             folderBrowserDialog1.ShowNewFolderButton = true;
             folderBrowserDialog1.SelectedPath = Application.StartupPath;
@@ -150,9 +149,9 @@ namespace ZeroWin
 
         public void ResetDetails() {
             details = null;
-            this.loadingScreen.Image = ZeroWin.Properties.Resources.NoImage;
-            this.ingameScreen.Image = ZeroWin.Properties.Resources.NoImage;
-            pictureBox1.Image = ZeroWin.Properties.Resources.NoImage;
+            loadingScreen.Image = Properties.Resources.NoImage;
+            ingameScreen.Image = Properties.Resources.NoImage;
+            pictureBox1.Image = Properties.Resources.NoImage;
             autoLoadComboBox.Items.Clear();
             autoLoadComboBox.Items.Add("None");
             autoLoadComboBox.SelectedIndex = 0;
@@ -171,30 +170,30 @@ namespace ZeroWin
             details = new InfoDetails();
             string param = "id=" + infoId;
             pictureBox1.ImageLocation = _imageLoc;
-            if (checkedListBox1.SelectedItems.Count == 0)
-                button1.Enabled = false;
-            else
-                button1.Enabled = true;
+            button1.Enabled = checkedListBox1.SelectedItems.Count != 0;
             try {
                 lastURL = wos_select + param;
                 HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(lastURL);
                 webRequest.Method = "GET";
 
                 // RequestState is a custom class to pass info to the callback
-                RequestState2 rs = new RequestState2();
-                rs.Request = webRequest;
-                rs.webURL = lastURL;
+                RequestState2 rs = new RequestState2
+                {
+                    Request = webRequest,
+                    webURL = lastURL
+                };
 
-                IAsyncResult result = webRequest.BeginGetResponse(new AsyncCallback(SearchCallback), rs);
+                IAsyncResult result = webRequest.BeginGetResponse(SearchCallback, rs);
 
                 ThreadPool.RegisterWaitForSingleObject(result.AsyncWaitHandle,
-                                        new WaitOrTimerCallback(InfoseekTimeout),
+                                        InfoseekTimeout,
                                         rs,
                                         (30 * 1000), // 30 second timeout
                                         true
                                     );
-                this.Show();
-            } catch (WebException we) {
+                Show();
+            }
+            catch (WebException we) {
                 MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK);
             }
         }
@@ -202,8 +201,7 @@ namespace ZeroWin
         private void InfoseekTimeout(object state, bool timedOut) {
             if (timedOut) {
                 RequestState2 reqState = (RequestState2)state;
-                if (reqState != null)
-                    reqState.Request.Abort();
+                reqState?.Request.Abort();
                 MessageBox.Show("Request timed out.", "Connection Error", MessageBoxButtons.OK);
             }
         }
@@ -236,7 +234,8 @@ namespace ZeroWin
                 xmlDoc.Load(xmlReader);
                 xmlReader.Close();
                 resp.Close();
-            } catch (WebException we) {
+            }
+            catch (WebException we) {
                 MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -312,18 +311,18 @@ namespace ZeroWin
                     webRequest.Method = WebRequestMethods.Http.Get;
                     webRequest.UserAgent = "Zero Emulator";
                     // RequestState is a custom class to pass info to the callback
-                    RequestState2 rs2 = new RequestState2();
-                    rs2.Request = webRequest;
+                    RequestState2 rs2 = new RequestState2 { Request = webRequest };
 
-                    IAsyncResult result2 = webRequest.BeginGetResponse(new AsyncCallback(PictureLoadCallback), rs2);
+                    IAsyncResult result2 = webRequest.BeginGetResponse(PictureLoadCallback, rs2);
 
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
-                                            new WaitOrTimerCallback(InfoseekTimeout),
+                                            InfoseekTimeout,
                                             rs2,
                                             (30 * 1000), // 30 second timeout
                                             true
                                         );
-                } catch (WebException we) {
+                }
+                catch (WebException we) {
                     MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK);
                 }
             }
@@ -334,18 +333,18 @@ namespace ZeroWin
                     webRequest.Method = WebRequestMethods.Http.Get;
                     webRequest.UserAgent = "Zero Emulator";
                     // RequestState is a custom class to pass info to the callback
-                    RequestState2 rs2 = new RequestState2();
-                    rs2.Request = webRequest;
+                    RequestState2 rs2 = new RequestState2 { Request = webRequest };
 
-                    IAsyncResult result2 = webRequest.BeginGetResponse(new AsyncCallback(PictureLoadCallback), rs2);
+                    IAsyncResult result2 = webRequest.BeginGetResponse(PictureLoadCallback, rs2);
 
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
-                                            new WaitOrTimerCallback(InfoseekTimeout),
+                                            InfoseekTimeout,
                                             rs2,
                                             (30 * 1000), // 30 second timeout
                                             true
                                         );
-                } catch (WebException we) {
+                }
+                catch (WebException we) {
                     MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK);
                 }
             }
@@ -356,18 +355,18 @@ namespace ZeroWin
                     webRequest.Method = WebRequestMethods.Http.Get;
                     webRequest.UserAgent = "Zero Emulator";
                     // RequestState is a custom class to pass info to the callback
-                    RequestState2 rs2 = new RequestState2();
-                    rs2.Request = webRequest;
+                    RequestState2 rs2 = new RequestState2 { Request = webRequest };
 
-                    IAsyncResult result2 = webRequest.BeginGetResponse(new AsyncCallback(PictureLoadCallback), rs2);
+                    IAsyncResult result2 = webRequest.BeginGetResponse(PictureLoadCallback, rs2);
 
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
-                                            new WaitOrTimerCallback(InfoseekTimeout),
+                                            InfoseekTimeout,
                                             rs2,
                                             (30 * 1000), // 30 second timeout
                                             true
                                         );
-                } catch (WebException we) {
+                }
+                catch (WebException we) {
                     MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -377,8 +376,7 @@ namespace ZeroWin
             if (timedOut) {
                 RequestState2 reqState = (RequestState2)state;
 
-                if (reqState != null)
-                    reqState.Request.Abort();
+                reqState?.Request.Abort();
                 MessageBox.Show("Request timed out.", reqState.webURL, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -399,12 +397,10 @@ namespace ZeroWin
                 string[] splitWords = fileList[rs.index].Split(delimiter);
 
                 FileStream outputStream = new FileStream(folderBrowserDialog1.SelectedPath + "//" + splitWords[splitWords.Length - 1], FileMode.Create);
-                long cl = resp.ContentLength;
                 int bufferSize = 2048;
-                int readCount;
                 byte[] buffer = new byte[bufferSize];
 
-                readCount = ftpStream.Read(buffer, 0, bufferSize);
+                var readCount = ftpStream.Read(buffer, 0, bufferSize);
                 while (readCount > 0) {
                     outputStream.Write(buffer, 0, readCount);
                     readCount = ftpStream.Read(buffer, 0, bufferSize);
@@ -420,10 +416,12 @@ namespace ZeroWin
                     AutoLoadArgs arg = new AutoLoadArgs(autoLoadFilePath);
                     EnableDownloadButton(true);
                     OnFileDownloadEvent(this, arg);
-                } else
-                    toolStripStatusLabel1.Text = "Downloaded " + fileDownloadCount.ToString() + " of " + filesToDownload.ToString() + " files...";
+                }
+                else
+                    toolStripStatusLabel1.Text = "Downloaded " + fileDownloadCount + " of " + filesToDownload + " files...";
                 resp.Close();
-            } catch (WebException we) {
+            }
+            catch (WebException we) {
                 MessageBox.Show(we.Message, "File Download Error", MessageBoxButtons.OK);
             }
         }
@@ -440,34 +438,32 @@ namespace ZeroWin
                 WebResponse resp = req.EndGetResponse(result);
 
                 if (req.RequestUri.AbsoluteUri == details.PicInlayURL) {
-                    pictureBox1.Image = Bitmap.FromStream(resp.GetResponseStream());
-                } else
+                    pictureBox1.Image = Image.FromStream(resp.GetResponseStream());
+                }
+                else
                     if (req.RequestUri.AbsoluteUri == details.PicLoadURL) {
-                        loadingScreen.Image = Bitmap.FromStream(resp.GetResponseStream());
-                    } else if (req.RequestUri.AbsoluteUri == details.PicIngameURL)
-                        ingameScreen.Image = Bitmap.FromStream(resp.GetResponseStream());
+                    loadingScreen.Image = Image.FromStream(resp.GetResponseStream());
+                }
+                else if (req.RequestUri.AbsoluteUri == details.PicIngameURL)
+                    ingameScreen.Image = Image.FromStream(resp.GetResponseStream());
                 resp.Close();
-            } catch (WebException we) {
+            }
+            catch (WebException we) {
                 MessageBox.Show(we.Message, "Picture Download Error", MessageBoxButtons.OK);
             }
         }
 
         private String GetNodeElement(XmlNode node, String value) {
-            if (node.SelectSingleNode(value) != null)
-                return node.SelectSingleNode(value).InnerText;
-
-            return "";
+            return node.SelectSingleNode(value) != null ? node.SelectSingleNode(value).InnerText : "";
         }
 
         private String GetNodeValue(XmlNodeList nodes, String value) {
-            String returnString = "";
             foreach (XmlNode node in nodes) {
                 if (node.SelectSingleNode("type").InnerText == value) {
-                    returnString = node.SelectSingleNode("link").InnerText;
-                    break;
+                    return node.SelectSingleNode("link").InnerText;
                 }
             }
-            return returnString;
+            return "";
         }
 
         private void button1_Click(object sender, EventArgs e) {
@@ -495,31 +491,34 @@ namespace ZeroWin
                             webRequest.Method = WebRequestMethods.Ftp.DownloadFile;
 
                             // RequestState is a custom class to pass info to the callback
-                            RequestState2 rs2 = new RequestState2();
-                            rs2.index = selectedItems[f];
-                            rs2.Request = webRequest;
+                            RequestState2 rs2 = new RequestState2
+                            {
+                                index = selectedItems[f],
+                                Request = webRequest
+                            };
 
-                            IAsyncResult result2 = webRequest.BeginGetResponse(new AsyncCallback(FileDownloadCallback), rs2);
+                            IAsyncResult result2 = webRequest.BeginGetResponse(FileDownloadCallback, rs2);
 
                             ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
-                                                    new WaitOrTimerCallback(InfoseekTimeout),
+                                                    InfoseekTimeout,
                                                     rs2,
                                                     (30 * 1000), // 30 second timeout
                                                     true
                                                 );
-                        } catch (WebException we) {
+                        }
+                        catch (WebException we) {
                             MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK);
                             button1.Enabled = true;
                         }
                     }
-                    toolStripStatusLabel1.Text = "Downloading " + filesToDownload.ToString() + " files...";
+                    toolStripStatusLabel1.Text = "Downloading " + filesToDownload + " files...";
                 }
             }
         }
 
         private void Infoviewer_FormClosing(object sender, FormClosingEventArgs e) {
             e.Cancel = true;
-            this.Hide();
+            Hide();
         }
 
         private void checkedListBox1_ItemCheck(object sender, ItemCheckEventArgs e) {
@@ -534,7 +533,8 @@ namespace ZeroWin
                     autoLoadComboBox.Items.Add(file);
                     //autoLoadComboBox.SelectedIndex = autoLoadComboBox.Items.Count - 1;
                 }
-            } else {
+            }
+            else {
                 if (ext == "szx" || ext == "sna" || ext == "z80" || ext == "tap" || ext == "tzx" ||
                     ext == "pzx" || ext == "dsk" || ext == "trd" || ext == "scl") {
                     if (/*autoLoadComboBox.SelectedIndex >= 0 && */(checkedListBox1.Items[e.Index] == autoLoadComboBox.Items[autoLoadComboBox.SelectedIndex]))
@@ -550,7 +550,7 @@ namespace ZeroWin
         }
 
         private void pictureBox1_Click(object sender, EventArgs e) {
-            if (pictureBox1.Image != ZeroWin.Properties.Resources.NoImage) {
+            if (pictureBox1.Image != Properties.Resources.NoImage) {
                 PicturePreview picPreview = new PicturePreview(pictureBox1.Image);
                 picPreview.Show();
             }

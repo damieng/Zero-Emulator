@@ -57,7 +57,6 @@
             this.label1.Size = new System.Drawing.Size(124, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "Currently mapped to key:";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // label2
             // 
@@ -69,7 +68,6 @@
             this.label2.TabIndex = 2;
             this.label2.Text = "None";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // button1
             // 

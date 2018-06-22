@@ -94,7 +94,6 @@
             this.textBox1.Size = new System.Drawing.Size(335, 113);
             this.textBox1.TabIndex = 8;
             this.textBox1.Text = resources.GetString("textBox1.Text");
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // label5
             // 

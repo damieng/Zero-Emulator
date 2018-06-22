@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Windows.Forms;
-using System.Text;
 
 namespace ZeroWin
 {
     class SQLHelper
     {
-        String dbConnection;
+        readonly String dbConnection;
 
         /// <summary>
         ///     Default Constructor for SQLiteDatabase Class.
@@ -24,8 +23,7 @@ namespace ZeroWin
         /// <param name="inputFile">The File containing the DB</param>
         public SQLHelper(String inputFile) {
             dbConnection = String.Format("Data Source={0}", inputFile);
-            string createQuery = "CREATE TABLE IF NOT EXISTS MyLibrary(Id INTEGER PRIMARY KEY AUTOINCREMENT, Title TEXT, Publisher TEXT, InfoseekID INT, Rating REAL, InfoLink TEXT, MapLink TEXT, CustomLink TEXT, InlayLink TEXT, LoadingLink TEXT, InGame TEXT)";
-            ExecuteNonQuery(createQuery);
+            ExecuteNonQuery("CREATE TABLE IF NOT EXISTS MyLibrary(Id INTEGER PRIMARY KEY AUTOINCREMENT, Title TEXT, Publisher TEXT, InfoseekID INT, Rating REAL, InfoLink TEXT, MapLink TEXT, CustomLink TEXT, InlayLink TEXT, LoadingLink TEXT, InGame TEXT)");
         }
 
         /// <summary>
@@ -51,13 +49,13 @@ namespace ZeroWin
             try {
                 SQLiteConnection cnn = new SQLiteConnection(dbConnection);
                 cnn.Open();
-                SQLiteCommand mycommand = new SQLiteCommand(cnn);
-                mycommand.CommandText = sql;
+                SQLiteCommand mycommand = new SQLiteCommand(cnn) { CommandText = sql };
                 SQLiteDataReader reader = mycommand.ExecuteReader();
                 dt.Load(reader);
                 reader.Close();
                 cnn.Close();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new Exception(e.Message);
             }
             return dt;
@@ -71,8 +69,7 @@ namespace ZeroWin
         public int ExecuteNonQuery(string sql) {
             SQLiteConnection cnn = new SQLiteConnection(dbConnection);
             cnn.Open();
-            SQLiteCommand mycommand = new SQLiteCommand(cnn);
-            mycommand.CommandText = sql;
+            SQLiteCommand mycommand = new SQLiteCommand(cnn) { CommandText = sql };
             int rowsUpdated = mycommand.ExecuteNonQuery();
             cnn.Close();
             return rowsUpdated;
@@ -86,14 +83,10 @@ namespace ZeroWin
         public string ExecuteScalar(string sql) {
             SQLiteConnection cnn = new SQLiteConnection(dbConnection);
             cnn.Open();
-            SQLiteCommand mycommand = new SQLiteCommand(cnn);
-            mycommand.CommandText = sql;
+            SQLiteCommand mycommand = new SQLiteCommand(cnn) {CommandText = sql};
             object value = mycommand.ExecuteScalar();
             cnn.Close();
-            if (value != null) {
-                return value.ToString();
-            }
-            return "";
+            return value?.ToString() ?? "";
         }
 
         /// <summary>
@@ -108,13 +101,14 @@ namespace ZeroWin
             Boolean returnCode = true;
             if (data.Count >= 1) {
                 foreach (KeyValuePair<String, String> val in data) {
-                    vals += String.Format(" {0} = '{1}',", val.Key.ToString(), val.Value.ToString());
+                    vals += String.Format(" {0} = '{1}',", val.Key, val.Value);
                 }
                 vals = vals.Substring(0, vals.Length - 1);
             }
             try {
-                this.ExecuteNonQuery(String.Format("update {0} set {1} where {2};", tableName, vals, where));
-            } catch {
+                ExecuteNonQuery(String.Format("update {0} set {1} where {2};", tableName, vals, where));
+            }
+            catch {
                 returnCode = false;
             }
             return returnCode;
@@ -129,8 +123,9 @@ namespace ZeroWin
         public bool Delete(String tableName, String where) {
             Boolean returnCode = true;
             try {
-                this.ExecuteNonQuery(String.Format("delete from {0} where {1};", tableName, where));
-            } catch (Exception fail) {
+                ExecuteNonQuery(String.Format("delete from {0} where {1};", tableName, where));
+            }
+            catch (Exception fail) {
                 MessageBox.Show(fail.Message);
                 returnCode = false;
             }
@@ -148,14 +143,15 @@ namespace ZeroWin
             String values = "";
             Boolean returnCode = true;
             foreach (KeyValuePair<String, String> val in data) {
-                columns += String.Format(" {0},", val.Key.ToString());
+                columns += String.Format(" {0},", val.Key);
                 values += String.Format(" '{0}',", val.Value);
             }
             columns = columns.Substring(0, columns.Length - 1);
             values = values.Substring(0, values.Length - 1);
             try {
-                this.ExecuteNonQuery(String.Format("insert into {0}({1}) values({2});", tableName, columns, values));
-            } catch (Exception fail) {
+                ExecuteNonQuery(String.Format("insert into {0}({1}) values({2});", tableName, columns, values));
+            }
+            catch (Exception fail) {
                 MessageBox.Show(fail.Message);
                 returnCode = false;
             }
@@ -167,14 +163,14 @@ namespace ZeroWin
         /// </summary>
         /// <returns>A boolean true or false to signify success or failure.</returns>
         public bool ClearDB() {
-            DataTable tables;
             try {
-                tables = this.GetDataTable("select NAME from SQLITE_MASTER where type='table' order by NAME;");
+                DataTable tables = GetDataTable("select NAME from SQLITE_MASTER where type='table' order by NAME;");
                 foreach (DataRow table in tables.Rows) {
-                    this.ClearTable(table["NAME"].ToString());
+                    ClearTable(table["NAME"].ToString());
                 }
                 return true;
-            } catch {
+            }
+            catch {
                 return false;
             }
         }
@@ -187,9 +183,10 @@ namespace ZeroWin
         public bool ClearTable(String table) {
             try {
 
-                this.ExecuteNonQuery(String.Format("delete from {0};", table));
+                ExecuteNonQuery(String.Format("delete from {0};", table));
                 return true;
-            } catch {
+            }
+            catch {
                 return false;
             }
         }

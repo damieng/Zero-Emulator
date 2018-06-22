@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using ZeroWin;
 using Peripherals;
 using Speccy;
 
@@ -12,21 +13,13 @@ namespace ZeroWin
         public Form1 ziggyWin;
         private string tapFileName;
         public bool tapePresent = false;
-        public bool isPlaying = false;
-        private bool tapeIsInserted;
-        private bool tapFileOpen = false;
-        private bool isPauseBlockPreproccess = false; //To ensure previous edge is finished correctly
-        private TapeInfo tapeInfo = new TapeInfo();
+        public bool isPlaying;
+        private bool tapFileOpen;
+        private readonly TapeInfo tapeInfo = new TapeInfo();
 
         public bool DoTapeAutoStart {
-            get {
-
-                return autoPlayStopToolStripMenuItem.Checked;
-            }
-
-            set {
-                autoPlayStopToolStripMenuItem.Checked = value;
-            }
+            get => autoPlayStopToolStripMenuItem.Checked;
+            set => autoPlayStopToolStripMenuItem.Checked = value;
         }
 
         public bool DoAutoTapeLoad {
@@ -69,9 +62,7 @@ namespace ZeroWin
             }
         }
 
-        public bool TapeIsInserted {
-            get { return tapeIsInserted; }
-        }
+        public bool TapeIsInserted { get; private set; }
 
         private int progressStep = 10;
 
@@ -79,7 +70,7 @@ namespace ZeroWin
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             ziggyWin = zw;
             SetStyle(ControlStyles.UserPaint, true);
@@ -90,15 +81,15 @@ namespace ZeroWin
         }
 
         public void RegisterEventHooks() {
-            ziggyWin.zx.TapeEvent += new TapeEventHandler(Deck_TapeEvent);
+            ziggyWin.zx.TapeEvent += Deck_TapeEvent;
             ziggyWin.zx.tape_edgeLoad = edgeLoadToolStripMenuItem.Checked;
             ziggyWin.zx.tape_AutoPlay = autoPlayStopToolStripMenuItem.Checked;
-            ziggyWin.zx.tape_readToPlay = tapeIsInserted;
+            ziggyWin.zx.tape_readToPlay = TapeIsInserted;
             ziggyWin.zx.tape_flashLoad = instaLoadToolStripMenuItem.Checked;
         }
 
         public void UnRegisterEventHooks() {
-            ziggyWin.zx.TapeEvent -= new TapeEventHandler(Deck_TapeEvent);
+            ziggyWin.zx.TapeEvent -= Deck_TapeEvent;
         }
 
         private void dataGridView1_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e) {
@@ -112,7 +103,7 @@ namespace ZeroWin
         }
 
         private void SaveTAP() {
-            if (!tapFileOpen && tapeIsInserted)
+            if (!tapFileOpen && TapeIsInserted)
                 ejectButton_Click(this, null);
 
             if (!tapFileOpen) {
@@ -122,12 +113,12 @@ namespace ZeroWin
                 saveFileDialog1.Filter = "TAP Tape|*.tap";
                 saveFileDialog1.OverwritePrompt = false;
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK) {
-                    if (System.IO.File.Exists(saveFileDialog1.FileName)) {
+                    if (File.Exists(saveFileDialog1.FileName)) {
                         DialogResult result = MessageBox.Show("Do you wish to append to this file? Choose Yes to append, No to create a new file or Cancel to erm... cancel this operation.", "File already exists", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
-                        if (result == System.Windows.Forms.DialogResult.No) {
-                            System.IO.FileStream fs = System.IO.File.Create(saveFileDialog1.FileName);
+                        if (result == DialogResult.No) {
+                            FileStream fs = File.Create(saveFileDialog1.FileName);
                             fs.Close();
-                        } else if (result == System.Windows.Forms.DialogResult.Cancel)
+                        } else if (result == DialogResult.Cancel)
                             return;
                     }
                     tapFileName = saveFileDialog1.FileName;
@@ -136,8 +127,8 @@ namespace ZeroWin
             }
 
             if (tapFileOpen) {
-                using (System.IO.FileStream tapFile = new System.IO.FileStream(tapFileName, System.IO.FileMode.Append)) {
-                    using (System.IO.BinaryWriter r = new System.IO.BinaryWriter(tapFile)) {
+                using (FileStream tapFile = new FileStream(tapFileName, FileMode.Append)) {
+                    using (BinaryWriter r = new BinaryWriter(tapFile)) {
                         int blockID = ziggyWin.zx._AF >> 8; //block ID in A register
                         int startAddr = ziggyWin.zx.IX;     //start address in IX
                         int tapLength = ziggyWin.zx.DE;     //Length of data in DE
@@ -146,7 +137,7 @@ namespace ZeroWin
                         r.Write((short)(tapLength + 2));
                         r.Write((byte)(blockID));
                         for (int f = startAddr; f < (startAddr + tapLength); f++) {
-                            byte data = (byte)(ziggyWin.zx.PeekByteNoContend(f));
+                            byte data = ziggyWin.zx.PeekByteNoContend(f);
                             r.Write(data);
                             checksum = checksum ^ data;
                         }
@@ -165,11 +156,11 @@ namespace ZeroWin
             InsertTape(tapFileName);
         }
 
-        public void Deck_TapeEvent(Object sender, Speccy.TapeEventArgs e) {
-            if (!tapeIsInserted && e.EventType != Speccy.TapeEventType.SAVE_TAP && e.EventType != Speccy.TapeEventType.CLOSE_TAP)
+        public void Deck_TapeEvent(Object sender, TapeEventArgs e) {
+            if (!TapeIsInserted && e.EventType != TapeEventType.SAVE_TAP && e.EventType != TapeEventType.CLOSE_TAP)
                 return;
             
-            if (e.EventType == Speccy.TapeEventType.STOP_TAPE) //stop
+            if (e.EventType == TapeEventType.STOP_TAPE) //stop
             {
                 ziggyWin.zx.SetEmulationSpeed(ziggyWin.config.EmulationSpeed);
                 ziggyWin.ShowTapeIndicator = false;
@@ -179,18 +170,18 @@ namespace ZeroWin
                 progressStep = 0;
                 progressBar1.Refresh();
                 statusStrip1.Items[0].Text = "Tape stopped.";
-                if (ziggyWin.zx.keyBuffer[(int)ZeroWin.Form1.keyCode.ALT])
+                if (ziggyWin.zx.keyBuffer[(int)Form1.keyCode.ALT])
                     ziggyWin.saveSnapshotMenuItem_Click(this, null);
             } 
-            else if (e.EventType == Speccy.TapeEventType.SAVE_TAP) //Save TAP
+            else if (e.EventType == TapeEventType.SAVE_TAP) //Save TAP
             {
                 SaveTAP();
             } 
-            else if (e.EventType == Speccy.TapeEventType.CLOSE_TAP) //Close TAP
+            else if (e.EventType == TapeEventType.CLOSE_TAP) //Close TAP
             {
                 CloseTAP();
-            } else if (e.EventType == Speccy.TapeEventType.START_TAPE) {
-                if (!tapeIsInserted)
+            } else if (e.EventType == TapeEventType.START_TAPE) {
+                if (!TapeIsInserted)
                     return;
 
                 isPlaying = true;
@@ -252,12 +243,12 @@ namespace ZeroWin
                     string tapeText = String.Format("Publisher\t: {0}\r\nAuthor(s)\t: ", info.Publisher);
    
                     if (info.Title != null)
-                        this.Text = info.Title;
+                        Text = info.Title;
                     else {
                         //Extract the filename from the path to display as tape name
                         string[] filePath = filename.Split('\\');
-                        this.Text = filePath[filePath.Length - 1];
-                        this.Text = this.Text.Substring(0, this.Text.Length - 4); //drop extension
+                        Text = filePath[filePath.Length - 1];
+                        Text = Text.Substring(0, Text.Length - 4); //drop extension
                     }
 
                     for (int f = 0; f < info.Authors.Count; f++) {
@@ -276,12 +267,12 @@ namespace ZeroWin
             }
         }
 
-        public void InsertTape(string filename, System.IO.Stream fs) {
+        public void InsertTape(string filename, Stream fs) {
             ejectButton_Click(this, null);
             ziggyWin.zx.tapeIsPlaying = false;
             PZXFile.LoadPZX(fs);
             ReadTape(filename);
-            tapeIsInserted = true;
+            TapeIsInserted = true;
             ziggyWin.zx.tape_readToPlay = true;
             ziggyWin.zx.tapeFilename = filename;
             ziggyWin.zx.blockCounter = 0;
@@ -292,7 +283,7 @@ namespace ZeroWin
             ziggyWin.zx.tapeIsPlaying = false;
             PZXFile.LoadPZX(filename);
             ReadTape(filename);
-            tapeIsInserted = true;
+            TapeIsInserted = true;
             ziggyWin.zx.tape_readToPlay = true;
             ziggyWin.zx.tapeFilename = filename;
             ziggyWin.zx.blockCounter = 0;
@@ -300,11 +291,10 @@ namespace ZeroWin
 
         private void loadButton_Click(object sender, EventArgs e) {
             ziggyWin.openFileMenuItem1_Click(this, e);
-            return;
         }
 
         private void playButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
 
             isPlaying = true;
@@ -329,16 +319,15 @@ namespace ZeroWin
                 ziggyWin.zx.blockCounter = 0;
 
             ziggyWin.zx.NextPZXBlock();
-            return;
         }
 
         private void TapeDeck_FormClosing(object sender, FormClosingEventArgs e) {
             e.Cancel = true;
-            this.Hide();
+            Hide();
         }
 
         private void ejectButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
             dataGridView1.DataSource = null;
             PZXFile.blocks.Clear();
@@ -348,14 +337,14 @@ namespace ZeroWin
             tapeInfo.SetText("");
             ziggyWin.zx.TapeStopped(true);
             ziggyWin.zx.ResetTapeEdgeDetector();
-            tapeIsInserted = false;
+            TapeIsInserted = false;
             tapFileOpen = false;
             ziggyWin.zx.tape_readToPlay = false;
             ziggyWin.zx.tapeFilename = "";
         }
 
         private void stopButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
             if (ziggyWin.zx.blockCounter > 0)
                 ziggyWin.zx.blockCounter = dataGridView1.Rows[ziggyWin.zx.blockCounter - 1].Index;
@@ -373,7 +362,7 @@ namespace ZeroWin
         }
 
         private void prevButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
 
             if (ziggyWin.zx.blockCounter > 0)
@@ -387,7 +376,7 @@ namespace ZeroWin
         }
 
         private void nextButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
 
             progressBar1.Value = 0;
@@ -402,7 +391,7 @@ namespace ZeroWin
         }
 
         private void rewindButton_Click(object sender, EventArgs e) {
-            if (!tapeIsInserted)
+            if (!TapeIsInserted)
                 return;
             ziggyWin.zx.TapeStopped(true);
             ziggyWin.zx.SetEmulationSpeed(ziggyWin.config.EmulationSpeed);
@@ -452,16 +441,16 @@ namespace ZeroWin
 
         public bool SavePZX(string filename) {
             bool success = false;
-            using (System.IO.FileStream file = new System.IO.FileStream(filename, System.IO.FileMode.Create)) {
-                using (System.IO.BinaryWriter r = new System.IO.BinaryWriter(file)) {
+            using (FileStream file = new FileStream(filename, FileMode.Create)) {
+                using (BinaryWriter r = new BinaryWriter(file)) {
                     try {
                         foreach (PZXFile.Block block in PZXFile.blocks) {
                             byte[] data = RawSerialize(block);
                             r.Write(data);
                         }
                         success = true;
-                    } catch (System.IO.IOException) {
-                        System.Windows.Forms.MessageBox.Show("Error while saving", "Error", System.Windows.Forms.MessageBoxButtons.OK);
+                    } catch (IOException) {
+                        MessageBox.Show("Error while saving", "Error", MessageBoxButtons.OK);
                     }
                 }
             }
@@ -480,7 +469,7 @@ namespace ZeroWin
 
         private void autoStartCheckBox_Click(object sender, EventArgs e) {
             if (!autoPlayStopToolStripMenuItem.Checked && !edgeLoadToolStripMenuItem.Checked) {
-                if (MessageBox.Show("Auto Play/Stop relies on Edge Loading, which is currently disabled. Do you wish to turn it on?", "Enable Edge Loading?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation) == System.Windows.Forms.DialogResult.Yes)
+                if (MessageBox.Show("Auto Play/Stop relies on Edge Loading, which is currently disabled. Do you wish to turn it on?", "Enable Edge Loading?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation) == DialogResult.Yes)
                     edgeLoadToolStripMenuItem.Checked = true;
                 else
                     return;

@@ -12,7 +12,7 @@ namespace ZeroWin
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Form1 form = new Form1();
-            Application.Idle += new System.EventHandler(form.OnApplicationIdle);
+            Application.Idle += form.OnApplicationIdle;
 
             Application.Run(form);
         }

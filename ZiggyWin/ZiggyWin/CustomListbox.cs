@@ -5,6 +5,7 @@
 //The default list box can only draw 1 column, hence the need for the customListBox.
 
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -13,41 +14,41 @@ namespace ZeroWin
     public delegate void ImageChangedEvent(object sender);
     public class CustomListbox : ListBox
     {
-        private Font customBoldFont = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold);
-        private Font customRegularFont = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, 10);
+        private readonly Font customBoldFont = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold);
+        private readonly Font customRegularFont = new Font(SystemFonts.MessageBoxFont.FontFamily, 10);
 
         public CustomListbox() {
-            this.DrawMode = DrawMode.OwnerDrawFixed;
-            this.BorderStyle = BorderStyle.Fixed3D;
-            this.DoubleBuffered = true;
-            this.HorizontalScrollbar = true;
-            this.SelectionMode = SelectionMode.One;
-            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
-            this.IntegralHeight = true;
-            this.Font = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, 8);
+            DrawMode = DrawMode.OwnerDrawFixed;
+            BorderStyle = BorderStyle.Fixed3D;
+            DoubleBuffered = true;
+            HorizontalScrollbar = true;
+            SelectionMode = SelectionMode.One;
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+            IntegralHeight = true;
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 8);
         }
 
         public void UpdateImageOnChange(Object sender) {
-            this.Invalidate(this.GetItemRectangle(((CustomListItem)sender).Index));
+            Invalidate(GetItemRectangle(((CustomListItem)sender).Index));
         }
 
         protected override void OnSelectedIndexChanged(EventArgs e) {
             //base.OnSelectedIndexChanged(e);
-            this.Invalidate();
+            Invalidate();
         }
 
         //Flicker Free!
         protected override void OnPaint(PaintEventArgs e) {
             Region iRegion = new Region(e.ClipRectangle);
-            e.Graphics.FillRegion(new SolidBrush(this.BackColor), iRegion);
-            if (this.Items.Count > 0) {
-                for (int i = 0; i < this.Items.Count; ++i) {
-                    System.Drawing.Rectangle irect = this.GetItemRectangle(i);
+            e.Graphics.FillRegion(new SolidBrush(BackColor), iRegion);
+            if (Items.Count > 0) {
+                for (int i = 0; i < Items.Count; ++i) {
+                    Rectangle irect = GetItemRectangle(i);
                     if (e.ClipRectangle.IntersectsWith(irect)) {
-                        OnDrawItem(new DrawItemEventArgs(e.Graphics, this.Font,
+                        OnDrawItem(new DrawItemEventArgs(e.Graphics, Font,
                             irect, i,
-                            DrawItemState.Default, this.ForeColor,
-                            this.BackColor));
+                            DrawItemState.Default, ForeColor,
+                            BackColor));
                     }
                     iRegion.Complement(irect);
                 }
@@ -57,7 +58,7 @@ namespace ZeroWin
         }
 
         protected override void OnDrawItem(DrawItemEventArgs e) {
-            CustomListItem item = (e.Index < 0 || this.DesignMode ? null : Items[e.Index] as CustomListItem);
+            CustomListItem item = (e.Index < 0 || DesignMode ? null : Items[e.Index] as CustomListItem);
             //bool draw = imageList != null && (item != null);
             if (item != null) {
                 CheckHorizontalScroll(e.Graphics, customBoldFont);
@@ -65,18 +66,14 @@ namespace ZeroWin
                 base.OnDrawItem(e);
 
                 Size imageSize = item.Pic.Size;
-                if (this.ItemHeight != imageSize.Height + 2)
-                    this.ItemHeight = imageSize.Height + 4;
+                if (ItemHeight != imageSize.Height + 2)
+                    ItemHeight = imageSize.Height + 4;
 
                 Rectangle bounds = e.Bounds;
 
                 Color color = Color.Black;
 
-                SolidBrush brush;
-                if (item.Index == this.SelectedIndex) {
-                    brush = new SolidBrush(Color.LightSteelBlue);
-                } else
-                    brush = new SolidBrush(Color.LightBlue);
+                SolidBrush brush = item.Index == SelectedIndex ? new SolidBrush(Color.LightSteelBlue) : new SolidBrush(Color.LightBlue);
 
                 Pen pen = new Pen(Color.White);
 
@@ -89,7 +86,6 @@ namespace ZeroWin
                 int textCount = 0;
 
                 foreach (String s in item.textList) {
-                    Rectangle itemBound = new Rectangle(bounds.Left, this.ItemHeight * textCount, bounds.Width, this.ItemHeight * textCount + this.ItemHeight);
                     e.Graphics.DrawString(s, (textCount == 0 ? customBoldFont : customRegularFont), new SolidBrush(color), item.Pic.Width + 5, bounds.Top + 5 + textCount * (e.Font.Size + 6));
                     textCount++;
                 }
@@ -99,12 +95,11 @@ namespace ZeroWin
         protected void CheckHorizontalScroll(Graphics g, Font f) {
             // Determine the size for HorizontalExtent using the MeasureString method using the last item in the list.
             int maxWidth = 0;
-            int hzSize = 0;
             int maxImageWidth = 0;
-            foreach (CustomListItem item in this.Items) {
+            foreach (CustomListItem item in Items) {
                 maxImageWidth = item.Pic.Width;
                 //first check name
-                hzSize = (int)g.MeasureString(item.textList[0], f).Width;
+                var hzSize = (int)g.MeasureString(item.textList[0], f).Width;
                 if (hzSize > maxWidth)
                     maxWidth = hzSize;
 
@@ -114,7 +109,7 @@ namespace ZeroWin
                     maxWidth = hzSize;
             }
             // Set the HorizontalExtent property.
-            this.HorizontalExtent = maxWidth + maxImageWidth;
+            HorizontalExtent = maxWidth + maxImageWidth;
         }
     }
 
@@ -128,9 +123,9 @@ namespace ZeroWin
 
         public event ImageChangedEvent ImageChangedEventHandler;
 
-        protected virtual void OnImageChangedEvent() {
-            if (ImageChangedEventHandler != null)
-                ImageChangedEventHandler(this);
+        protected virtual void OnImageChangedEvent()
+        {
+            ImageChangedEventHandler?.Invoke(this);
         }
 
         public CustomListItem()
@@ -139,7 +134,7 @@ namespace ZeroWin
 
         public void RemoveEventHandlers() {
             // this.SetImageChangedHandler(null);
-            Pic.LoadCompleted -= new System.ComponentModel.AsyncCompletedEventHandler(Pic_LoadCompleted);
+            Pic.LoadCompleted -= Pic_LoadCompleted;
         }
 
         public CustomListItem(String _text)
@@ -149,15 +144,15 @@ namespace ZeroWin
         public CustomListItem(int _index, String _text) {
             Index = _index;
             textList.Add(_text);
-            Pic.Image = ZeroWin.Properties.Resources.NoImage;
+            Pic.Image = Properties.Resources.NoImage;
             // Pic.ImageLocation = null;
             Pic.Width = 150;// 85;
             Pic.Height = 100;// 85;
             Pic.SizeMode = PictureBoxSizeMode.StretchImage;
-            Pic.LoadCompleted += new System.ComponentModel.AsyncCompletedEventHandler(Pic_LoadCompleted);
+            Pic.LoadCompleted += Pic_LoadCompleted;
         }
 
-        private void Pic_LoadCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e) {
+        private void Pic_LoadCompleted(object sender, AsyncCompletedEventArgs e) {
             OnImageChangedEvent();
         }
 
@@ -171,7 +166,7 @@ namespace ZeroWin
         }
 
         public void SetImageChangedHandler(ImageChangedEvent eventHandler) {
-            this.ImageChangedEventHandler += new ImageChangedEvent(eventHandler);
+            ImageChangedEventHandler += eventHandler;
         }
     }
 

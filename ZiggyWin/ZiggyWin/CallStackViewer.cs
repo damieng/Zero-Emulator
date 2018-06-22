@@ -4,7 +4,7 @@ namespace ZeroWin
 {
     public partial class CallStackViewer : Form
     {
-        private Monitor monitor = null;
+        private Monitor monitor;
 
         public CallStackViewer(Monitor _monitor) {
             InitializeComponent();

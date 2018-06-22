@@ -1,21 +1,18 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace ZeroWin
 {
     public partial class Options : Form
     {
-        private Form1 zwRef;
+        private readonly Form1 zwRef;
         private int currentModelIndex = -1;
-        private string current48kRom = "";
-        private string current128kRom = "";
-        private string current128keRom = "";
-        private string currentPlus3Rom = "";
-        private string currentPentagonRom = "";
         private bool stereoSound = true;
-        private bool ayFor48k = false;
-        private int joy1 = 0;
-        private int joy2 = 0;
+        private bool ayFor48k;
+        private int joy1;
+        private int joy2;
 
         #region Accessors
 
@@ -169,30 +166,14 @@ namespace ZeroWin
             set { gamePathTextBox.Text = value; }
         }
 
-        public String RomToUse48k {
-            get { return current48kRom; }
-            set { current48kRom = value; }
-        }
+        public String RomToUse48k { get; set; } = "";
 
-        public String RomToUse128k {
-            get { return current128kRom; }
-            set { current128kRom = value; }
-        }
+        public String RomToUse128k { get; set; } = "";
 
-        public String RomToUse128ke {
-            get { return current128keRom; }
-            set { current128keRom = value; }
-        }
+        public String RomToUse128ke { get; set; } = "";
+        public String RomToUsePlus3 { get; set; } = "";
 
-        public String RomToUsePlus3 {
-            get { return currentPlus3Rom; }
-            set { currentPlus3Rom = value; }
-        }
-
-        public String RomToUsePentagon {
-            get { return currentPentagonRom; }
-            set { currentPentagonRom = value; }
-        }
+        public String RomToUsePentagon { get; set; } = "";
 
         public bool FileAssociateSNA {
             get { return snaCheckBox.Checked; }
@@ -266,7 +247,7 @@ namespace ZeroWin
                 return false;
             }
             set {
-                if (value == true) {
+                if (value) {
                     issue2RadioButton.Checked = true;
                     issue3radioButton.Checked = false;
                 } else {
@@ -281,7 +262,7 @@ namespace ZeroWin
                 return directXRadioButton.Checked;
             }
             set {
-                if (value == true) {
+                if (value) {
                     directXRadioButton.Checked = true;
                     gdiRadioButton.Checked = false;
                     interlaceCheckBox.Enabled = true;
@@ -350,13 +331,13 @@ namespace ZeroWin
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             zwRef = parentRef;
         }
 
         private void Options_Load(object sender, EventArgs e) {
-            this.Location = new System.Drawing.Point(zwRef.Location.X + 20, zwRef.Location.Y + 20);
+            Location = new Point(zwRef.Location.X + 20, zwRef.Location.Y + 20);
             if (UseDirectX) {
                 interlaceCheckBox.Enabled = true;
                 pixelSmoothingCheckBox.Enabled = true;
@@ -376,27 +357,27 @@ namespace ZeroWin
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK) {
                 romTextBox.Text = openFileDialog1.SafeFileName;
-                RomPath = System.IO.Path.GetDirectoryName(openFileDialog1.FileName);
+                RomPath = Path.GetDirectoryName(openFileDialog1.FileName);
 
                 switch (currentModelIndex) {
                     case 0:
-                        current48kRom = romTextBox.Text;
+                        RomToUse48k = romTextBox.Text;
                         break;
 
                     case 1:
-                        current128kRom = romTextBox.Text;
+                        RomToUse128k = romTextBox.Text;
                         break;
 
                     case 2:
-                        current128keRom = romTextBox.Text;
+                        RomToUse128ke = romTextBox.Text;
                         break;
 
                     case 3:
-                        currentPlus3Rom = romTextBox.Text;
+                        RomToUsePlus3 = romTextBox.Text;
                         break;
 
                     case 4:
-                        currentPentagonRom = romTextBox.Text;
+                        RomToUsePentagon = romTextBox.Text;
                         break;
                 }
             }
@@ -432,10 +413,10 @@ namespace ZeroWin
                         romInUse = RomToUsePentagon;
                         break;
                 }
-                if (!System.IO.File.Exists(folderBrowserDialog1.SelectedPath + "\\" + romInUse)) {
-                    System.Windows.Forms.MessageBox.Show("The current ROM couldn't be found in this path.\n\nEnsure this path is correct, or specify a new ROM \nin the Hardware section.",
-                             "File Warning", System.Windows.Forms.MessageBoxButtons.OK,
-                             System.Windows.Forms.MessageBoxIcon.Warning);
+                if (!File.Exists(folderBrowserDialog1.SelectedPath + "\\" + romInUse)) {
+                    MessageBox.Show("The current ROM couldn't be found in this path.\n\nEnsure this path is correct, or specify a new ROM \nin the Hardware section.",
+                             "File Warning", MessageBoxButtons.OK,
+                             MessageBoxIcon.Warning);
                 }
 
                 RomPath = folderBrowserDialog1.SelectedPath;
@@ -443,9 +424,9 @@ namespace ZeroWin
         }
 
         private void defaultSettingsButton_Click(object sender, EventArgs e) {
-            if (System.Windows.Forms.MessageBox.Show("This will cause you to lose all your current settings!\nAre you sure you want to revert to default settings?",
-                          "Confirm settings reset", System.Windows.Forms.MessageBoxButtons.YesNo,
-                          System.Windows.Forms.MessageBoxIcon.Question) == DialogResult.Yes) {
+            if (MessageBox.Show("This will cause you to lose all your current settings!\nAre you sure you want to revert to default settings?",
+                          "Confirm settings reset", MessageBoxButtons.YesNo,
+                          MessageBoxIcon.Question) == DialogResult.Yes) {
 
                 #region old default method
 
@@ -573,45 +554,45 @@ namespace ZeroWin
         private void modelComboBox_SelectedIndexChanged(object sender, EventArgs e) {
             switch (currentModelIndex) {
                 case 0:
-                    current48kRom = romTextBox.Text;
+                    RomToUse48k = romTextBox.Text;
                     break;
 
                 case 1:
-                    current128kRom = romTextBox.Text;
+                    RomToUse128k = romTextBox.Text;
                     break;
 
                 case 2:
-                    current128keRom = romTextBox.Text;
+                    RomToUse128ke = romTextBox.Text;
                     break;
 
                 case 3:
-                    currentPlus3Rom = romTextBox.Text;
+                    RomToUsePlus3 = romTextBox.Text;
                     break;
 
                 case 4:
-                    currentPentagonRom = romTextBox.Text;
+                    RomToUsePentagon = romTextBox.Text;
                     break;
             }
 
             switch (modelComboBox.SelectedIndex) {
                 case 0:
-                    romTextBox.Text = current48kRom;
+                    romTextBox.Text = RomToUse48k;
                     break;
 
                 case 1:
-                    romTextBox.Text = current128kRom;
+                    romTextBox.Text = RomToUse128k;
                     break;
 
                 case 2:
-                    romTextBox.Text = current128keRom;
+                    romTextBox.Text = RomToUse128ke;
                     break;
 
                 case 3:
-                    romTextBox.Text = currentPlus3Rom;
+                    romTextBox.Text = RomToUsePlus3;
                     break;
 
                 case 4:
-                    romTextBox.Text = currentPentagonRom;
+                    romTextBox.Text = RomToUsePentagon;
                     break;
             }
 
@@ -681,9 +662,6 @@ namespace ZeroWin
             button1.Enabled = Joystick1Choice > 0;
         }
 
-        private void checkBox1_CheckedChanged(object sender, EventArgs e) {
-        }
-
         private void emulationSpeedTrackBar_Scroll(object sender, EventArgs e) {
             toolTip1.SetToolTip(emulationSpeedTrackBar, "Speed  " + emulationSpeedTrackBar.Value + "%");
         }
@@ -708,11 +686,11 @@ namespace ZeroWin
         }
 
         private void button1_Click(object sender, EventArgs e) {
-            if (this.zwRef.joystick1.isInitialized)
-                this.zwRef.joystick1.Release();
-            this.zwRef.joystick1 = new JoystickController();
-            this.zwRef.joystick1.InitJoystick(this.zwRef, Joystick1Choice - 1);
-            JoystickRemap jsRemap = new JoystickRemap(this.zwRef, this.zwRef.joystick1);
+            if (zwRef.joystick1.isInitialized)
+                zwRef.joystick1.Release();
+            zwRef.joystick1 = new JoystickController();
+            zwRef.joystick1.InitJoystick(zwRef, Joystick1Choice - 1);
+            JoystickRemap jsRemap = new JoystickRemap(zwRef, zwRef.joystick1);
             jsRemap.ShowDialog();
         }
     }

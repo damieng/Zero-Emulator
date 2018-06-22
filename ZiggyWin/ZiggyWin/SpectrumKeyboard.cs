@@ -5,7 +5,7 @@ namespace ZeroWin
 {
     public partial class SpectrumKeyboard : Form
     {
-        private Form1 ziggyWin;
+        private readonly Form1 ziggyWin;
 
         public SpectrumKeyboard(Form1 _zw) {
             InitializeComponent();

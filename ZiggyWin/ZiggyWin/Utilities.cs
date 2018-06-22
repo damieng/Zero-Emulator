@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.ComponentModel;
-using System.Runtime.InteropServices;
+using System.Globalization;
 using System.IO;
+using System.Reflection;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
@@ -16,10 +17,7 @@ namespace ZeroWin
             DescriptionAttribute[] attributes =
                 (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
 
-            if (attributes != null && attributes.Length > 0)
-                return attributes[0].Description;
-            else
-                return value.ToString();
+            return attributes.Length > 0 ? attributes[0].Description : value.ToString();
         }
 
         public static T GetEnumFromString<T>(string s, T defaultValue) where T: struct
@@ -60,16 +58,10 @@ namespace ZeroWin
         }
 
         public static int ConvertToInt(string input) {
-            bool validInput = false;
-            int number = -1;
-
-            if (input[0] == '$')
-                validInput = System.Int32.TryParse(input.Substring(1, input.Length - 1), System.Globalization.NumberStyles.HexNumber, null, out number);
-            else
-                validInput = System.Int32.TryParse(input, out number);
+            var validInput = input[0] == '$' ? Int32.TryParse(input.Substring(1, input.Length - 1), NumberStyles.HexNumber, null, out var number) : Int32.TryParse(input, out number);
 
             if (!validInput) {
-                System.Windows.Forms.MessageBox.Show("Your input doesn't seem to be a valid number.", "Invalid input", System.Windows.Forms.MessageBoxButtons.OK);
+                MessageBox.Show("Your input doesn't seem to be a valid number.", "Invalid input", MessageBoxButtons.OK);
                 number = -1;
             }
 

@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Drawing.Drawing2D;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
@@ -6,7 +7,7 @@ namespace ZeroWin
     {
         public pane() {
             InitializeComponent();
-            this.DoubleBuffered = true;
+            DoubleBuffered = true;
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
 
@@ -15,7 +16,7 @@ namespace ZeroWin
 
         protected override void OnPaintBackground(PaintEventArgs e) {
             //Do not paint background
-            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
             base.OnPaintBackground(e);
         }
 

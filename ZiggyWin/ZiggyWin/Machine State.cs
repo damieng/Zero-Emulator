@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Drawing;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
@@ -8,12 +9,12 @@ namespace ZeroWin
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
         }
 
         public void RefreshView(Form1 ziggyWin) {
-            this.Text = ziggyWin.config.CurrentSpectrumModel;
+            Text = ziggyWin.config.CurrentSpectrumModel;
             tStateLabel.Text = ziggyWin.zx.totalTStates.ToString();
             frameLengthLabel.Text = ziggyWin.zx.FrameLength.ToString();
             pagingCheckBox.Checked = !ziggyWin.zx.pagingDisabled;

@@ -8,43 +8,40 @@ namespace ZeroWin
 {
     public partial class Breakpoints : Form
     {
-        private Monitor monitor = null;
+        private readonly Monitor monitor;
 
         public Breakpoints(Monitor _monitor) {
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
 
             monitor = _monitor;
             dataGridView2.ColumnHeadersBorderStyle = Monitor.ProperColumnHeadersBorderStyle;
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 =
-                new System.Windows.Forms.DataGridViewCellStyle();
 
             //Define Header Style
-            dataGridViewCellStyle2.Alignment =
-                System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle2.BackColor =  Control.DefaultBackColor;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas",
-                8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = Control.DefaultBackColor;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.WrapMode =
-                System.Windows.Forms.DataGridViewTriState.False;
-
-            //Apply Header Style
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                BackColor = DefaultBackColor,
+                Font = new Font("Consolas", 8F, FontStyle.Regular, GraphicsUnit.Point, 0),
+                ForeColor = SystemColors.WindowText,
+                SelectionBackColor = DefaultBackColor,
+                SelectionForeColor = SystemColors.WindowText,
+                WrapMode = DataGridViewTriState.False
+            };
             dataGridView2.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
 
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas",
-                8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                BackColor = SystemColors.ControlLightLight,
+                Font = new Font("Consolas", 8F, FontStyle.Regular, GraphicsUnit.Point, 0),
+                ForeColor = SystemColors.WindowText,
+                SelectionBackColor = SystemColors.Highlight,
+                SelectionForeColor = SystemColors.HighlightText
+            };
 
             dataGridView2.DefaultCellStyle = dataGridViewCellStyle3;
 
@@ -53,25 +50,31 @@ namespace ZeroWin
             dataGridView2.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridView2.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
-            DataGridViewTextBoxColumn dgrid2ColCondition = new DataGridViewTextBoxColumn();
-            dgrid2ColCondition.HeaderText = "Condition";
-            dgrid2ColCondition.Name = "Condition";
-            dgrid2ColCondition.Width = 141;
-            dgrid2ColCondition.DataPropertyName = "Condition";
+            DataGridViewTextBoxColumn dgrid2ColCondition = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Condition",
+                Name = "Condition",
+                Width = 141,
+                DataPropertyName = "Condition"
+            };
             dataGridView2.Columns.Add(dgrid2ColCondition);
 
-            DataGridViewTextBoxColumn dgrid2ColAddress = new DataGridViewTextBoxColumn();
-            dgrid2ColAddress.HeaderText = "Address";
-            dgrid2ColAddress.Name = "Address";
-            dgrid2ColAddress.Width = 141;
-            dgrid2ColAddress.DataPropertyName = "AddressAsString";
+            DataGridViewTextBoxColumn dgrid2ColAddress = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Address",
+                Name = "Address",
+                Width = 141,
+                DataPropertyName = "AddressAsString"
+            };
             dataGridView2.Columns.Add(dgrid2ColAddress);
 
-            DataGridViewTextBoxColumn dgrid3ColData = new DataGridViewTextBoxColumn();
-            dgrid3ColData.HeaderText = "Value";
-            dgrid3ColData.Name = "Data";
-            dgrid3ColData.Width = 141;
-            dgrid3ColData.DataPropertyName = "DataAsString";
+            DataGridViewTextBoxColumn dgrid3ColData = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Value",
+                Name = "Data",
+                Width = 141,
+                DataPropertyName = "DataAsString"
+            };
             dataGridView2.Columns.Add(dgrid3ColData);
 
             dataGridView2.DataSource = monitor.breakPointConditions;
@@ -79,16 +82,14 @@ namespace ZeroWin
             //Setup the listbox for valid breakpoint registers
             foreach (SPECCY_EVENT speccyEvent in Utilities.EnumToList<SPECCY_EVENT>())
                 comboBox2.Items.Add(Utilities.GetStringFromEnum(speccyEvent));
-           
+
             comboBox2.SelectedIndex = 0;
             comboBox2_SelectedIndexChanged(this, null); //sanity check for case ULA port breakpoints are selected
         }
 
-        public void RefreshView(bool isHexView) {
-            if (isHexView)
-                this.dataGridView2.Columns[1].DefaultCellStyle.Format = "x2";
-            else
-                this.dataGridView2.Columns[1].DefaultCellStyle.Format = "";
+        public void RefreshView(bool isHexView)
+        {
+            dataGridView2.Columns[1].DefaultCellStyle.Format = isHexView ? "x2" : "";
         }
 
         private void clearSelectedButton_Click(object sender, EventArgs e) {
@@ -97,8 +98,6 @@ namespace ZeroWin
                 return;
 
             foreach (DataGridViewRow row in rowCollection) {
-                KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> kv;
-
                 //convert dashes (-) to -1 (int) where required,
                 //else convert the actual value to int.
                 int _addr = -1;
@@ -109,8 +108,8 @@ namespace ZeroWin
                 if ((String)row.Cells[2].Value != "-")
                     _val = Convert.ToInt32(row.Cells[2].Value);
 
-                SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString<SPECCY_EVENT>((string)row.Cells[0].Value, SPECCY_EVENT.OPCODE_PC);
-                kv = new KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition>(speccyEvent, new Monitor.BreakPointCondition(speccyEvent, _addr, _val));
+                SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString((string)row.Cells[0].Value, SPECCY_EVENT.OPCODE_PC);
+                KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> kv = new KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition>(speccyEvent, new Monitor.BreakPointCondition(speccyEvent, _addr, _val));
                 monitor.RemoveBreakpoint(kv);
             }
         }
@@ -124,34 +123,34 @@ namespace ZeroWin
                 return;
 
             int addr = -1;
-            int val = -1;
+            int val;
 
-            SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString<SPECCY_EVENT>(comboBox2.Text, SPECCY_EVENT.OPCODE_PC);
+            SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString(comboBox2.Text, SPECCY_EVENT.OPCODE_PC);
 
             if (comboBox2.SelectedIndex < 14) {
                 addr = Utilities.ConvertToInt(maskedTextBox2.Text);
 
                 if (addr > 65535) {
-                    System.Windows.Forms.MessageBox.Show("The address is not within 0 to 65535!", "Invalid input", MessageBoxButtons.OK);
+                    MessageBox.Show("The address is not within 0 to 65535!", "Invalid input", MessageBoxButtons.OK);
                     return;
                 }
-            } else if (speccyEvent == SPECCY_EVENT.ULA_WRITE || speccyEvent == SPECCY_EVENT.ULA_READ)
+            }
+            else if (speccyEvent == SPECCY_EVENT.ULA_WRITE || speccyEvent == SPECCY_EVENT.ULA_READ)
                 addr = 254; //0xfe
 
-
             if (maskedTextBox3.Text.Length > 0) {
-
                 val = Utilities.ConvertToInt(maskedTextBox3.Text);
 
                 if (val > 255) {
-                    System.Windows.Forms.MessageBox.Show("The value is not within 0 to 255!", "Invalid input", MessageBoxButtons.OK);
+                    MessageBox.Show("The value is not within 0 to 255!", "Invalid input", MessageBoxButtons.OK);
                     return;
                 }
-            } else
+            }
+            else
                 val = -1;
 
             string _str = comboBox2.SelectedItem.ToString();// +"@" + addr.ToString();
-            SPECCY_EVENT speccEventFromString = Utilities.GetEnumFromString<SPECCY_EVENT>(_str, SPECCY_EVENT.OPCODE_PC);
+            SPECCY_EVENT speccEventFromString = Utilities.GetEnumFromString(_str, SPECCY_EVENT.OPCODE_PC);
 
             KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> kv = new KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition>(speccEventFromString, new Monitor.BreakPointCondition(speccEventFromString, addr, val));
 
@@ -160,20 +159,19 @@ namespace ZeroWin
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e) {
             maskedTextBox3.Text = "";
-            SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString<SPECCY_EVENT>(comboBox2.Text, SPECCY_EVENT.OPCODE_PC);
-            if (speccyEvent == SPECCY_EVENT.ULA_WRITE || speccyEvent == SPECCY_EVENT.ULA_READ)
-            {
+            SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString(comboBox2.Text, SPECCY_EVENT.OPCODE_PC);
+            if (speccyEvent == SPECCY_EVENT.ULA_WRITE || speccyEvent == SPECCY_EVENT.ULA_READ) {
                 maskedTextBox2.Text = "$fe";
                 maskedTextBox2.ReadOnly = true;
                 maskedTextBox3.ReadOnly = false;
             }
-            else if (speccyEvent == SPECCY_EVENT.INTERRUPT || speccyEvent == SPECCY_EVENT.RE_INTERRUPT)
-            {
+            else if (speccyEvent == SPECCY_EVENT.INTERRUPT || speccyEvent == SPECCY_EVENT.RE_INTERRUPT) {
                 maskedTextBox2.Text = "";
 
                 maskedTextBox3.ReadOnly = true;
                 maskedTextBox2.ReadOnly = true;
-            } else {
+            }
+            else {
                 maskedTextBox3.ReadOnly = false;
                 maskedTextBox2.ReadOnly = false;
             }

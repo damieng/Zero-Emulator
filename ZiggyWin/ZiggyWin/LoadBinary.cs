@@ -1,45 +1,50 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using Speccy;
 
 namespace ZeroWin
 {
     public partial class LoadBinary : Form
     {
-        private Form1 ziggyWin;
-        private bool loadMode = true;
+        private readonly Form1 ziggyWin;
+        private readonly bool loadMode;
 
         public LoadBinary(Form1 zw, bool lm) {
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             loadMode = lm;
             ziggyWin = zw;
             if (loadMode) {
                 label3.Visible = false;
                 maskedTextBox2.Visible = false;
-                this.Text = "Load Binary";
+                Text = "Load Binary";
                 button2.Text = "Load";
-                if (zw.zx.model == Speccy.MachineModel._48k) {
+                if (zw.zx.model == MachineModel._48k) {
                     addressRadioButton.Checked = true;
                     ramPageRadioButton.Enabled = false;
                     pageComboBox.Enabled = false;
-                } else {
+                }
+                else {
                     ramPageRadioButton.Checked = true;
                     pageComboBox.SelectedIndex = 0;
                 }
-            } else {
+            }
+            else {
                 maskedTextBox2.Visible = true;
-                this.Text = "Save Binary";
+                Text = "Save Binary";
                 button2.Text = "Save";
 
-                if (zw.zx.model == Speccy.MachineModel._48k) {
+                if (zw.zx.model == MachineModel._48k) {
                     addressRadioButton.Checked = true;
                     ramPageRadioButton.Enabled = false;
                     pageComboBox.Enabled = false;
-                } else {
+                }
+                else {
                     ramPageRadioButton.Checked = true;
                     pageComboBox.SelectedIndex = 0;
                 }
@@ -48,13 +53,12 @@ namespace ZeroWin
         }
 
         private void button2_Click(object sender, EventArgs e) {
-          
+
             if (loadMode) {
                 int start = 16384;
                 if (addressRadioButton.Checked) {
 
-                    if (string.IsNullOrEmpty(maskedTextBox1.Text))
-                    {
+                    if (string.IsNullOrEmpty(maskedTextBox1.Text)) {
                         MessageBox.Show("Enter a valid address from 0 to 65535.", "Invalid address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
@@ -72,7 +76,8 @@ namespace ZeroWin
                 //Check if we can find the ROM file!
                 try {
                     fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                } catch {
+                }
+                catch {
                     MessageBox.Show("Couldn't load file! Aborting.", "File invalid", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -95,7 +100,7 @@ namespace ZeroWin
                             end = 65536;
 
                         ziggyWin.zx.PokeBytesNoContend(start, 0, end - start, buffer);
-                    } 
+                    }
                     else {
                         int end = bytesRead;
 
@@ -107,14 +112,13 @@ namespace ZeroWin
                 }
                 MessageBox.Show("Binary file loaded successfully.", "File loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 fs.Close();
-            } 
+            }
             else {
                 int start = 16384;
-                int end = 16384;
+                int end;
                 if (addressRadioButton.Checked) {
 
-                    if (string.IsNullOrEmpty(maskedTextBox1.Text))
-                    {
+                    if (string.IsNullOrEmpty(maskedTextBox1.Text)) {
                         MessageBox.Show("Enter a valid address from 0 to 65535.", "Invalid address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
@@ -125,8 +129,7 @@ namespace ZeroWin
                         return;
                     }
 
-                    if (string.IsNullOrEmpty(maskedTextBox2.Text))
-                    {
+                    if (string.IsNullOrEmpty(maskedTextBox2.Text)) {
                         MessageBox.Show("Enter a valid length from 0 to 65535.", "Invalid Length", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
@@ -137,12 +140,9 @@ namespace ZeroWin
                         MessageBox.Show("Far too many bytes to write than that exist in memory!", "Invalid address range", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                } else {
-
-                    if (string.IsNullOrEmpty(maskedTextBox2.Text))
-                        end = 16384;
-                    else
-                        end = Convert.ToInt32(maskedTextBox2.Text);
+                }
+                else {
+                    end = string.IsNullOrEmpty(maskedTextBox2.Text) ? 16384 : Convert.ToInt32(maskedTextBox2.Text);
 
                     if (end > 16384)
                         end = 16384;
@@ -153,7 +153,8 @@ namespace ZeroWin
 
                 try {
                     fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
-                } catch {
+                }
+                catch {
                     MessageBox.Show("Couldn't create file! Aborting.", "File error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -161,14 +162,14 @@ namespace ZeroWin
                 using (BinaryWriter r = new BinaryWriter(fs)) {
                     if (addressRadioButton.Checked) {
                         for (int f = start; f < end; f++)
-                            r.Write((byte)ziggyWin.zx.PeekByteNoContend(f));
-                    } else {
+                            r.Write(ziggyWin.zx.PeekByteNoContend(f));
+                    }
+                    else {
                         byte[] ramData = ziggyWin.zx.GetPageData(pageComboBox.SelectedIndex * 2);
                         int adjust = (end > 8192 ? end - 8192 : 0);
                         r.Write(ramData, 0, Math.Min(end, 8192));
-                        
-                        if (adjust > 0)
-                        {
+
+                        if (adjust > 0) {
                             ramData = ziggyWin.zx.GetPageData(pageComboBox.SelectedIndex * 2 + 1);
                             r.Write(ramData, 0, Math.Min(adjust, 8192));
                         }
@@ -177,7 +178,7 @@ namespace ZeroWin
                 fs.Close();
                 MessageBox.Show("Binary file saved successfully.", "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            this.Close();
+            Close();
         }
 
         private void browseButton_Click(object sender, EventArgs e) {
@@ -188,7 +189,8 @@ namespace ZeroWin
                 if (openFileDialog1.ShowDialog() == DialogResult.OK) {
                     textBox1.Text = openFileDialog1.FileName;
                 }
-            } else {
+            }
+            else {
                 saveFileDialog1.FileName = "";
                 saveFileDialog1.Filter = "All files|*.*";
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK) {
@@ -198,7 +200,7 @@ namespace ZeroWin
         }
 
         private void button3_Click(object sender, EventArgs e) {
-            this.Close();
+            Close();
         }
 
         private void ramPageRadioButton_CheckedChanged(object sender, EventArgs e) {
@@ -218,10 +220,7 @@ namespace ZeroWin
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e) {
-            if (textBox1.Text == "")
-                button2.Enabled = false;
-            else
-                button2.Enabled = true;
+            button2.Enabled = textBox1.Text != "";
         }
     }
 }

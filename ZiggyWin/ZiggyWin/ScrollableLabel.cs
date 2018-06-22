@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Drawing;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
@@ -8,26 +9,15 @@ namespace ZeroWin
 
         public ScrollableLabel() {
             InitializeComponent();
-            this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            this.BackColor = System.Drawing.Color.Transparent;
-            this.ForeColor = System.Drawing.Color.White;
-            this.AutoScroll = true;
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+            ForeColor = Color.White;
+            AutoScroll = true;
             scrollLabel.AutoSize = true;
-            this.Controls.Add(scrollLabel);
-            scrollLabel.Font = new System.Drawing.Font("Tahoma", 8);
-            this.HScroll = false;
-            this.AutoScrollMargin = new System.Drawing.Size(1, 1);
-            // this.AutoScrollMinSize = 20;
+            Controls.Add(scrollLabel);
+            scrollLabel.Font = new Font("Tahoma", 8);
+            HScroll = false;
+            AutoScrollMargin = new Size(1, 1);
         }
-
-        /*  protected override void OnPaint(PaintEventArgs e)
-          {
-              Font myFont = new Font("Tahoma", 8);
-              SolidBrush brush = new SolidBrush(Color.White);
-
-              e.Graphics.DrawString(this.Text, myFont, brush, 0,0);//new RectangleF(this.Bounds.Left, this.Bounds.Top, this.Bounds.Width, this.Bounds.Height)) ;
-              base.OnPaint(e);
-          }
-         */
     }
 }

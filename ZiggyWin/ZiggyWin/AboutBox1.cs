@@ -1,10 +1,5 @@
 ﻿using System;
-
-//using System.Collections.Generic;
-//using System.ComponentModel;
 using System.Drawing;
-
-//using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -12,14 +7,14 @@ namespace ZeroWin
 {
     partial class AboutBox1 : Form
     {
-        private Form zwRef;
+        private readonly Form zwRef;
 
         public AboutBox1(Form fref) {
             zwRef = fref;
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.SizeInPoints);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.SizeInPoints);
             }
             // this.Text = String.Format("About {0} {0}", AssemblyTitle);
         }
@@ -87,14 +82,8 @@ namespace ZeroWin
 
         #endregion Assembly Attribute Accessors
 
-        private void labelVersion_Click(object sender, EventArgs e) {
-        }
-
-        private void textBox1_TextChanged(object sender, EventArgs e) {
-        }
-
         private void AboutBox1_Load(object sender, EventArgs e) {
-            this.Location = new Point(zwRef.Location.X + 20, zwRef.Location.Y + 20);
+            Location = new Point(zwRef.Location.X + 20, zwRef.Location.Y + 20);
             textBox1.SelectionStart = 0;
             textBox1.SelectionLength = 0;
         }

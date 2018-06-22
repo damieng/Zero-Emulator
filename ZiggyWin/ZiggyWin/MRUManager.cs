@@ -1,29 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
-using System.IO;
 using Microsoft.Win32;
-using System.Runtime.InteropServices;
 
 public class MRUManager
 {
     #region Private members
-    private string NameOfProgram;
-    private string SubKeyName;
+    private readonly string NameOfProgram;
+    private readonly string SubKeyName;
     
-    private Action<object, EventArgs> OnRecentFileClick;
-    private Action<object, EventArgs> OnClearRecentFilesClick;
-    private List<string> fullPath = new List<string>();
+    private readonly Action<object, EventArgs> OnRecentFileClick;
+    private readonly Action<object, EventArgs> OnClearRecentFilesClick;
+    private readonly List<string> fullPath = new List<string>();
     private const int MAX_FILE_PATH_CHARS = 40;
 
     public class DynamicToolStripMenuItem : ToolStripMenuItem
     {
-
     }
 
-    private ToolStripMenuItem ParentMenuItem;
+    private readonly ToolStripMenuItem ParentMenuItem;
 
     [DllImport("shlwapi.dll")]
     static extern bool PathCompactPathEx([Out] StringBuilder pszOut, string szPath, int cchMax, int dwFlags);
@@ -39,23 +37,23 @@ public class MRUManager
     {
         try
         {
-            RegistryKey rK = Registry.CurrentUser.OpenSubKey(this.SubKeyName, true);
+            RegistryKey rK = Registry.CurrentUser.OpenSubKey(SubKeyName, true);
             if (rK == null)
                 return;
             string[] values = rK.GetValueNames();
             foreach (string valueName in values)
                 rK.DeleteValue(valueName, true);
             rK.Close();
-            this.ParentMenuItem.DropDownItems.Clear();
+            ParentMenuItem.DropDownItems.Clear();
             fullPath.Clear();
-            this.ParentMenuItem.Enabled = false;
+            ParentMenuItem.Enabled = false;
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.ToString());
         }
-        if (OnClearRecentFilesClick != null)
-            this.OnClearRecentFilesClick(obj, evt);
+
+        OnClearRecentFilesClick?.Invoke(obj, evt);
     }
         
     private void _refreshRecentFilesMenu()
@@ -67,20 +65,20 @@ public class MRUManager
 
         try
         {
-            rK = Registry.CurrentUser.OpenSubKey(this.SubKeyName, false);
+            rK = Registry.CurrentUser.OpenSubKey(SubKeyName, false);
             if (rK == null)
             {
-                this.ParentMenuItem.Enabled = false;
+                ParentMenuItem.Enabled = false;
                 return;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Cannot open recent files registry key:\n" + ex.ToString());
+            Console.WriteLine("Cannot open recent files registry key:\n" + ex);
             return;
         }
 
-        this.ParentMenuItem.DropDownItems.Clear();
+        ParentMenuItem.DropDownItems.Clear();
         string[] valueNames = rK.GetValueNames();
         foreach (string valueName in valueNames.Reverse())
         {
@@ -88,19 +86,19 @@ public class MRUManager
             if (s == null)
                 continue;
             fullPath.Add(s);
-            tSI = this.ParentMenuItem.DropDownItems.Add(TruncatePath(s, MAX_FILE_PATH_CHARS));
-            tSI.Click += new EventHandler(this.OnRecentFileClick);
+            tSI = ParentMenuItem.DropDownItems.Add(TruncatePath(s, MAX_FILE_PATH_CHARS));
+            tSI.Click += new EventHandler(OnRecentFileClick);
         }
 
-        if (this.ParentMenuItem.DropDownItems.Count == 0)
+        if (ParentMenuItem.DropDownItems.Count == 0)
         {
-            this.ParentMenuItem.Enabled = false;
+            ParentMenuItem.Enabled = false;
             return;
         }
-        this.ParentMenuItem.DropDownItems.Add("-");
-        tSI = this.ParentMenuItem.DropDownItems.Add("Clear list");
-        tSI.Click += new EventHandler(this._onClearRecentFiles_Click);
-        this.ParentMenuItem.Enabled = true;
+        ParentMenuItem.DropDownItems.Add("-");
+        tSI = ParentMenuItem.DropDownItems.Add("Clear list");
+        tSI.Click += _onClearRecentFiles_Click;
+        ParentMenuItem.Enabled = true;
     }
     #endregion
 
@@ -110,8 +108,8 @@ public class MRUManager
         string s;
         try
         {
-            RegistryKey rK = Registry.CurrentUser.CreateSubKey(this.SubKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
-            for (int i = 0; true; i++)
+            RegistryKey rK = Registry.CurrentUser.CreateSubKey(SubKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+            for (int i = 0;; i++)
             {
                 s = rK.GetValue(i.ToString(), null) as string;
                 if (s == null)
@@ -120,7 +118,8 @@ public class MRUManager
                     rK.Close();
                     break;
                 }
-                else if (s == fileNameWithFullPath)
+
+                if (s == fileNameWithFullPath)
                 {
                     rK.Close();
                     break;
@@ -131,21 +130,21 @@ public class MRUManager
         {
             Console.WriteLine(ex.ToString());
         }
-        this._refreshRecentFilesMenu();
+        _refreshRecentFilesMenu();
     }
 
     public void RemoveRecentFile(string fileNameWithFullPath)
     {
         try
         {
-            RegistryKey rK = Registry.CurrentUser.OpenSubKey(this.SubKeyName, true);
+            RegistryKey rK = Registry.CurrentUser.OpenSubKey(SubKeyName, true);
             string[] valuesNames = rK.GetValueNames();
             foreach (string valueName in valuesNames)
             {
                 if ((rK.GetValue(valueName, null) as string) == fileNameWithFullPath)
                 {
                     rK.DeleteValue(valueName, true);
-                    this._refreshRecentFilesMenu();
+                    _refreshRecentFilesMenu();
                     break;
                 }
             }
@@ -154,15 +153,12 @@ public class MRUManager
         {
             Console.WriteLine(ex.ToString());
         }
-        this._refreshRecentFilesMenu();
+        _refreshRecentFilesMenu();
     }
 
     public string GetFullFilePath(int index)
     {
-        if (index < fullPath.Count)
-            return fullPath[index];
-
-        return null;
+        return index < fullPath.Count ? fullPath[index] : null;
     }
     #endregion
 
@@ -173,12 +169,12 @@ public class MRUManager
             nameOfProgram == null || nameOfProgram.Length == 0 || nameOfProgram.Contains("\\"))
             throw new ArgumentException("Bad argument.");
 
-        this.ParentMenuItem = parentMenuItem;
-        this.NameOfProgram = nameOfProgram;
-        this.OnRecentFileClick = onRecentFileClick;
-        this.OnClearRecentFilesClick = onClearRecentFilesClick;
-        this.SubKeyName = string.Format("Software\\{0}\\MRU", this.NameOfProgram);
+        ParentMenuItem = parentMenuItem;
+        NameOfProgram = nameOfProgram;
+        OnRecentFileClick = onRecentFileClick;
+        OnClearRecentFilesClick = onClearRecentFilesClick;
+        SubKeyName = string.Format("Software\\{0}\\MRU", NameOfProgram);
 
-        this._refreshRecentFilesMenu();
+        _refreshRecentFilesMenu();
     }
 }

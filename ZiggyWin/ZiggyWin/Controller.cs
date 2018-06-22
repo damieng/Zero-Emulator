@@ -4,7 +4,7 @@ namespace ZeroWin
 {
     public class MouseController
     {
-        private Microsoft.DirectX.DirectInput.Device mouse = null;
+        private DirectInput.Device mouse;
         Form1 ziggyWin;
         //Mouse mouse = null;
         public int MouseX {
@@ -70,20 +70,18 @@ namespace ZeroWin
 
     public class JoystickController
     {
-        public DirectInput.Device joystick = null;
+        public DirectInput.Device joystick;
         public DirectInput.JoystickState state;
         public static System.Collections.Generic.List<DirectInput.DeviceInstance> joystickList = new System.Collections.Generic.List<DirectInput.DeviceInstance>();
         public string name;
-        public bool isInitialized = false;
-        private int numPOVs = 0;
-        private int SliderCount = 0;
+        public bool isInitialized;
 
         //public Dictionary<int, int> buttonMap = new Dictionary<int, int>();
         public int[] buttonMap = new int[0];
 
         //Specifies which button will act as the 'Fire' button.
         //No key will be assigned to this button in the buttonmap list above (i.e. it will remain -1).
-        public int fireButtonIndex = 0;
+        public int fireButtonIndex;
 
         public static void EnumerateJosticks() {
             joystickList.Clear();
@@ -115,7 +113,7 @@ namespace ZeroWin
                 joystick.SetCooperativeLevel(zw, DirectInput.CooperativeLevelFlags.NonExclusive | DirectInput.CooperativeLevelFlags.Background);
                 joystick.SetDataFormat(DirectInput.DeviceDataFormat.Joystick);
                 name = joystickList[deviceNum].ProductName;
-            } catch (Microsoft.DirectX.DirectInput.InputException de) {
+            } catch (DirectInput.InputException de) {
                 System.Windows.Forms.MessageBox.Show("Couldn't connect to joystick!", "Joystick Problem", System.Windows.Forms.MessageBoxButtons.OK);
                 return false;
             }
@@ -134,7 +132,7 @@ namespace ZeroWin
             try {
                 joystick.Acquire();
             }
-            catch (Microsoft.DirectX.DirectInput.InputException de) {
+            catch (DirectInput.InputException de) {
                 System.Windows.Forms.MessageBox.Show(de.Message, "Joystick Error", System.Windows.Forms.MessageBoxButtons.OK);
                 return false;
             }
@@ -160,7 +158,7 @@ namespace ZeroWin
                 joystick.Poll();
                 state = joystick.CurrentJoystickState;
             }
-            catch (Microsoft.DirectX.DirectInput.InputException de) {
+            catch (DirectInput.InputException) {
                 System.Windows.Forms.MessageBox.Show("The connection to the joystick has been lost.", "Joystick Problem", System.Windows.Forms.MessageBoxButtons.OK);
                 isInitialized = false;
             }

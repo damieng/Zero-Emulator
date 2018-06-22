@@ -1086,7 +1086,6 @@
             this.sclCheckBox.TabIndex = 27;
             this.sclCheckBox.Text = ".SCL";
             this.sclCheckBox.UseVisualStyleBackColor = true;
-            this.sclCheckBox.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // trdCheckBox
             // 

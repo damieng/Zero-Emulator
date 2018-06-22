@@ -7,7 +7,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Text;
 using System.Windows.Forms;
 using Speccy;
@@ -29,10 +28,10 @@ namespace ZeroWin
             [MarshalAs(UnmanagedType.SysInt)]
             public IntPtr lpData;
         }
-        [System.Runtime.InteropServices.DllImport("User32.dll")]
+        [DllImport("User32.dll")]
         private static extern bool SendMessage(IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
 
-        [System.Runtime.InteropServices.DllImport("User32.dll")]
+        [DllImport("User32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
 
 #if _DEBUG
@@ -73,32 +72,32 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         }
 #endif
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr tzx2pzx(string input_name, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr tzx2pzx(string input_name, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr csw2pzx(string input_name, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr csw2pzx(string input_name, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr pzx2wav(string input_name, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr pzx2wav(string input_name, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr tap2pzx(string input_name, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr tap2pzx(string input_name, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern void pzx_close();
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern void wav_close();
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr tzx2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr tzx2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr csw2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr csw2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
 
-        [System.Runtime.InteropServices.DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern System.IntPtr tap2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
+        [DllImport(@"pzxtools.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr tap2pzx_buff(byte[] buff, uint buffSize, ref uint outSize);
 
         enum EMULATOR_STATE
         {
@@ -127,7 +126,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         private MouseController mouse = new MouseController();
         private MRUManager mruManager;
         public Logger logger = new Logger();
-        public Speccy.zxmachine zx;
+        public zxmachine zx;
 
         //The pentagon has a different screen size to other speccy's.
         //However, when rendering we will match the normal speccy dimensions by using the offsets below
@@ -297,7 +296,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 COPYDATASTRUCT data = (COPYDATASTRUCT)
                     message.GetLParam(typeof(COPYDATASTRUCT));
 
-                byte[] b = System.BitConverter.GetBytes((int)(data.dwData));
+                byte[] b = BitConverter.GetBytes((int)(data.dwData));
                 string str = String.Format("{3}{2}{1}{0}", (char)b[0], (char)b[1], (char)b[2], (char)b[3]);
 
                 if (str == "PAUS") {
@@ -314,7 +313,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 else if (str == "STEP") {
                     tempHandle = message.WParam;
 
-                    PostMessage(this.Handle, WM_USER + 2, message.WParam, data.dwData);
+                    PostMessage(Handle, WM_USER + 2, message.WParam, data.dwData);
                 }
             }
             else if (message.Msg == WM_USER + 2) {
@@ -355,7 +354,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
         unsafe private void SendWMCOPYDATA(String s, IntPtr _hTarget, IntPtr _lpData, int _size)
         {
-            byte[] carray = System.Text.ASCIIEncoding.UTF8.GetBytes(s);
+            byte[] carray = Encoding.UTF8.GetBytes(s);
             uint val = BitConverter.ToUInt32(carray, 0);
 
             IntPtr dwData = (IntPtr)val;
@@ -370,7 +369,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
             Marshal.StructureToPtr(data, lpStruct, false);
 
-            SendMessage(_hTarget, WM_COPYDATA, this.Handle, lpStruct);
+            SendMessage(_hTarget, WM_COPYDATA, Handle, lpStruct);
             Marshal.FreeHGlobal(lpStruct);
         }
 #endif
@@ -387,13 +386,13 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 if (MessageBox.Show(string.Format("{0} doesn't exist. Remove from recent " +
                  "files?", fName), "File not found",
                  MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    this.mruManager.RemoveRecentFile(fullFilePath);
+                    mruManager.RemoveRecentFile(fullFilePath);
                 return;
             }
 
             //Move this file to the top
-            this.mruManager.RemoveRecentFile(fullFilePath);
-            this.mruManager.AddRecentFile(fullFilePath);
+            mruManager.RemoveRecentFile(fullFilePath);
+            mruManager.AddRecentFile(fullFilePath);
 
             zx.Pause();
             dxWindow.Suspend();
@@ -416,7 +415,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         public void OnFileDownloadEvent(Object sender, AutoLoadArgs arg)
         {
             if (!string.IsNullOrEmpty(arg.filePath)) {
-                if (MessageBox.Show("You've selected a file to auto-load on completion of download. Auto-load now?", "Auto Load", MessageBoxButtons.OKCancel) == System.Windows.Forms.DialogResult.OK) {
+                if (MessageBox.Show("You've selected a file to auto-load on completion of download. Auto-load now?", "Auto Load", MessageBoxButtons.OKCancel) == DialogResult.OK) {
                     autoLoadFile = arg.filePath;
 
                     //  DispatcherTimer setup
@@ -486,13 +485,13 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         {
             InitializeComponent();
             EjectA = new ToolStripMenuItem("Eject");
-            this.EjectA.Click += new EventHandler(EjectA_Click);
+            EjectA.Click += new EventHandler(EjectA_Click);
             EjectB = new ToolStripMenuItem("Eject");
-            this.EjectB.Click += new EventHandler(EjectB_Click);
+            EjectB.Click += new EventHandler(EjectB_Click);
             EjectC = new ToolStripMenuItem("Eject");
-            this.EjectC.Click += new EventHandler(EjectC_Click);
+            EjectC.Click += new EventHandler(EjectC_Click);
             EjectD = new ToolStripMenuItem("Eject");
-            this.EjectD.Click += new EventHandler(EjectD_Click);
+            EjectD.Click += new EventHandler(EjectD_Click);
             toolTip1.Active = false;
             toolTip1.UseAnimation = false;
             toolTip1.UseFading = false;
@@ -501,14 +500,14 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             //seems to stop the stutter when tooltip appears in fullscreen mode...
             toolTip1.IsBalloon = true;
 
-            this.Load += new System.EventHandler(this.Form1_Load);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panel1_MouseMove);
+            Load += new EventHandler(Form1_Load);
+            MouseMove += new MouseEventHandler(panel1_MouseMove);
 
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             SetStyle(ControlStyles.Opaque, true);
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Form_MouseDown);
+            MouseDown += new MouseEventHandler(Form_MouseDown);
 
             TimeoutToHide = TimeSpan.FromSeconds(5);
 
@@ -561,38 +560,38 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
         public static class Native
         {
-            [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+            [StructLayout(LayoutKind.Sequential)]
             public struct Message
             {
                 public IntPtr hWnd;
 
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U4)]
+                [MarshalAs(UnmanagedType.U4)]
                 public int msg;
 
                 public IntPtr wParam;
                 public IntPtr lParam;
 
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U4)]
+                [MarshalAs(UnmanagedType.U4)]
                 public uint time;
 
-                public System.Drawing.Point p;
+                public Point p;
             }
 
-            [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-            [System.Security.SuppressUnmanagedCodeSecurity, System.Runtime.InteropServices.DllImport("User32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            [System.Security.SuppressUnmanagedCodeSecurity, DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = true)]
             public static extern bool PeekMessage(out Message msg, IntPtr hWnd,
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U4)]
+                [MarshalAs(UnmanagedType.U4)]
                 uint messageFilterMin,
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U4)]
+                [MarshalAs(UnmanagedType.U4)]
                 uint messageFilterMax,
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U4)]
+                [MarshalAs(UnmanagedType.U4)]
                 uint flags);
 
-            [System.Runtime.InteropServices.DllImport("User32.dll")]
+            [DllImport("User32.dll")]
             public static extern IntPtr GetForegroundWindow();
 
-            [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, ExactSpelling = true)]
-            public static extern short GetAsyncKeyState([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.I4)] int vkey);
+            [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+            public static extern short GetAsyncKeyState([MarshalAs(UnmanagedType.I4)] int vkey);
         }
 
         private bool AppStillIdle {
@@ -604,7 +603,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
         public bool AppHasFocus()
         {
-            if ((Native.GetForegroundWindow() == this.Handle) || (tapeDeck != null && Native.GetForegroundWindow() == tapeDeck.Handle))
+            if ((Native.GetForegroundWindow() == Handle) || (tapeDeck != null && Native.GetForegroundWindow() == tapeDeck.Handle))
                 return true;
             else
                 if ((debugger != null) && (!debugger.IsDisposed))
@@ -1096,7 +1095,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
             while (readStr != section) {
                 if (sr.EndOfStream == true) {
-                    System.Windows.Forms.MessageBox.Show("Invalid config file!", "Config file error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                    MessageBox.Show("Invalid config file!", "Config file error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return "error";
                 }
                 readStr = sr.ReadLine();
@@ -1107,7 +1106,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 if (readStr.IndexOf(data) >= 0)
                     break;
                 if (sr.EndOfStream == true) {
-                    System.Windows.Forms.MessageBox.Show("Invalid config file!", "Config file error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                    MessageBox.Show("Invalid config file!", "Config file error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return "error";
                 }
             }
@@ -1151,7 +1150,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 }
                 else {
                     MessageBox.Show("Unfortunately, Zero cannot work without a valid ROM file.\nIt will now exit.",
-                            "Unable to continue!", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                            "Unable to continue!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     break;
                 }
             }
@@ -1273,7 +1272,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 }
                 else {
                     MessageBox.Show("Unfortunately, Zero cannot work without a valid ROM file.\nIt will now exit.",
-                            "Unable to continue!", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                            "Unable to continue!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     break;
                 }
             }
@@ -2076,9 +2075,9 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         {
             //Show the confirmation box only if it's not an invalid ROM exit event and not fullscreen
             if (config.ConfirmOnExit && romLoaded && !config.FullScreen) {
-                if (System.Windows.Forms.MessageBox.Show("Are you sure you want to exit?",
-                           "Confirm Exit", System.Windows.Forms.MessageBoxButtons.YesNo,
-                           System.Windows.Forms.MessageBoxIcon.Question) == DialogResult.No)
+                if (MessageBox.Show("Are you sure you want to exit?",
+                           "Confirm Exit", MessageBoxButtons.YesNo,
+                           MessageBoxIcon.Question) == DialogResult.No)
 
                     e.Cancel = true;
             }
@@ -2142,19 +2141,19 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             base.OnClosed(e);
         }
 
-        private void Form1_Load(object sender, System.EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
             logger.Log("Starting up...");
-            this.BringToFront();
+            BringToFront();
 
             //Setup MRU (Recent files)
-            this.mruManager = new MRUManager(
+            mruManager = new MRUManager(
                                 //the menu item that will contain the recent files
-                                this.recentFilesToolStripMenuItem,
+                                recentFilesToolStripMenuItem,
                                 //the name of your program
                                 "Zero",
                                 //the funtion that will be called when a recent file gets clicked.
-                                this.MRUOpenFile_handler,
+                                MRUOpenFile_handler,
                                 //an optional function to call when the user clears the list of recent items
                                 null);
 
@@ -2246,7 +2245,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             switch (config.CurrentSpectrumModel) {
                 case ZX_SPECTRUM_48K:
                     config.Model = MachineModel._48k;
-                    zx = new zx48(this.Handle, config.UseLateTimings);
+                    zx = new zx48(Handle, config.UseLateTimings);
                     zx.Issue2Keyboard = config.UseIssue2Keyboard;
                     // zx.Reset();
                     zxSpectrum48kToolStripMenuItem.Checked = true;
@@ -2256,7 +2255,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 case ZX_SPECTRUM_128KE:
                     config.Model = MachineModel._128ke;
-                    zx = new zx128e(this.Handle, config.UseLateTimings);
+                    zx = new zx128e(Handle, config.UseLateTimings);
                     zx.Issue2Keyboard = config.UseIssue2Keyboard;
                     //zx.Reset();
                     zxSpectrum128keToolStripMenuItem1.Checked = true;
@@ -2266,7 +2265,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 case ZX_SPECTRUM_128K:
                     config.Model = MachineModel._128k;
-                    zx = new zx128(this.Handle, config.UseLateTimings);
+                    zx = new zx128(Handle, config.UseLateTimings);
                     //zx.Reset();
                     zxSpectrum128kToolStripMenuItem1.Checked = true;
                     disksMenuItem.Enabled = false;
@@ -2275,7 +2274,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 case ZX_SPECTRUM_PENTAGON_128K:
                     config.Model = MachineModel._pentagon;
-                    zx = new Pentagon128K(this.Handle, config.UseLateTimings);
+                    zx = new Pentagon128K(Handle, config.UseLateTimings);
                     //zx.Reset();
                     pentagon128kToolStripMenuItem1.Checked = true;
                     romLoaded = LoadROM(config.currentPentagonRom);
@@ -2286,7 +2285,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 case ZX_SPECTRUM_PLUS3:
                     config.Model = MachineModel._plus3;
-                    zx = new zxPlus3(this.Handle, config.UseLateTimings);
+                    zx = new zxPlus3(Handle, config.UseLateTimings);
                     // zx.Reset();
                     zxSpectrum3ToolStripMenuItem1.Checked = true;
                     romLoaded = LoadROM(config.currentPlus3Rom);
@@ -2299,7 +2298,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             logger.Log("Initializing tape deck...");
             tapeDeck = new TapeDeck(this);
             if (!romLoaded) {
-                this.Close();
+                Close();
                 return;
             }
 
@@ -2319,7 +2318,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 logger.Log("Initializing renderer...");
                 dxWindow = new ZRenderer(this, panel1.Width, panel1.Height);
             }
-            catch (System.TypeInitializationException dxex) {
+            catch (TypeInitializationException dxex) {
                 MessageBox.Show(dxex.InnerException.Message, "Wrong DirectX version.", MessageBoxButtons.OK);
                 return;
             }
@@ -2333,7 +2332,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             //dxWindow.Location = new Point(panel4.Width, panel2.Height);
             //dxWindow.SetSize(panel1.Width, panel1.Height);
             dxWindow.MouseMove += new MouseEventHandler(Form1_MouseMove);
-            this.Controls.Add(dxWindow);
+            Controls.Add(dxWindow);
             panel1.Enabled = false;
             panel1.Hide();
             panel1.SendToBack();
@@ -2412,8 +2411,8 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         private void Form_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left) {
-                this.Top += e.Y - mouseOrigin.Y;
-                this.Left += e.X - mouseOrigin.X;
+                Top += e.Y - mouseOrigin.Y;
+                Left += e.X - mouseOrigin.X;
             }
         }
 
@@ -2443,9 +2442,9 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                     dxWindow.ShowScanlines = false;
             }
             else {
-                System.Windows.Forms.MessageBox.Show("Zero was unable to switch to DirectX mode.\nIt will now continue in GDI mode.",
-                           "DirectX Error", System.Windows.Forms.MessageBoxButtons.OK,
-                           System.Windows.Forms.MessageBoxIcon.Exclamation);
+                MessageBox.Show("Zero was unable to switch to DirectX mode.\nIt will now continue in GDI mode.",
+                           "DirectX Error", MessageBoxButtons.OK,
+                           MessageBoxIcon.Exclamation);
                 dxWindow.EnableDirectX = false;
                 gDIToolStripMenuItem.Checked = true;
                 directXToolStripMenuItem.Checked = false;
@@ -2517,8 +2516,8 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         }
 
         protected override bool ProcessCmdKey(ref
-              System.Windows.Forms.Message m,
-              System.Windows.Forms.Keys k)
+              Message m,
+              Keys k)
         {
             // detect the pushing (Msg) of Enter Key (k)
 
@@ -2654,7 +2653,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             zx.Shutdown();
             zx = null;
 
-            System.GC.Collect();
+            GC.Collect();
 
             config.Model = _model;
             Directory.SetCurrentDirectory(Application.StartupPath);
@@ -2662,28 +2661,28 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             switch (config.Model) {
                 case MachineModel._48k:
                     config.Model = MachineModel._48k;
-                    zx = new zx48(this.Handle, config.UseLateTimings);
+                    zx = new zx48(Handle, config.UseLateTimings);
                     romLoaded = LoadROM(config.Current48kROM);
                     disksMenuItem.Enabled = false;
                     break;
 
                 case MachineModel._128k:
                     config.Model = MachineModel._128k;
-                    zx = new zx128(this.Handle, config.UseLateTimings);
+                    zx = new zx128(Handle, config.UseLateTimings);
                     romLoaded = LoadROM(config.Current128kROM);
                     disksMenuItem.Enabled = false;
                     break;
 
                 case MachineModel._128ke:
                     config.Model = MachineModel._128ke;
-                    zx = new zx128e(this.Handle, config.UseLateTimings);
+                    zx = new zx128e(Handle, config.UseLateTimings);
                     romLoaded = LoadROM(config.current128keRom);
                     disksMenuItem.Enabled = false;
                     break;
 
                 case MachineModel._plus3:
                     config.Model = MachineModel._plus3;
-                    zx = new zxPlus3(this.Handle, config.UseLateTimings);
+                    zx = new zxPlus3(Handle, config.UseLateTimings);
                     romLoaded = LoadROM(config.currentPlus3Rom);
                     disksMenuItem.Enabled = true;
                     insertDiskCToolStripMenuItem.Enabled = false;
@@ -2692,7 +2691,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 case MachineModel._pentagon:
                     config.Model = MachineModel._pentagon;
-                    zx = new Pentagon128K(this.Handle, config.UseLateTimings);
+                    zx = new Pentagon128K(Handle, config.UseLateTimings);
                     romLoaded = LoadROM(config.currentPentagonRom);
                     disksMenuItem.Enabled = true;
                     insertDiskCToolStripMenuItem.Enabled = true;
@@ -2701,7 +2700,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             }
 
             if (!romLoaded) {
-                this.Close();
+                Close();
                 return;
             }
 
@@ -2981,7 +2980,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         }
 
         //Need this to command the windows explorer shell to refresh icon cache
-        [System.Runtime.InteropServices.DllImport("shell32.dll")]
+        [DllImport("shell32.dll")]
         private static extern void SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
 
         public void CheckFileAssociations()
@@ -3118,7 +3117,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         //power off
         private void powerButton_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void hardResetToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -3205,9 +3204,9 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 toolStripMenuItem5.Enabled = false;
                 toolStripMenuItem1.Enabled = false;
                 LastMouseMove = DateTime.Now;
-                this.SuspendLayout();
-                this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-                oldWindowPosition = this.Location;
+                SuspendLayout();
+                FormBorderStyle = FormBorderStyle.None;
+                oldWindowPosition = Location;
                 dxWindow.EnableFullScreen = true;
                 oldWindowSize = config.WindowSize;
                 config.WindowSize = 0;
@@ -3217,15 +3216,15 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                     dxWindow.InitDirectX(Screen.FromControl(this).Bounds.Width, Screen.FromControl(this).Bounds.Height, false);
                 }
                 else {
-                    this.Location = new Point(0, 0);
-                    this.WindowState = FormWindowState.Maximized;
+                    Location = new Point(0, 0);
+                    WindowState = FormWindowState.Maximized;
                     dxWindow.Location = new Point(0, 0);
                     dxWindow.SetSize(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
                 }
 
                 if (!commandLineLaunch) {
                     Point cursorPos = Cursor.Position;
-                    cursorPos.Y = this.PointToScreen(dxWindow.Location).Y;
+                    cursorPos.Y = PointToScreen(dxWindow.Location).Y;
                     Cursor.Position = cursorPos;
                 }
                 else {
@@ -3235,7 +3234,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                     mouseOldPos.X = Cursor.Position.X;
                     mouseOldPos.Y = Cursor.Position.Y;
                 }
-                this.ResumeLayout();
+                ResumeLayout();
                 dxWindow.Focus();
             }
             else {
@@ -3244,11 +3243,11 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 statusStrip1.Visible = true;
                 toolStripMenuItem5.Enabled = true;
                 toolStripMenuItem1.Enabled = true;
-                this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-                this.WindowState = FormWindowState.Normal;
+                FormBorderStyle = FormBorderStyle.Sizable;
+                WindowState = FormWindowState.Normal;
 
                 dxWindow.EnableFullScreen = false;
-                this.Location = oldWindowPosition;
+                Location = oldWindowPosition;
                 config.WindowSize = oldWindowSize;
                 AdjustWindowSize();
 
@@ -3386,7 +3385,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                     }
                 }
                 else {
-                    System.IO.Stream s = new System.IO.MemoryStream(szx.embeddedTapeData);
+                    Stream s = new MemoryStream(szx.embeddedTapeData);
                     tapeDeck.InsertTape("", s);
                 }
             }
@@ -3841,7 +3840,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
 
                 FileStream trd = new FileStream(diskArchivePath[0], FileMode.Create, FileAccess.Write);
                 using (BinaryWriter w = new BinaryWriter(trd)) {
-                    System.Collections.Generic.List<byte> fileSectorList = new System.Collections.Generic.List<byte>();
+                    List<byte> fileSectorList = new List<byte>();
                     for (int index = 0; index < fileCount; index++) {
                         startIndex = 9 + index * 14;
 
@@ -4048,8 +4047,8 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                 pauseEmulation = false;
             }
             else
-                System.Windows.Forms.MessageBox.Show("Sorry, but Zero doesn't recognise this file format.",
-                   "Unsupported Format", System.Windows.Forms.MessageBoxButtons.OK);
+                MessageBox.Show("Sorry, but Zero doesn't recognise this file format.",
+                   "Unsupported Format", MessageBoxButtons.OK);
         }
 
         private void interlaceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -4074,8 +4073,8 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                         break;
 
                     case 2:
-                        using (System.IO.FileStream scrFile = new System.IO.FileStream(saveFileDialog1.FileName, System.IO.FileMode.Create)) {
-                            using (System.IO.BinaryWriter r = new System.IO.BinaryWriter(scrFile)) {
+                        using (FileStream scrFile = new FileStream(saveFileDialog1.FileName, FileMode.Create)) {
+                            using (BinaryWriter r = new BinaryWriter(scrFile)) {
                                 for (int f = 16384; f < 16384 + 6912; f++) {
                                     byte data = (byte)(zx.PeekByteNoContend(f));
                                     r.Write(data);
@@ -4142,7 +4141,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             openFileDialog1.FileName = "";
             openFileDialog1.Filter = "All supported files|*.szx;*.sna;*.z80;*.pzx;*.tzx;*.tap;*.csw;*.rzx;*.zip;*.dsk;*.trd;*.scl;*.scr|Snapshots (*.szx, *.sna, *.z80)|*.szx; *.sna;*.z80|Tapes (*.pzx, *.tap, *.tzx, *.csw)|*.pzx;*.tap;*.tzx;*.csw|Disks (*.dsk, *.trd, *.scl)|*.dsk;*.trd;*.scl|ZIP Archive (*.zip)|*.zip|Action Replay (*.rzx)|*.rzx|Spectrum Screen (*.scr)|*.scr";
             if (openFileDialog1.ShowDialog() == DialogResult.OK) {
-                this.mruManager.AddRecentFile(openFileDialog1.FileName);
+                mruManager.AddRecentFile(openFileDialog1.FileName);
                 recentFolder = Path.GetDirectoryName(openFileDialog1.FileName);
                 LoadZXFile(openFileDialog1.FileName);
             }
@@ -4202,9 +4201,9 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             int dxWindowOffsetX = 10;
             int dxWindowOffsetY = toolStrip1.Location.Y + toolStrip1.Height;
 
-            Rectangle screenRectangle = RectangleToScreen(this.ClientRectangle);
+            Rectangle screenRectangle = RectangleToScreen(ClientRectangle);
 
-            int titleHeight = screenRectangle.Top - this.Top;
+            int titleHeight = screenRectangle.Top - Top;
             int totalClientWidth = speccyWidth + dxWindowOffsetX;
             int totalClientHeight = speccyHeight + dxWindowOffsetY + statusStrip1.Height + titleHeight;
             int adjustWidth = (speccyWidth * config.WindowSize / 100);
@@ -4218,7 +4217,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
             //if (zx.model == MachineModel._pentagon)
             //    _offsetX -= 8;
 
-            this.Size = new Size(totalClientWidth + adjustWidth - (2 * borderAdjust) + _offsetX * 2, totalClientHeight + adjustHeight - (2 * borderAdjust));
+            Size = new Size(totalClientWidth + adjustWidth - (2 * borderAdjust) + _offsetX * 2, totalClientHeight + adjustHeight - (2 * borderAdjust));
             dxWindow.Location = new Point(_offsetX - borderAdjust, dxWindowOffsetY - _offsetY - borderAdjust);
             dxWindow.SetSize(zx.GetTotalScreenWidth() + adjustWidth, zx.GetTotalScreenHeight() + adjustHeight);
             dxWindow.SendToBack();
@@ -4281,7 +4280,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
         private Region GetRegion(Bitmap _img, Color color)
         {
             Color _matchColor = Color.FromArgb(color.R, color.G, color.B);
-            System.Drawing.Region rgn = new Region();
+            Region rgn = new Region();
             rgn.MakeEmpty();
             Rectangle rc = new Rectangle(0, 0, 0, 0);
             bool inimage = false;
@@ -4372,7 +4371,7 @@ const string WmCpyDta = "WmCpyDta_d.dll";
                     File.Delete(diskArchivePath[_unit]);
                     diskArchivePath[_unit] = null;
                 }
-                String ext = System.IO.Path.GetExtension(openFileDialog1.FileName).ToLower();
+                String ext = Path.GetExtension(openFileDialog1.FileName).ToLower();
                 if (ext == ".zip") //handle zip archives
                 {
                     pauseEmulation = true;

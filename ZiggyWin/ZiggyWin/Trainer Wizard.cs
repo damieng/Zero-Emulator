@@ -1,11 +1,15 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
     public partial class Trainer_Wizard : Form
     {
         public Form1 ziggyWin;
-        private TrainerValueInput inputDialog = new TrainerValueInput();
+        private readonly TrainerValueInput inputDialog = new TrainerValueInput();
 
         public class Pokes
         {
@@ -18,34 +22,33 @@ namespace ZeroWin
         public class Trainer
         {
             public string name;
-            public System.Collections.Generic.List<Pokes> pokeList = new System.Collections.Generic.List<Pokes>();
+            public List<Pokes> pokeList = new List<Pokes>();
         }
 
-        private System.Collections.Generic.List<Trainer> TrainerList = new System.Collections.Generic.List<Trainer>();
+        private readonly List<Trainer> TrainerList = new List<Trainer>();
 
         public void LoadTrainer(string filename) {
             pokesListBox.Items.Clear();
             TrainerList.Clear();
-            using (System.IO.FileStream fs = new System.IO.FileStream(filename, System.IO.FileMode.Open)) {
-                System.IO.StreamReader sr = new System.IO.StreamReader(fs);
+            using (FileStream fs = new FileStream(filename, FileMode.Open)) {
+                StreamReader sr = new StreamReader(fs);
                 string line;
-                char[] delimiters = new char[] { '\r', '\n', ' ' };
+                char[] delimiters = { '\r', '\n', ' ' };
                 do {
                     line = sr.ReadLine();
 
                     if (line[0] == 'N') {
-                        Trainer trainer = new Trainer();
-                        trainer.name = line.Substring(1, line.Length - 1);
+                        Trainer trainer = new Trainer { name = line.Substring(1, line.Length - 1) };
                         string[] fields;
 
                         do {
                             Pokes poke = new Pokes();
                             line = sr.ReadLine();
-                            fields = line.Split(delimiters, System.StringSplitOptions.RemoveEmptyEntries);
-                            poke.bank = System.Convert.ToByte(fields[1]);
-                            poke.address = System.Convert.ToInt32(fields[2]);
-                            poke.newVal = System.Convert.ToInt32(fields[3]);
-                            poke.oldVal = System.Convert.ToInt32(fields[4]);
+                            fields = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                            poke.bank = Convert.ToByte(fields[1]);
+                            poke.address = Convert.ToInt32(fields[2]);
+                            poke.newVal = Convert.ToInt32(fields[3]);
+                            poke.oldVal = Convert.ToInt32(fields[4]);
                             trainer.pokeList.Add(poke);
                         } while (fields[0] != "Z");
 
@@ -77,7 +80,8 @@ namespace ZeroWin
                             continue;
 
                         ziggyWin.zx.PokeByteNoContend(p.address, (applyPokes ? p.newVal : p.oldVal));
-                    } else {
+                    }
+                    else {
                         //Remove poke only if old value is a non-zero value
                         if (!applyPokes && (p.oldVal == 0))
                             continue;
@@ -93,18 +97,18 @@ namespace ZeroWin
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             ziggyWin = zw;
         }
 
-        private void button1_Click(object sender, System.EventArgs e) {
+        private void button1_Click(object sender, EventArgs e) {
             ApplyTrainers();
-            this.Hide();
+            Hide();
             MessageBox.Show("Selected pokes are now active.", "Pokes applied", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
 
-        private void button3_Click(object sender, System.EventArgs e) {
+        private void button3_Click(object sender, EventArgs e) {
             openFileDialog1.Title = "Choose a .POK file";
             openFileDialog1.FileName = "";
             openFileDialog1.Filter = ".POK files|*.POK";
@@ -115,8 +119,8 @@ namespace ZeroWin
             }
         }
 
-        private void button2_Click(object sender, System.EventArgs e) {
-            this.Hide();
+        private void button2_Click(object sender, EventArgs e) {
+            Hide();
         }
 
         private void pokesListBox_ItemCheck(object sender, ItemCheckEventArgs e) {

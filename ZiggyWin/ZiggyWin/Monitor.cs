@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 using Speccy;
 
@@ -17,11 +18,6 @@ namespace ZeroWin
         private Registers registerViewer = null;
         private Machine_State machineState = null;
         private CallStackViewer callStackViewer = null;
-
-        //Internal set of registers that mimic the z80 reg state
-        private int pc, bc, de, hl, ir, mp, sp, _bc, _de, _hl, ix, iy, im, af, _af;
-
-        private int tstates;
         private String breakPointStatus = "";
         private bool pauseEmulation = false;
         private int runToCursorAddress = -1;
@@ -61,153 +57,37 @@ namespace ZeroWin
 
         #region Accessors
 
-        public int TStates {
-            get {
-                return tstates;
-            }
-            set {
-                tstates = value;
-                //HexAnd8bitRegUpdate();
-            }
-        }
+        public int TStates { get; set; }
 
-        public int ValuePC {
-            get {
-                return pc;
-            }
-            set {
-                pc = value;
-                //HexAnd8bitRegUpdate();
-            }
-        }
+        public int ValuePC { get; set; }
 
-        public int ValueSP {
-            get {
-                return sp;
-            }
-            set {
-                sp = value;
-                //HexAnd8bitRegUpdate();
-            }
-        }
+        public int ValueSP { get; set; }
 
-        public int ValueMP {
-            get {
-                return mp;
-            }
-            set {
-                mp = value;
-                //HexAnd8bitRegUpdate();
-            }
-        }
+        public int ValueMP { get; set; }
 
-        public int ValueIM {
-            get {
-                return im;
-            }
-            set {
-                im = value;
-            }
-        }
+        public int ValueIM { get; set; }
 
-        public int ValueAF {
-            get {
-                return af;
-            }
-            set {
-                af = value;
-            }
-        }
+        public int ValueAF { get; set; }
 
-        public int ValueIR {
-            get {
-                return ir;
-            }
-            set {
-                ir = value;
-            }
-        }
+        public int ValueIR { get; set; }
 
-        public int ValueAF_ {
-            get {
-                return _af;
-            }
-            set {
-                _af = value;
-            }
-        }
+        public int ValueAF_ { get; set; }
 
-        public int ValueHL {
-            get {
-                return hl;
-            }
-            set {
-                hl = value;
-            }
-        }
+        public int ValueHL { get; set; }
 
-        public int ValueBC {
-            get {
-                return bc;
-            }
-            set {
-                bc = value;
-            }
-        }
+        public int ValueBC { get; set; }
 
-        public int ValueDE {
-            get {
-                return de;
-            }
-            set {
-                de = value;
-            }
-        }
+        public int ValueDE { get; set; }
 
-        public int ValueHL_ {
-            get {
-                return _hl;
-            }
-            set {
-                _hl = value;
-            }
-        }
+        public int ValueHL_ { get; set; }
 
-        public int ValueBC_ {
-            get {
-                return _bc;
-            }
-            set {
-                _bc = value;
-            }
-        }
+        public int ValueBC_ { get; set; }
 
-        public int ValueDE_ {
-            get {
-                return _de;
-            }
-            set {
-                _de = value;
-            }
-        }
+        public int ValueDE_ { get; set; }
 
-        public int ValueIX {
-            get {
-                return ix;
-            }
-            set {
-                ix = value;
-            }
-        }
+        public int ValueIX { get; set; }
 
-        public int ValueIY {
-            get {
-                return iy;
-            }
-            set {
-                iy = value;
-            }
-        }
+        public int ValueIY { get; set; }
 
         #endregion Accessors
 
@@ -226,61 +106,45 @@ namespace ZeroWin
         public class BreakPointCondition : Object
         {
             private SPECCY_EVENT condition;
-            private int address;
-            private int data;
 
             public string Condition
             {
                 get { return Utilities.GetStringFromEnum(condition); }
             }
 
-            public int Address {
-                get { return address; }
-            }
+            public int Address { get; }
 
             public string AddressAsString {
-                get {
-                    if (address < 0)
-                        return "-";
-                    else
-                        return address.ToString();
-                }
+                get { return Address < 0 ? "-" : Address.ToString(); }
             }
 
-            public int Data {
-                get { return data; }
-            }
+            public int Data { get; }
 
             public string DataAsString {
-                get {
-                    if (data < 0)
-                        return "-";
-                    else
-                        return data.ToString();
-                }
+                get { return Data < 0 ? "-" : Data.ToString(); }
             }
 
             public BreakPointCondition() {
-                address = 0;
-                data = 0;
+                Address = 0;
+                Data = 0;
             }
 
             public BreakPointCondition(SPECCY_EVENT cond, int addr, int val)
             {
                 condition = cond;
-                address = addr;
-                data = val;
+                Address = addr;
+                Data = val;
             }
 
             public override bool Equals(Object obj) {
                 //Check for null and compare run-time types.
                 if (obj == null || GetType() != obj.GetType()) return false;
                 BreakPointCondition p = (BreakPointCondition)obj;
-                return (address == p.address) && (data == p.data) && (condition == p.condition);
+                return (Address == p.Address) && (Data == p.Data) && (condition == p.condition);
             }
 
             public override int GetHashCode() {
-                return address ^ data;
+                return Address ^ Data;
             }
         };
 
@@ -323,7 +187,7 @@ namespace ZeroWin
 
         private void ProcessMemoryBreakpoint(int addr, int val) {
             pauseEmulation = true;
-            pc = ziggyWin.zx.PC;
+            ValuePC = ziggyWin.zx.PC;
             DoPauseEmulation();
             SetState(MonitorState.PAUSE);
             Disassemble(ziggyWin.zx.PC, ziggyWin.zx.PC, false, false);
@@ -339,7 +203,7 @@ namespace ZeroWin
                 registerViewer.RefreshView(useHexNumbers);
 
             if (machineState != null && !machineState.IsDisposed)
-                machineState.RefreshView(this.ziggyWin);
+                machineState.RefreshView(ziggyWin);
 
             if (!(dbState == MonitorState.RUN || dbState == MonitorState.STEPOVER || dbState == MonitorState.STEPOUT) && !pauseEmulation) {
                 Disassemble(ziggyWin.zx.PC, ziggyWin.zx.PC, false, false);
@@ -352,7 +216,7 @@ namespace ZeroWin
                     registerViewer.RefreshView(useHexNumbers);
 
                 if (machineState != null && !machineState.IsDisposed)
-                    machineState.RefreshView(this.ziggyWin);
+                    machineState.RefreshView(ziggyWin);
             }
         }
 
@@ -467,13 +331,13 @@ namespace ZeroWin
                 registerViewer.RefreshView(useHexNumbers);
 
             if (machineState != null && !machineState.IsDisposed)
-                machineState.RefreshView(this.ziggyWin);
+                machineState.RefreshView(ziggyWin);
 
             if (callStackViewer != null && !callStackViewer.IsDisposed)
                 callStackViewer.RefreshView();
 
-            this.Show();
-            this.Focus();
+            Show();
+            Focus();
         }
 
         //Event: Raised before a opcode has been executed by the z80
@@ -486,7 +350,7 @@ namespace ZeroWin
             //ziggyWin.zx.Pause();
             //Can't do ValuePC = etc because ValuePC calls HexAnd8bitRegUpdate internally
             //leading to a severe hit on framerate.
-            pc = ziggyWin.zx.PC;
+            ValuePC = ziggyWin.zx.PC;
 
             //Check if any breakpoints have been hit
             foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
@@ -503,7 +367,7 @@ namespace ZeroWin
                         break;
 
                     case SPECCY_EVENT.OPCODE_PC:
-                        if (pc == val.Address) {
+                        if (ValuePC == val.Address) {
                             pauseEmulation = true;
                             breakPointStatus = String.Format("PC = {0} (${0:x})", val.Address);
                         }
@@ -553,7 +417,7 @@ namespace ZeroWin
                 }
             }
 
-            if (pc == runToCursorAddress) {
+            if (ValuePC == runToCursorAddress) {
                 pauseEmulation = true;
                 breakPointStatus = String.Format("PC reached cursor position @ {0} (${0:x})", runToCursorAddress);
                 runToCursorAddress = -1;
@@ -564,7 +428,7 @@ namespace ZeroWin
                     pauseEmulation = true;
                     lastOpcodeWasRET = false;
                 } else {
-                    switch (PeekByte(pc)) {
+                    switch (PeekByte(ValuePC)) {
                         case 0xC9:  //RET
                         case 0xD8:  //RET C
                         case 0xF8:  //RET M
@@ -578,7 +442,7 @@ namespace ZeroWin
                             break;
 
                         case 0xED:
-                            int nxtopc = PeekByte(pc + 1);
+                            int nxtopc = PeekByte(ValuePC + 1);
                             if (nxtopc == 0x45 || nxtopc == 0x4D)   //RETI or RETN
                                 lastOpcodeWasRET = true;
                             break;
@@ -617,13 +481,13 @@ namespace ZeroWin
                     registerViewer.RefreshView(useHexNumbers);
 
                 if (machineState != null && !machineState.IsDisposed)
-                    machineState.RefreshView(this.ziggyWin);
+                    machineState.RefreshView(ziggyWin);
             } else {
                 breakPointStatus = "";
             }
 
             if (isTraceOn && (dbState != MonitorState.STEPOVER)) {
-                if (previousPC != pc) {
+                if (previousPC != ValuePC) {
                     Disassemble(previousPC, previousPC, false, true);
 
                     LogMessage log = new LogMessage();
@@ -636,7 +500,7 @@ namespace ZeroWin
             }
 
             if (dbState != MonitorState.STEPOVER) {
-                previousPC = pc;
+                previousPC = ValuePC;
                 previousTState = ziggyWin.zx.totalTStates;
             }
         }
@@ -660,12 +524,12 @@ namespace ZeroWin
                     registerViewer.RefreshView(useHexNumbers);
 
                 if (machineState != null && !machineState.IsDisposed)
-                    machineState.RefreshView(this.ziggyWin);
+                    machineState.RefreshView(ziggyWin);
             }
         }
 
         private void Monitor_StateChangeEvent(object sender, StateChangeEventArgs e) {
-            pc = ziggyWin.zx.PC;
+            ValuePC = ziggyWin.zx.PC;
 
             pauseEmulation = false;
 
@@ -691,7 +555,7 @@ namespace ZeroWin
                         registerViewer.RefreshView(useHexNumbers);
 
                     if (machineState != null && !machineState.IsDisposed)
-                        machineState.RefreshView(this.ziggyWin);
+                        machineState.RefreshView(ziggyWin);
                     break;
                 }
             }
@@ -704,7 +568,7 @@ namespace ZeroWin
         }
 
         public void Monitor_PortIO(Object sender, PortIOEventArgs e) {
-            pc = ziggyWin.zx.PC;
+            ValuePC = ziggyWin.zx.PC;
 
             pauseEmulation = false;
             //Check if any breakpoints have been hit
@@ -775,7 +639,7 @@ namespace ZeroWin
                         registerViewer.RefreshView(useHexNumbers);
 
                     if (machineState != null && !machineState.IsDisposed)
-                        machineState.RefreshView(this.ziggyWin);
+                        machineState.RefreshView(ziggyWin);
                     break;
                 }
             }
@@ -800,8 +664,7 @@ namespace ZeroWin
             public event PropertyChangedEventHandler PropertyChanged;
 
             private void NotifyPropertyChanged(string name) {
-                if (PropertyChanged != null)
-                    PropertyChanged(this, new PropertyChangedEventArgs(name));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
             }
 
             public int Address {
@@ -811,17 +674,14 @@ namespace ZeroWin
 
                 set {
                     address = value;
-                    this.NotifyPropertyChanged("Address");
+                    NotifyPropertyChanged("Address");
                 }
             }
 
             public String AddressAsString {
-                get {
-                    if (monitorRef.useHexNumbers) {
-                        return address.ToString("x");
-                    }
-
-                    return address.ToString();
+                get
+                {
+                    return monitorRef.useHexNumbers ? address.ToString("x") : address.ToString();
                 }
             }
 
@@ -831,13 +691,13 @@ namespace ZeroWin
                 }
                 set {
                     bytesAtAddress = value;
-                    this.NotifyPropertyChanged("GetBytesAtAddress");
+                    NotifyPropertyChanged("GetBytesAtAddress");
                 }
             }
 
             public String BytesAtAddressAsString {
                 get {
-                    System.Text.StringBuilder byteString = new System.Text.StringBuilder();
+                    StringBuilder byteString = new StringBuilder();
                     for (int i = 0; i < bytesAtAddress.Count; i++) {
                         if (monitorRef.aSCIICharactersToolStripMenuItem.Checked) {
                             if ((bytesAtAddress[i] > 31) && (bytesAtAddress[i] < 128)) {
@@ -892,7 +752,7 @@ namespace ZeroWin
                 set {
                     opcodes = value;
 
-                    this.NotifyPropertyChanged("Opcodes");
+                    NotifyPropertyChanged("Opcodes");
                 }
             }
 
@@ -1159,13 +1019,13 @@ namespace ZeroWin
         }
 
         public void RefreshMemory(int from) {
-            this.SuspendLayout();
+            SuspendLayout();
             dataGridView1.DataSource = null;
             //int line = disassemblyList.Find("Address", from);
             //Disassemble(disassemblyList[line].Address, 65535, line, false);
             Disassemble(0, 65535, true, false);
             dataGridView1.DataSource = disassemblyList;
-            this.ResumeLayout();
+            ResumeLayout();
         }
 
         public Monitor(Form1 zw) {
@@ -1179,7 +1039,7 @@ namespace ZeroWin
             }
             //dataGridView1.DoubleBuffered(true);
 
-            this.SuspendLayout();
+            SuspendLayout();
 
             dataGridView1.ColumnHeadersBorderStyle = ProperColumnHeadersBorderStyle;
 
@@ -1194,26 +1054,26 @@ namespace ZeroWin
             //ziggyWin.zx.PopStackEvent += new PopStackEventHandler(Monitor_PopStackEvent);
             //ziggyWin.zx.PushStackEvent += new PushStackEventHandler(Monitor_PushStackEvent);
 
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 =
-                 new System.Windows.Forms.DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 =
+                 new DataGridViewCellStyle();
 
             //Define Header Style
             dataGridViewCellStyle2.Alignment =
-                System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle2.BackColor = Control.DefaultBackColor;
+                DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.BackColor = DefaultBackColor;
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas",
                 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = Control.DefaultBackColor;
+            dataGridViewCellStyle2.SelectionBackColor = DefaultBackColor;
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.WindowText;
             dataGridViewCellStyle2.WrapMode =
-                System.Windows.Forms.DataGridViewTriState.False;
+                DataGridViewTriState.False;
 
             //Apply Header Style
             dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
 
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.ControlLightLight;
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas",
                 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1221,7 +1081,7 @@ namespace ZeroWin
             dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
 
-            this.dataGridView1.ColumnHeadersBorderStyle =
+            dataGridView1.ColumnHeadersBorderStyle =
              DataGridViewHeaderBorderStyle.Raised;
 
             Disassemble(0, 65535, true, false);
@@ -1291,7 +1151,7 @@ namespace ZeroWin
             dgridColLogInstructions.Width = 195;
             dgridColLogInstructions.DataPropertyName = "Opcodes";
 
-            this.ResumeLayout();
+            ResumeLayout();
         }
 
         private void dataGridView1_CellToolTipTextNeeded(object sender, DataGridViewCellToolTipTextNeededEventArgs e) {
@@ -7113,9 +6973,9 @@ namespace ZeroWin
             dataGridView1.Refresh();
         }
 
-        public void RemoveBreakpoint(KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> _kv)
+        public void RemoveBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv)
         {
-            foreach (KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> breakpoint in breakPointList)
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
             {
                 if (breakpoint.Equals(_kv)) {
                     if (_kv.Key == SPECCY_EVENT.OPCODE_PC)
@@ -7142,7 +7002,7 @@ namespace ZeroWin
                 {
                     int index = disassemblyList.Find("Address", breakpoint.Value.Address);
                     if (index >= 0)
-                        dataGridView1.Rows[index].HeaderCell.Style.BackColor = Control.DefaultBackColor;
+                        dataGridView1.Rows[index].HeaderCell.Style.BackColor = DefaultBackColor;
                 }
             }
             breakPointList.Clear();
@@ -7201,10 +7061,10 @@ namespace ZeroWin
         private void label29_Click(object sender, EventArgs e) {
         }
 
-        public void AddBreakpoint(KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> _kv)
+        public void AddBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv)
         {
             bool found = false;
-            foreach (KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> breakpoint in breakPointList)
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
             {
                 if (breakpoint.Equals(_kv)) {
                     found = true;
@@ -7236,7 +7096,7 @@ namespace ZeroWin
             addr = Utilities.ConvertToInt(jumpAddrTextBox4.Text);
 
             if (addr > 65535) {
-                System.Windows.Forms.MessageBox.Show("The address is not within 0 to 65535!", "Invalid input", MessageBoxButtons.OK);
+                MessageBox.Show("The address is not within 0 to 65535!", "Invalid input", MessageBoxButtons.OK);
                 return;
             }
 
@@ -7257,55 +7117,55 @@ namespace ZeroWin
         }
 
         private void PClink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(pc);
+            JumpToAddress(ValuePC);
         }
 
         private void HLlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(hl);
+            JumpToAddress(ValueHL);
         }
 
         private void BClink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(bc);
+            JumpToAddress(ValueBC);
         }
 
         private void DElink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(de);
+            JumpToAddress(ValueDE);
         }
 
         private void IXlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(ix);
+            JumpToAddress(ValueIX);
         }
 
         private void SPlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(sp);
+            JumpToAddress(ValueSP);
         }
 
         private void HL_link_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(_hl);
+            JumpToAddress(ValueHL_);
         }
 
         private void AFlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(af);
+            JumpToAddress(ValueAF);
         }
 
         private void IRlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(ir);
+            JumpToAddress(ValueIR);
         }
 
         private void BC_link_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(_bc);
+            JumpToAddress(ValueBC_);
         }
 
         private void DE_link_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(_de);
+            JumpToAddress(ValueDE_);
         }
 
         private void AF_lnk_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(_af);
+            JumpToAddress(ValueAF_);
         }
 
         private void IYlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            JumpToAddress(iy);
+            JumpToAddress(ValueIY);
         }
 
         private void MPlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
@@ -7315,7 +7175,7 @@ namespace ZeroWin
             if (machineState == null || machineState.IsDisposed)
                 machineState = new Machine_State();
 
-            machineState.RefreshView(this.ziggyWin);
+            machineState.RefreshView(ziggyWin);
             machineState.Show();
             isMachineStateViewerOpen = true;
         }
@@ -7363,7 +7223,7 @@ namespace ZeroWin
                 dbState = MonitorState.STEPIN;
 
                 ziggyWin.zx.doRun = true;
-                previousPC = pc;
+                previousPC = ValuePC;
                 previousTState = ziggyWin.zx.totalTStates;
                 ziggyWin.zx.Resume();
                 //ziggyWin.Focus();
@@ -7379,7 +7239,7 @@ namespace ZeroWin
                 dbState = MonitorState.STEPIN;
 
                 ziggyWin.zx.doRun = true;
-                previousPC = pc;
+                previousPC = ValuePC;
                 previousTState = ziggyWin.zx.totalTStates;
                 ziggyWin.zx.Resume();
                 //ziggyWin.Focus();
@@ -7390,24 +7250,24 @@ namespace ZeroWin
             runToCursorAddress = disassemblyList[dataGridView1.CurrentRow.Index + 1].Address;
 
             ziggyWin.zx.doRun = true;
-            previousPC = pc;
+            previousPC = ValuePC;
             previousTState = ziggyWin.zx.totalTStates;
 
-            this.Hide();
+            Hide();
             //ziggyWin.zx.monitorSaysRun = true;
             ziggyWin.zx.Resume();
             ziggyWin.Focus();
         }
 
         private void StepInButton_Click(object sender, EventArgs e) {
-            previousPC = pc;
+            previousPC = ValuePC;
             ziggyWin.zx.ResetKeyboard();
             previousTState = ziggyWin.zx.totalTStates;
             SetState(MonitorState.STEPIN);
         }
 
         private void StopDebuggerButton_Click(object sender, EventArgs e) {
-            this.Close();
+            Close();
         }
 
         private void HideWindow() {
@@ -7441,7 +7301,7 @@ namespace ZeroWin
                 callStackViewer.Hide();
             }
 
-            this.Hide();
+            Hide();
         }
 
         private void RunToCursorButton_Click(object sender, EventArgs e) {
@@ -7450,7 +7310,7 @@ namespace ZeroWin
 
             ziggyWin.zx.doRun = true;
             ziggyWin.zx.ResetKeyboard();
-            previousPC = pc;
+            previousPC = ValuePC;
             previousTState = ziggyWin.zx.totalTStates;
             HideWindow();
             //ziggyWin.zx.monitorSaysRun = true;
@@ -7460,7 +7320,7 @@ namespace ZeroWin
 
         private void ResumeEmulationButton_Click(object sender, EventArgs e) {
             ziggyWin.zx.ResetKeyboard();
-            previousPC = pc;
+            previousPC = ValuePC;
             previousTState = ziggyWin.zx.totalTStates;
 
             HideWindow();
@@ -7527,7 +7387,7 @@ namespace ZeroWin
         }
 
         private void StepOutButton_Click(object sender, EventArgs e) {
-            previousPC = pc;
+            previousPC = ValuePC;
             ziggyWin.zx.ResetKeyboard();
             previousTState = ziggyWin.zx.totalTStates;
             SetState(MonitorState.STEPOUT);
@@ -7535,7 +7395,7 @@ namespace ZeroWin
 
         private void aSCIICharactersToolStripMenuItem_CheckedChanged(object sender, EventArgs e) {
             if (aSCIICharactersToolStripMenuItem.Checked) {
-                this.dataGridView1.Columns[1].DefaultCellStyle.Format = "x2";
+                dataGridView1.Columns[1].DefaultCellStyle.Format = "x2";
                 numbersInHexToolStripMenuItem.Checked = false;
             }
             dataGridView1.Refresh();
@@ -7545,10 +7405,10 @@ namespace ZeroWin
             useHexNumbers = numbersInHexToolStripMenuItem.Checked;
 
             if (useHexNumbers) {
-                this.dataGridView1.Columns[0].DefaultCellStyle.Format = "x2";
+                dataGridView1.Columns[0].DefaultCellStyle.Format = "x2";
                 aSCIICharactersToolStripMenuItem.Checked = false;
             } else {
-                this.dataGridView1.Columns[0].DefaultCellStyle.Format = "";
+                dataGridView1.Columns[0].DefaultCellStyle.Format = "";
             }
 
             if (breakpointViewer != null && !breakpointViewer.IsDisposed)
@@ -7673,8 +7533,8 @@ namespace ZeroWin
                         //                "Log created!", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.None);
                     }
                 } catch {
-                    System.Windows.Forms.MessageBox.Show("Zero was unable to create a file! Either the disk is full, or there is a problem with access rights to the folder or something else entirely!",
-                            "File Write Error!", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                    MessageBox.Show("Zero was unable to create a file! Either the disk is full, or there is a problem with access rights to the folder or something else entirely!",
+                            "File Write Error!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
             }
         }
@@ -7687,7 +7547,7 @@ namespace ZeroWin
         }
 
         private void Monitor_VisibleChanged(object sender, EventArgs e) {
-            if (this.Visible) {
+            if (Visible) {
                 if (isBreakpointWindowOpen) {
                     if (breakpointViewer.IsDisposed)
                         BreakpointsButton_Click(this, e);

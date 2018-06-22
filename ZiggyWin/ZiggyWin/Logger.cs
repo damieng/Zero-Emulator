@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Text;
 
 namespace ZeroWin
 {
@@ -12,7 +11,7 @@ namespace ZeroWin
         public void Log(string s, bool finalise = false)
         {
             if (sw == null)
-               sw = new System.IO.StreamWriter(@"ZeroLog.txt");
+               sw = new StreamWriter(@"ZeroLog.txt");
 
             sw.WriteLine(s);
             sw.Flush();
@@ -23,13 +22,12 @@ namespace ZeroWin
 
         public void DebugLog(string s)
         {
-            System.Diagnostics.Debug.WriteLine(s);
+            Debug.WriteLine(s);
         }
 
         public void Dispose()
         {
-            if (sw != null)
-                sw.Close();
+            sw?.Close();
         }
     }
 }

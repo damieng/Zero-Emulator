@@ -1,5 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ZeroWin
@@ -19,11 +23,10 @@ namespace ZeroWin
             }
         }
 
-        private System.Threading.Thread joystickPollThread;
         public BindingList<ButtonKeyCombo> ButtonKeyList = new BindingList<ButtonKeyCombo>();
         public bool dataChanged = false;
-        private JoystickController joystick = null;
-        private bool running = false;
+        private readonly JoystickController joystick;
+        private bool running;
 
         //Since the search button cannot be updated from Async web callback as it's on another thread.
         public delegate void SelectDataGridViewCell(int index);
@@ -34,32 +37,30 @@ namespace ZeroWin
             joystick = jc;
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
-                c.Font = new System.Drawing.Font(System.Drawing.SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
+                c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
-            if (System.IO.File.Exists(Application.UserAppDataPath + jc.name + ".xml")) {
-                System.Data.DataSet ds = new System.Data.DataSet();
-                ds.ReadXml(Application.UserAppDataPath + jc.name + ".xml", System.Data.XmlReadMode.InferSchema);
+            if (File.Exists(Application.UserAppDataPath + jc.name + ".xml")) {
+                DataSet ds = new DataSet();
+                ds.ReadXml(Application.UserAppDataPath + jc.name + ".xml", XmlReadMode.InferSchema);
                 dataGridView1.DataSource = ds;
             } else {
                 for (int f = 0; f < jc.joystick.Caps.NumberButtons; f++) {
-                    ButtonKeyCombo buttonKey = new ButtonKeyCombo();
-                    buttonKey.Button = "Button " + (f + 1).ToString();
-                    /*
-                    if (f == 0) {
-                        buttonKey.Key = "Fire";
-                        jc.fireButtonIndex = 0;
-                    } else
-                     */
-                    buttonKey.Key = "None";
+                    ButtonKeyCombo buttonKey = new ButtonKeyCombo
+                    {
+                        Button = "Button " + (f + 1),
+                        Key = "None"
+                    };
                     ButtonKeyList.Add(buttonKey);
                 }
                 dataGridView1.AutoGenerateColumns = true;
                 dataGridView1.DataSource = ButtonKeyList;
             }
             running = true;
-            joystickPollThread = new System.Threading.Thread(new System.Threading.ThreadStart(JoystickPoll));
-            joystickPollThread.Name = "Joystick Poll Thread";
-            joystickPollThread.Priority = System.Threading.ThreadPriority.Lowest;
+            Thread joystickPollThread = new Thread(JoystickPoll)
+            {
+                Name = "Joystick Poll Thread",
+                Priority = ThreadPriority.Lowest
+            };
             joystickPollThread.Start();
         }
 
@@ -87,11 +88,11 @@ namespace ZeroWin
                 byte[] buttons = joystick.state.GetButtons();
                 for (int f = 0; f < buttons.Length; f++)
                     if (buttons[f] > 0) {
-                        SelectDataGridViewCell selectCell = new SelectDataGridViewCell(SelectCell);
-                        this.Invoke(selectCell, new object[] { f });
+                        SelectDataGridViewCell selectCell = SelectCell;
+                        Invoke(selectCell, f);
                         break;
                     }
-                System.Threading.Thread.Sleep(1);
+                Thread.Sleep(1);
             }
         }
 

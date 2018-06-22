@@ -1,20 +1,20 @@
-﻿using System.Windows.Forms;
+﻿using System;
 using System.IO;
+using System.Windows.Forms;
 
 namespace ZeroWin
 {
     public partial class ZLibrary : Form
     {
-        SQLHelper sql = new SQLHelper(Properties.Settings.Default.PathLibrary + ".\\zxLibrary.db");
         public ZLibrary() {
             InitializeComponent();
         }
 
-        private void textBox2_TextChanged(object sender, System.EventArgs e) {
+        private void textBox2_TextChanged(object sender, EventArgs e) {
 
         }
 
-        private void scanButton_Click(object sender, System.EventArgs e) {
+        private void scanButton_Click(object sender, EventArgs e) {
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK) {
                 ScanFolder(folderBrowserDialog1.SelectedPath);
             }
@@ -23,9 +23,9 @@ namespace ZeroWin
         private void ScanFolder(string folder) {
             try {
                 string[] filenames = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
-                char [] delimiters = new char[] {'(', ')', '[', ']'}; 
+                char[] delimiters = { '(', ')', '[', ']' };
                 foreach (string s in filenames) {
-                    string[] filename = Path.GetFileName(s).Split(delimiters, System.StringSplitOptions.RemoveEmptyEntries);
+                    string[] filename = Path.GetFileName(s).Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
                     string name = filename[0];
                     string year = "";
                     string pub = "";
@@ -40,17 +40,15 @@ namespace ZeroWin
                         year = filename[1 + offset];
                     if (filename.Length > 3)
                         pub = filename[2 + offset];
-                    System.Console.WriteLine(name + " Year: " + year + " publisher: " + pub);
+                    Console.WriteLine(name + " Year: " + year + " publisher: " + pub);
                 }
-            } catch (System.UnauthorizedAccessException UAEx) {
-                MessageBox.Show(UAEx.Message, "Error", MessageBoxButtons.OK);
-                return;
-            } catch (PathTooLongException PathEx) {
-                MessageBox.Show(PathEx.Message, "Error", MessageBoxButtons.OK);
-                return;
             }
-
-            
+            catch (UnauthorizedAccessException UAEx) {
+                MessageBox.Show(UAEx.Message, "Error", MessageBoxButtons.OK);
+            }
+            catch (PathTooLongException PathEx) {
+                MessageBox.Show(PathEx.Message, "Error", MessageBoxButtons.OK);
+            }
         }
     }
 }
