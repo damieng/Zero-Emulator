@@ -100,28 +100,17 @@ namespace ZeroWin
             }
 
             int low = Low(monitor.ValueAF);
-            int hi = High(monitor.ValueAF);
 
             FlagCCheck.Checked = (low & 0x01) != 0;
-
             FlagNCheck.Checked = (low & 0x02) != 0;
-
             FlagVCheck.Checked = (low & 0x04) != 0;
-
             Flag3Check.Checked = (low & 0x08) != 0;
-
             FlagHCheck.Checked = (low & 0x10) != 0;
-
             Flag5Check.Checked = (low & 0x20) != 0;
-
             FlagZCheck.Checked = (low & 0x40) != 0;
-
             FlagSCheck.Checked = (low & 0x80) != 0;
 
             interruptCheckBox.Checked = monitor.ziggyWin.zx.IFF1;
-        }
-
-        private void panel1_Paint(object sender, PaintEventArgs e) {
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e) {

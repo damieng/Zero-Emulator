@@ -17,97 +17,63 @@ namespace ZeroWin
         #region Accessors
 
         public bool EnableKey2Joy {
-            get {
-                return key2joyCheckBox.Checked;
-            }
-            set {
-                key2joyCheckBox.Checked = value;
-            }
+            get => key2joyCheckBox.Checked;
+            set => key2joyCheckBox.Checked = value;
         }
 
         public int Key2JoyStickType {
-            get {
-                return key2joyComboBox.SelectedIndex;
-            }
-            set {
-                key2joyComboBox.SelectedIndex = value;
-            }
+            get => key2joyComboBox.SelectedIndex;
+            set => key2joyComboBox.SelectedIndex = value;
         }
 
         public int MouseSensitivity {
-            get {
-                return (11 - mouseTrackBar.Value);
-            }
-            set {
-                mouseTrackBar.Value = 11 - value;
-            }
+            get => (11 - mouseTrackBar.Value);
+            set => mouseTrackBar.Value = 11 - value;
         }
 
         public bool EnableKempstonMouse {
-            get { return mouseCheckBox.Checked; }
-            set { mouseCheckBox.Checked = value; }
+            get => mouseCheckBox.Checked;
+            set => mouseCheckBox.Checked = value;
         }
 
         public int Joystick1Choice {
-            get {
-                return joystickComboBox1.SelectedIndex;
-            }
-            set {
-                // joystickComboBox1.SelectedIndex = value;
-                joy1 = value;
-            }
+            get => joystickComboBox1.SelectedIndex;
+            set => joy1 = value;
         }
 
         public int Joystick2Choice {
-            get {
-                return joystick2ComboBox1.SelectedIndex;
-            }
-            set {
-                // joystick2ComboBox1.SelectedIndex = value;
-                joy2 = value;
-            }
+            get => joystick2ComboBox1.SelectedIndex;
+            set => joy2 = value;
         }
 
         public int Joystick1EmulationChoice {
-            get {
-                return joystickComboBox2.SelectedIndex;
-            }
-            set {
-                joystickComboBox2.SelectedIndex = value;
-            }
+            get => joystickComboBox2.SelectedIndex;
+            set => joystickComboBox2.SelectedIndex = value;
         }
 
         public int Joystick2EmulationChoice {
-            get {
-                return joystick2ComboBox2.SelectedIndex;
-            }
-            set {
-                joystick2ComboBox2.SelectedIndex = value;
-            }
+            get => joystick2ComboBox2.SelectedIndex;
+            set => joystick2ComboBox2.SelectedIndex = value;
         }
 
         public int EmulationSpeed {
-            get {
-                return emulationSpeedTrackBar.Value;
-            }
-            set {
-                emulationSpeedTrackBar.Value = value;
-            }
+            get => emulationSpeedTrackBar.Value;
+            set => emulationSpeedTrackBar.Value = value;
         }
 
         public bool HighCompatibilityMode {
-            get { return Use128keCheckbox.Checked; }
-            set { Use128keCheckbox.Checked = value; }
+            get => Use128keCheckbox.Checked;
+            set => Use128keCheckbox.Checked = value;
         }
 
         public bool RestoreLastState {
-            get { return lastStateCheckbox.Checked; }
-            set { lastStateCheckbox.Checked = value; }
+            get => lastStateCheckbox.Checked;
+            set => lastStateCheckbox.Checked = value;
         }
 
         public bool ShowOnScreenLEDS {
-            get { return onScreenLEDCheckbox.Checked; }
-            set { onScreenLEDCheckbox.Checked = value; }
+            get => onScreenLEDCheckbox.Checked;
+            set => onScreenLEDCheckbox.Checked = value;
         }
 
         public int SpeakerSetup {
@@ -124,14 +90,16 @@ namespace ZeroWin
                 if (value == 0) {
                     stereoRadioButton.Checked = false;
                     monoRadioButton.Checked = true;
-                } else {
+                }
+                else {
                     stereoRadioButton.Checked = true;
                     monoRadioButton.Checked = false;
 
                     if (value == 1) {
                         acbRadioButton.Checked = true;
                         abcRadioButton.Checked = false;
-                    } else {
+                    }
+                    else {
                         acbRadioButton.Checked = false;
                         abcRadioButton.Checked = true;
                     }
@@ -140,7 +108,7 @@ namespace ZeroWin
         }
 
         public bool EnableStereoSound {
-            get { return stereoSound; }
+            get => stereoSound;
             set {
                 stereoSound = value;
                 stereoRadioButton.Checked = value;
@@ -149,7 +117,7 @@ namespace ZeroWin
         }
 
         public bool EnableAYFor48K {
-            get { return ayFor48k; }
+            get => ayFor48k;
             set {
                 ayFor48k = value;
                 ayFor48kCheckbox.Checked = value;
@@ -157,13 +125,13 @@ namespace ZeroWin
         }
 
         public String RomPath {
-            get { return romPathTextBox.Text; }
-            set { romPathTextBox.Text = value; }
+            get => romPathTextBox.Text;
+            set => romPathTextBox.Text = value;
         }
 
         public String GamePath {
-            get { return gamePathTextBox.Text; }
-            set { gamePathTextBox.Text = value; }
+            get => gamePathTextBox.Text;
+            set => gamePathTextBox.Text = value;
         }
 
         public String RomToUse48k { get; set; } = "";
@@ -176,154 +144,135 @@ namespace ZeroWin
         public String RomToUsePentagon { get; set; } = "";
 
         public bool FileAssociateSNA {
-            get { return snaCheckBox.Checked; }
-            set { snaCheckBox.Checked = value; }
+            get => snaCheckBox.Checked;
+            set => snaCheckBox.Checked = value;
         }
 
         public bool FileAssociateSZX {
-            get { return szxCheckBox.Checked; }
-            set { szxCheckBox.Checked = value; }
+            get => szxCheckBox.Checked;
+            set => szxCheckBox.Checked = value;
         }
 
         public bool FileAssociateZ80 {
-            get { return z80CheckBox.Checked; }
-            set { z80CheckBox.Checked = value; }
+            get => z80CheckBox.Checked;
+            set => z80CheckBox.Checked = value;
         }
 
         public bool FileAssociatePZX {
-            get { return pzxCheckBox.Checked; }
-            set { pzxCheckBox.Checked = value; }
+            get => pzxCheckBox.Checked;
+            set => pzxCheckBox.Checked = value;
         }
 
         public bool FileAssociateTZX {
-            get { return tzxCheckBox.Checked; }
-            set { tzxCheckBox.Checked = value; }
+            get => tzxCheckBox.Checked;
+            set => tzxCheckBox.Checked = value;
         }
 
         public bool FileAssociateTAP {
-            get { return tapCheckBox.Checked; }
-            set { tapCheckBox.Checked = value; }
+            get => tapCheckBox.Checked;
+            set => tapCheckBox.Checked = value;
         }
 
         public bool FileAssociateDSK {
-            get { return dskCheckBox.Checked; }
-            set { dskCheckBox.Checked = value; }
+            get => dskCheckBox.Checked;
+            set => dskCheckBox.Checked = value;
         }
 
         public bool FileAssociateTRD {
-            get { return trdCheckBox.Checked; }
-            set { trdCheckBox.Checked = value; }
+            get => trdCheckBox.Checked;
+            set => trdCheckBox.Checked = value;
         }
 
         public bool FileAssociateSCL {
-            get { return sclCheckBox.Checked; }
-            set { sclCheckBox.Checked = value; }
+            get => sclCheckBox.Checked;
+            set => sclCheckBox.Checked = value;
         }
 
         public int SpectrumModel {
-            get { return modelComboBox.SelectedIndex; }
-            set { modelComboBox.SelectedIndex = value; }
+            get => modelComboBox.SelectedIndex;
+            set => modelComboBox.SelectedIndex = value;
         }
 
         public bool InterlacedMode {
-            get { return interlaceCheckBox.Checked; }
-            set { interlaceCheckBox.Checked = value; }
+            get => interlaceCheckBox.Checked;
+            set => interlaceCheckBox.Checked = value;
         }
 
         public bool PixelSmoothing {
-            get { return pixelSmoothingCheckBox.Checked; }
-            set { pixelSmoothingCheckBox.Checked = value; }
+            get => pixelSmoothingCheckBox.Checked;
+            set => pixelSmoothingCheckBox.Checked = value;
         }
 
         public bool EnableVSync {
-            get { return vsyncCheckbox.Checked; }
-            set { vsyncCheckbox.Checked = value; }
+            get => vsyncCheckbox.Checked;
+            set => vsyncCheckbox.Checked = value;
         }
 
         public bool UseIssue2Keyboard {
-            get {
-                if (issue2RadioButton.Checked)
-                    return true;
-                return false;
-            }
+            get => issue2RadioButton.Checked;
             set {
                 if (value) {
                     issue2RadioButton.Checked = true;
                     issue3radioButton.Checked = false;
-                } else {
+                }
+                else {
                     issue2RadioButton.Checked = false;
                     issue3radioButton.Checked = true;
-                };
-            }
-        }
-
-        public bool UseDirectX {
-            get {
-                return directXRadioButton.Checked;
-            }
-            set {
-                if (value) {
-                    directXRadioButton.Checked = true;
-                    gdiRadioButton.Checked = false;
-                    interlaceCheckBox.Enabled = true;
-                    pixelSmoothingCheckBox.Enabled = true;
-                    vsyncCheckbox.Enabled = true;
-                } else {
-                    directXRadioButton.Checked = false;
-                    gdiRadioButton.Checked = true;
-                    interlaceCheckBox.Enabled = false;
-                    pixelSmoothingCheckBox.Enabled = false;
-                    vsyncCheckbox.Enabled = false;
                 }
             }
         }
 
+        public bool UseDirectX {
+            get => directXRadioButton.Checked;
+            set {
+                directXRadioButton.Checked = interlaceCheckBox.Enabled = pixelSmoothingCheckBox.Enabled = vsyncCheckbox.Enabled = value;
+                gdiRadioButton.Checked = !value;
+            }
+        }
+
         public int Palette {
-            get { return paletteComboBox.SelectedIndex; }
-            set { paletteComboBox.SelectedIndex = value; }
+            get => paletteComboBox.SelectedIndex;
+            set => paletteComboBox.SelectedIndex = value;
         }
 
         public int borderSize {
-            get { return borderSizeComboBox.SelectedIndex; }
-            set { borderSizeComboBox.SelectedIndex = value; }
+            get => borderSizeComboBox.SelectedIndex;
+            set => borderSizeComboBox.SelectedIndex = value;
         }
 
         public int windowSize {
-            get { return windowSizeComboBox.SelectedIndex; }
-            set { windowSizeComboBox.SelectedIndex = value; }
+            get => windowSizeComboBox.SelectedIndex;
+            set => windowSizeComboBox.SelectedIndex = value;
         }
 
         public bool UseLateTimings {
-            get { return timingCheckBox.Checked; }
-            set { timingCheckBox.Checked = value; }
+            get => timingCheckBox.Checked;
+            set => timingCheckBox.Checked = value;
         }
 
         public bool PauseOnFocusChange {
-            get { return pauseCheckBox.Checked; }
-            set { pauseCheckBox.Checked = value; }
+            get => pauseCheckBox.Checked;
+            set => pauseCheckBox.Checked = value;
         }
 
         public bool ConfirmOnExit {
-            get { return exitConfirmCheckBox.Checked; }
-            set { exitConfirmCheckBox.Checked = value; }
+            get => exitConfirmCheckBox.Checked;
+            set => exitConfirmCheckBox.Checked = value;
         }
 
-        public bool MaintainAspectRatioInFullScreen
-        {
-            get { return aspectRatioFullscreenCheckBox.Checked; }
-            set { aspectRatioFullscreenCheckBox.Checked = value; }
+        public bool MaintainAspectRatioInFullScreen {
+            get => aspectRatioFullscreenCheckBox.Checked;
+            set => aspectRatioFullscreenCheckBox.Checked = value;
         }
 
-        public bool DisableTapeTraps
-        {
-            get { return disableTapeTrapCheckbox.Checked; }
-            set { disableTapeTrapCheckbox.Checked = value; }
+        public bool DisableTapeTraps {
+            get => disableTapeTrapCheckbox.Checked;
+            set => disableTapeTrapCheckbox.Checked = value;
         }
 
-        public bool KempstonUsesPort1F
-        {
-            get { return port1FCheckbox.Checked; }
-            set { port1FCheckbox.Checked = value; }
+        public bool KempstonUsesPort1F {
+            get => port1FCheckbox.Checked;
+            set => port1FCheckbox.Checked = value;
         }
         #endregion Accessors
 
@@ -341,7 +290,8 @@ namespace ZeroWin
             if (UseDirectX) {
                 interlaceCheckBox.Enabled = true;
                 pixelSmoothingCheckBox.Enabled = true;
-            } else {
+            }
+            else {
                 interlaceCheckBox.Enabled = false;
                 pixelSmoothingCheckBox.Enabled = false;
             }
@@ -427,68 +377,6 @@ namespace ZeroWin
             if (MessageBox.Show("This will cause you to lose all your current settings!\nAre you sure you want to revert to default settings?",
                           "Confirm settings reset", MessageBoxButtons.YesNo,
                           MessageBoxIcon.Question) == DialogResult.Yes) {
-
-                #region old default method
-
-                /*
-                 System.Xml.Linq.XElement configXML = System.Xml.Linq.XElement.Load(Application.StartupPath + @"\ziggyDefaultConfig.xml");
-                RomToUse48k = (string)configXML.Element("rom48k");
-                RomToUse128k = (string)configXML.Element("rom128k");
-                RomToUse128ke = (string)configXML.Element("rom128ke");
-
-                //Don't revert path to defaults, since there is no default path.
-                //Instead try to use application start up path.
-                RomPath = Application.StartupPath + "\\roms";
-                GamePath = Application.StartupPath + "\\programs";
-                string model = (string)configXML.Element("model");
-                switch (model)
-                {
-                    case "ZX Spectrum 48k":
-                        SpectrumModel = 0;
-                        break;
-
-                    case "ZX Spectrum 128k":
-                        SpectrumModel = 1;
-                        break;
-
-                    case "ZX Spectrum 128ke":
-                        SpectrumModel = 2;
-                        break;
-
-                    case "ZX Spectrum +3":
-                        SpectrumModel = 3;
-                        break;
-
-                    case "Pentagon 128k":
-                        SpectrumModel = 4;
-                        break;
-                }
-                UseDirectX = (bool)configXML.Element("display").Element("useDirectX");
-                borderSize = (int)configXML.Element("display").Element("borderSize");
-
-                string paletteMode = (string)configXML.Element("display").Element("palette");
-                switch (paletteMode)
-                {
-                    case "Grayscale":
-                        Palette = 1;
-                        break;
-
-                    case "ULA Plus":
-                        Palette = 2;
-                        break;
-
-                    default:
-                        Palette = 0;
-                        break;
-                }
-
-                PauseOnFocusChange = (bool)configXML.Element("emulation").Element("pauseOnFocusChange");
-                ConfirmOnExit = (bool)configXML.Element("emulation").Element("confirmOnExit");
-                UseLateTimings = ((int)configXML.Element("emulation").Element("timingModel") == 0? false: true);
-                UseIssue2Keyboard = (bool)configXML.Element("emulation").Element("issue2keyboard");
-                 */
-
-                #endregion old default method
 
                 ZeroConfig defCon = new ZeroConfig();
                 RomToUse48k = defCon.Current48kROM;

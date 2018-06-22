@@ -6,7 +6,7 @@ using Speccy;
 
 namespace ZeroWin
 {
-    public partial class LoadBinary : Form
+    public sealed partial class LoadBinary : Form
     {
         private readonly Form1 ziggyWin;
         private readonly bool loadMode;
@@ -64,7 +64,7 @@ namespace ZeroWin
                     }
 
                     start = Convert.ToInt32(maskedTextBox1.Text);
-                    if ((start < 16384) || (start > 65535)) {
+                    if (start < 16384 || start > 65535) {
                         MessageBox.Show("Enter a valid address from 16384 to 65535.", "Invalid address", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
@@ -82,9 +82,7 @@ namespace ZeroWin
                     return;
                 }
 
-                //fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
                 using (BinaryReader r = new BinaryReader(fs)) {
-                    //int bytesRead = ReadBytes(r, mem, 0, 16384);
                     byte[] buffer = new byte[fs.Length];
                     int bytesRead = r.Read(buffer, 0, (int)fs.Length);
 

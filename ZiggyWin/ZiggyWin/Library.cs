@@ -10,10 +10,6 @@ namespace ZeroWin
             InitializeComponent();
         }
 
-        private void textBox2_TextChanged(object sender, EventArgs e) {
-
-        }
-
         private void scanButton_Click(object sender, EventArgs e) {
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK) {
                 ScanFolder(folderBrowserDialog1.SelectedPath);

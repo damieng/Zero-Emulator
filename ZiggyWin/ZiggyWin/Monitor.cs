@@ -107,8 +107,7 @@ namespace ZeroWin
         {
             private SPECCY_EVENT condition;
 
-            public string Condition
-            {
+            public string Condition {
                 get { return Utilities.GetStringFromEnum(condition); }
             }
 
@@ -129,8 +128,7 @@ namespace ZeroWin
                 Data = 0;
             }
 
-            public BreakPointCondition(SPECCY_EVENT cond, int addr, int val)
-            {
+            public BreakPointCondition(SPECCY_EVENT cond, int addr, int val) {
                 condition = cond;
                 Address = addr;
                 Data = val;
@@ -158,7 +156,8 @@ namespace ZeroWin
             if (lst1.InvokeRequired) {
                 AssignToDGVDisassemblyDelegate d = new AssignToDGVDisassemblyDelegate(AssignToDGVDisassembly);
                 lst1.Invoke(d, new object[] { lst1, lst2 });
-            } else {
+            }
+            else {
                 lst1.DataSource = lst2;
             }
         }
@@ -169,7 +168,8 @@ namespace ZeroWin
             if (lst1.InvokeRequired) {
                 AssignToDGVMemoryDelegate d = new AssignToDGVMemoryDelegate(AssignToDGVMemory);
                 lst1.Invoke(d, new object[] { lst1, lst2 });
-            } else {
+            }
+            else {
                 lst1.DataSource = lst2;
             }
         }
@@ -180,7 +180,8 @@ namespace ZeroWin
             if (lst1.InvokeRequired) {
                 AssignToDGVLogDelegate d = new AssignToDGVLogDelegate(AssignToDGVLog);
                 lst1.Invoke(d, new object[] { lst1, lst2 });
-            } else {
+            }
+            else {
                 lst1.DataSource = lst2;
             }
         }
@@ -223,11 +224,9 @@ namespace ZeroWin
         //Event: Raised when the z80 memory contents have changed (via POKE)
         public void Monitor_MemoryWrite(Object sender, MemoryEventArgs e) {
             //Check if any breakpoints have been hit
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 BreakPointCondition val = kv.Value;
-                if (kv.Key == SPECCY_EVENT.MEMORY_WRITE)
-                {
+                if (kv.Key == SPECCY_EVENT.MEMORY_WRITE) {
                     if (e.Address == val.Address) {
                         if (val.Data > -1) {
                             if (e.Byte == val.Data) {
@@ -235,7 +234,8 @@ namespace ZeroWin
                                 ProcessMemoryBreakpoint(e.Address, e.Byte);
                                 break;
                             }
-                        } else {
+                        }
+                        else {
                             breakPointStatus = String.Format("Memory write @ {0} (${0:x}) with value {1} (${1:x})", e.Address, e.Byte);
                             ProcessMemoryBreakpoint(e.Address, e.Byte);
                             break;
@@ -248,8 +248,7 @@ namespace ZeroWin
         //Event: Raised when the z80 memory contents are read (via PEEK)
         public void Monitor_MemoryRead(Object sender, MemoryEventArgs e) {
             //Check if any breakpoints have been hit
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 BreakPointCondition val = kv.Value;
                 if (kv.Key == SPECCY_EVENT.MEMORY_READ) {
                     if (e.Address == val.Address) {
@@ -259,7 +258,8 @@ namespace ZeroWin
                                 ProcessMemoryBreakpoint(e.Address, e.Byte);
                                 break;
                             }
-                        } else {
+                        }
+                        else {
                             breakPointStatus = String.Format("Memory read @ {0} (${0:x}) with value {1} (${1:x})", e.Address, e.Byte);
                             ProcessMemoryBreakpoint(e.Address, e.Byte);
                             break;
@@ -272,11 +272,9 @@ namespace ZeroWin
         //Event: Raised when the z80 memory contents are executed (opcode fetch)
         public void Monitor_MemoryExecute(Object sender, MemoryEventArgs e) {
             //Check if any breakpoints have been hit
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 BreakPointCondition val = kv.Value;
-                if (kv.Key == SPECCY_EVENT.MEMORY_EXECUTE)
-                {
+                if (kv.Key == SPECCY_EVENT.MEMORY_EXECUTE) {
                     if (e.Address == val.Address) {
                         if (val.Data > -1) {
                             if (e.Byte == val.Data) {
@@ -284,7 +282,8 @@ namespace ZeroWin
                                 ProcessMemoryBreakpoint(e.Address, e.Byte);
                                 break;
                             }
-                        } else {
+                        }
+                        else {
                             breakPointStatus = String.Format("Memory execute @ {0} (${0:x}) with value {1} (${1:x})", e.Address, e.Byte);
                             ProcessMemoryBreakpoint(e.Address, e.Byte);
                             break;
@@ -353,8 +352,7 @@ namespace ZeroWin
             ValuePC = ziggyWin.zx.PC;
 
             //Check if any breakpoints have been hit
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 // int val = Convert.ToInt32(kv.Value);
                 BreakPointCondition val = kv.Value;
 
@@ -427,7 +425,8 @@ namespace ZeroWin
                 if (lastOpcodeWasRET) {
                     pauseEmulation = true;
                     lastOpcodeWasRET = false;
-                } else {
+                }
+                else {
                     switch (PeekByte(ValuePC)) {
                         case 0xC9:  //RET
                         case 0xD8:  //RET C
@@ -482,7 +481,8 @@ namespace ZeroWin
 
                 if (machineState != null && !machineState.IsDisposed)
                     machineState.RefreshView(ziggyWin);
-            } else {
+            }
+            else {
                 breakPointStatus = "";
             }
 
@@ -533,8 +533,7 @@ namespace ZeroWin
 
             pauseEmulation = false;
 
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 // int val = Convert.ToInt32(kv.Value);
                 BreakPointCondition val = kv.Value;
 
@@ -572,8 +571,7 @@ namespace ZeroWin
 
             pauseEmulation = false;
             //Check if any breakpoints have been hit
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv in breakPointList) {
                 // int val = Convert.ToInt32(kv.Value);
                 BreakPointCondition val = kv.Value;
 
@@ -586,8 +584,9 @@ namespace ZeroWin
                                     breakPointStatus = String.Format("Port write @ {0} (${0:x}) with value {1} (${1:x}))", e.Port, e.Value);
                                     pauseEmulation = true;
                                 }
-                            } else //we don't care about the data so break anyway
-                            {
+                            }
+                            else //we don't care about the data so break anyway
+                          {
                                 breakPointStatus = String.Format("Port write @ {0} (${0:x})", val);
                                 pauseEmulation = true;
                             }
@@ -608,7 +607,8 @@ namespace ZeroWin
                                     breakPointStatus = String.Format("ULA write @ {0} (${0:x}) with value {1} (${1:x}))", e.Port, e.Value);
                                     pauseEmulation = true;
                                 }
-                            } else {
+                            }
+                            else {
                                 breakPointStatus = String.Format("ULA write @ {0} (${0:x})", e.Port);
                                 pauseEmulation = true;
                             }
@@ -679,8 +679,7 @@ namespace ZeroWin
             }
 
             public String AddressAsString {
-                get
-                {
+                get {
                     return monitorRef.useHexNumbers ? address.ToString("x") : address.ToString();
                 }
             }
@@ -702,11 +701,14 @@ namespace ZeroWin
                         if (monitorRef.aSCIICharactersToolStripMenuItem.Checked) {
                             if ((bytesAtAddress[i] > 31) && (bytesAtAddress[i] < 128)) {
                                 byteString.Append((char)bytesAtAddress[i]);
-                            } else
+                            }
+                            else
                                 byteString.Append('.');
-                        } else if (monitorRef.useHexNumbers) {
+                        }
+                        else if (monitorRef.useHexNumbers) {
                             byteString.Append(bytesAtAddress[i].ToString("x2"));
-                        } else {
+                        }
+                        else {
                             byteString.Append(bytesAtAddress[i].ToString("D2"));
                         }
 
@@ -725,7 +727,7 @@ namespace ZeroWin
                             String svar;
                             if (monitorRef.systemVariables.TryGetValue(Param1, out svar)) {
                                 foundSysVars = true;
-                                toolTipText = Param1.ToString(monitorRef.useHexNumbers ? "x2": "D2");
+                                toolTipText = Param1.ToString(monitorRef.useHexNumbers ? "x2" : "D2");
                                 opString = String.Format(opcodes, svar);
                             }
                         }
@@ -734,15 +736,18 @@ namespace ZeroWin
                     if (!foundSysVars) {
                         if (monitorRef.useHexNumbers) {
                             opcodes = opcodes.Replace(":D", ":x");
-                        } else {
+                        }
+                        else {
                             opcodes = opcodes.Replace(":x", ":D");
                         }
-                        
+
                         if (param2 != int.MaxValue) {
                             opString = String.Format(opcodes, Param1, Param2);
-                        } else if (param1 != int.MaxValue) {
+                        }
+                        else if (param1 != int.MaxValue) {
                             opString = String.Format(opcodes, Param1);
-                        } else
+                        }
+                        else
                             opString = opcodes;
                     }
 
@@ -817,24 +822,9 @@ namespace ZeroWin
 
         public class LogMessage
         {
-            private String address;
-            private String opcodes;
-            private int tstates;
-
-            public String Address {
-                get { return address; }
-                set { address = value; }
-            }
-
-            public int Tstates {
-                get { return tstates; }
-                set { tstates = value; }
-            }
-
-            public String Opcodes {
-                get { return opcodes; }
-                set { opcodes = value; }
-            }
+            public String Address { get; set; }
+            public int Tstates { get; set; }
+            public String Opcodes { get; set; }
         }
 
         public BindingList<LogMessage> logList = new BindingList<LogMessage>();
@@ -850,31 +840,24 @@ namespace ZeroWin
         public class MemoryUnit
         {
             private Monitor monitorRef;
-            private int address;
-            private List<int> bytes;
 
             public MemoryUnit(Monitor m) {
                 monitorRef = m;
             }
 
-            public int Address {
-                get { return address; }
-                set { address = value; }
-            }
+            public int Address { get; set; }
 
-            public List<int> Bytes {
-                get { return bytes; }
-                set { bytes = value; }
-            }
+            public List<int> Bytes { get; set; }
 
             public String GetBytes {
                 get {
-                    System.Text.StringBuilder byteString = new System.Text.StringBuilder();
-                    for (int i = 0; i < bytes.Count; i++) {
+                    StringBuilder byteString = new StringBuilder();
+                    for (int i = 0; i < Bytes.Count; i++) {
                         if (monitorRef.useHexNumbers) {
-                            byteString.Append(bytes[i].ToString("x2"));
-                        } else {
-                            byteString.Append(bytes[i].ToString("D2"));
+                            byteString.Append(Bytes[i].ToString("x2"));
+                        }
+                        else {
+                            byteString.Append(Bytes[i].ToString("D2"));
                         }
 
                         byteString.Append(" ");
@@ -885,12 +868,12 @@ namespace ZeroWin
 
             public String GetCharacters {
                 get {
-                    System.Text.StringBuilder byteString = new System.Text.StringBuilder();
-                    for (int i = 0; i < bytes.Count; i++) {
-                        // char c = (char)(bytes[i]);
-                        if ((bytes[i] > 31) && (bytes[i] < 128)) {
-                            byteString.Append((char)(bytes[i]));
-                        } else
+                    StringBuilder byteString = new StringBuilder();
+                    for (int i = 0; i < Bytes.Count; i++) {
+                        if ((Bytes[i] > 31) && (Bytes[i] < 128)) {
+                            byteString.Append((char)(Bytes[i]));
+                        }
+                        else
                             byteString.Append('.');
                     }
                     return byteString.ToString();
@@ -932,8 +915,6 @@ namespace ZeroWin
         }
 
         public void ReSyncWithZX() {
-            //ziggyWin.zx.MemoryChangeEvent += new MemoryChangeEventHandler(Monitor_MemoryChanged);
-            //ziggyWin.zx.OpcodeExecutedEvent += new OpcodeExecutedEventHandler(Monitor_OpcodeExecuted);
             disassemblyList = new DisassemblyList();
             Disassemble(0, 65535, true, false);
             dataGridView1.DataSource = disassemblyList;
@@ -951,7 +932,7 @@ namespace ZeroWin
                 }
                 memoryViewList.Add(mu);
             }
-            //dataGridView4.DataSource = memoryViewList;
+
             if (memoryViewer != null && !memoryViewer.IsDisposed)
                 memoryViewer.RefreshData(useHexNumbers);
 
@@ -960,8 +941,6 @@ namespace ZeroWin
         }
 
         public void DeSyncWithZX() {
-            //ziggyWin.zx.MemoryChangeEvent -= new MemoryChangeEventHandler(Monitor_MemoryChanged);
-            //ziggyWin.zx.OpcodeExecutedEvent -= new OpcodeExecutedEventHandler(Monitor_OpcodeExecuted);
             dataGridView1.DataSource = null;
             disassemblyList.Clear();
             dataGridView1.Enabled = false;
@@ -973,23 +952,8 @@ namespace ZeroWin
             switch (state) {
                 case MonitorState.RUN:
                     dbState = MonitorState.RUN;
-                    //pauseEmulation = false;
                     ziggyWin.zx.Resume();
                     ziggyWin.zx.doRun = true;
-                    /** Thread code
-                    if (breakPointList.Count == 0)
-                        DeRegisterAllEvents();
-
-                    if (ziggyWin.zx.isSuspended)
-                        ziggyWin.zx.Resume();
-                    else
-                    {
-                        lock (ziggyWin.zx.lockThis2)
-                        {
-                            ziggyWin.zx.monitorIsRunning = false;
-                            System.Threading.Monitor.Pulse(ziggyWin.zx.lockThis2);
-                        }
-                    }*/
                     break;
 
                 case MonitorState.PAUSE:
@@ -1003,17 +967,13 @@ namespace ZeroWin
                 case MonitorState.STEPIN:
                     dbState = MonitorState.STEPIN;
                     ziggyWin.zx.Resume();
-                    //pauseEmulation = false;
                     ziggyWin.zx.doRun = true;
-                    //ziggyWin.zx.Resume();
                     break;
 
                 case MonitorState.STEPOUT:
                     dbState = MonitorState.STEPOUT;
                     ziggyWin.zx.Resume();
-                    //pauseEmulation = false;
                     ziggyWin.zx.doRun = true;
-                    //ziggyWin.zx.Resume();
                     break;
             }
         }
@@ -1021,8 +981,6 @@ namespace ZeroWin
         public void RefreshMemory(int from) {
             SuspendLayout();
             dataGridView1.DataSource = null;
-            //int line = disassemblyList.Find("Address", from);
-            //Disassemble(disassemblyList[line].Address, 65535, line, false);
             Disassemble(0, 65535, true, false);
             dataGridView1.DataSource = disassemblyList;
             ResumeLayout();
@@ -1037,7 +995,6 @@ namespace ZeroWin
             foreach (Control c in Controls) {
                 c.Font = System.Drawing.SystemFonts.MessageBoxFont;
             }
-            //dataGridView1.DoubleBuffered(true);
 
             SuspendLayout();
 
@@ -1051,38 +1008,32 @@ namespace ZeroWin
             ziggyWin.zx.OpcodeExecutedEvent += new OpcodeExecutedEventHandler(Monitor_OpcodeExecuted);
             ziggyWin.zx.PortEvent += new PortIOEventHandler(Monitor_PortIO);
             ziggyWin.zx.StateChangeEvent += new StateChangeEventHandler(Monitor_StateChangeEvent);
-            //ziggyWin.zx.PopStackEvent += new PopStackEventHandler(Monitor_PopStackEvent);
-            //ziggyWin.zx.PushStackEvent += new PushStackEventHandler(Monitor_PushStackEvent);
 
-            DataGridViewCellStyle dataGridViewCellStyle2 =
-                 new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                BackColor = DefaultBackColor,
+                Font = new System.Drawing.Font("Consolas",
+                    10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
+                ForeColor = System.Drawing.SystemColors.WindowText,
+                SelectionBackColor = DefaultBackColor,
+                SelectionForeColor = System.Drawing.SystemColors.WindowText,
+                WrapMode = DataGridViewTriState.False
+            };
 
-            //Define Header Style
-            dataGridViewCellStyle2.Alignment =
-                DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle2.BackColor = DefaultBackColor;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas",
-                10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = DefaultBackColor;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.WrapMode =
-                DataGridViewTriState.False;
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                BackColor = System.Drawing.SystemColors.ControlLightLight,
+                Font = new System.Drawing.Font("Consolas",
+                    10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
+                ForeColor = System.Drawing.SystemColors.WindowText,
+                SelectionBackColor = System.Drawing.SystemColors.Highlight,
+                SelectionForeColor = System.Drawing.SystemColors.HighlightText
+            };
 
-            //Apply Header Style
             dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
-
-            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
-            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas",
-                10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-
-            dataGridView1.ColumnHeadersBorderStyle =
-             DataGridViewHeaderBorderStyle.Raised;
+            dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised;
 
             Disassemble(0, 65535, true, false);
 
@@ -1098,7 +1049,7 @@ namespace ZeroWin
                 memoryViewList.Add(mu);
             }
             //clear any previously set columns
-            //dataGridView1.Columns.Clear();
+
             dataGridView1.AutoGenerateColumns = false;
             DataGridViewTextBoxColumn dgridColAddress = new DataGridViewTextBoxColumn();
             dgridColAddress.HeaderText = "Address";
@@ -1116,40 +1067,48 @@ namespace ZeroWin
             dgridColBytes.DataPropertyName = "BytesAtAddressAsString";
             dataGridView1.Columns.Add(dgridColBytes);
 
-            DataGridViewTextBoxColumn dgridColOpcodes = new DataGridViewTextBoxColumn();
-            dgridColOpcodes.HeaderText = "Instruction";
-            dgridColOpcodes.Name = "Instruction";
-            dgridColOpcodes.Width = 220;
-            dgridColOpcodes.ReadOnly = true;
-            dgridColOpcodes.DataPropertyName = "Opcodes";
+            DataGridViewTextBoxColumn dgridColOpcodes = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Instruction",
+                Name = "Instruction",
+                Width = 220,
+                ReadOnly = true,
+                DataPropertyName = "Opcodes"
+            };
             dataGridView1.Columns.Add(dgridColOpcodes);
-
-            //dataGridView1.VirtualMode = true;
             dataGridView1.DataSource = disassemblyList;
 
-            DataGridViewTextBoxColumn dgrid2ColCondition = new DataGridViewTextBoxColumn();
-            dgrid2ColCondition.HeaderText = "Condition";
-            dgrid2ColCondition.Name = "Condition";
-            dgrid2ColCondition.Width = 141;
-            dgrid2ColCondition.DataPropertyName = "Condition";
+            DataGridViewTextBoxColumn dgrid2ColCondition = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Condition",
+                Name = "Condition",
+                Width = 141,
+                DataPropertyName = "Condition"
+            };
 
-            DataGridViewTextBoxColumn dgridColLogAddress = new DataGridViewTextBoxColumn();
-            dgridColLogAddress.HeaderText = "Address";
-            dgridColLogAddress.Name = "Address";
-            dgridColLogAddress.Width = 120;
-            dgridColLogAddress.DataPropertyName = "Address";
+            DataGridViewTextBoxColumn dgridColLogAddress = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Address",
+                Name = "Address",
+                Width = 120,
+                DataPropertyName = "Address"
+            };
 
-            DataGridViewTextBoxColumn dgridColLogTstates = new DataGridViewTextBoxColumn();
-            dgridColLogTstates.HeaderText = "T-State";
-            dgridColLogTstates.Name = "Tstates";
-            dgridColLogTstates.Width = 150;
-            dgridColLogTstates.DataPropertyName = "Tstates";
+            DataGridViewTextBoxColumn dgridColLogTstates = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "T-State",
+                Name = "Tstates",
+                Width = 150,
+                DataPropertyName = "Tstates"
+            };
 
-            DataGridViewTextBoxColumn dgridColLogInstructions = new DataGridViewTextBoxColumn();
-            dgridColLogInstructions.HeaderText = "Instruction";
-            dgridColLogInstructions.Name = "Opcodes";
-            dgridColLogInstructions.Width = 195;
-            dgridColLogInstructions.DataPropertyName = "Opcodes";
+            DataGridViewTextBoxColumn dgridColLogInstructions = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Instruction",
+                Name = "Opcodes",
+                Width = 195,
+                DataPropertyName = "Opcodes"
+            };
 
             ResumeLayout();
         }
@@ -1189,9 +1148,7 @@ namespace ZeroWin
             if (registerViewer != null && !registerViewer.IsDisposed)
                 registerViewer.RefreshView(useHexNumbers);
 
-            //HexAnd8bitRegUpdate();
-            int index;
-            if (!disassemblyLookup.TryGetValue(ValuePC, out index)) {
+            if (!disassemblyLookup.TryGetValue(ValuePC, out var index)) {
                 index = disassemblyList.Find("Address", ValuePC);
             }
             if (index < 0)
@@ -1205,16 +1162,16 @@ namespace ZeroWin
         //Returns the byte value at an address and adds it to the byteList
         private int PeekByte(int addr) {
             int b = ziggyWin.zx.PeekByteNoContend(addr & 0xffff);
-            byteList.Add(b); //= byteString + " " + b.ToString();
+            byteList.Add(b);
             return b;
         }
 
         //Returns the word value at an address and adds it to the byteList
         private int PeekWord(int addr) {
             int a = ziggyWin.zx.PeekByteNoContend(addr & 0xffff);
-            byteList.Add(a);// = byteString + " " + a.ToString();
+            byteList.Add(a);
             a = ziggyWin.zx.PeekByteNoContend((addr + 1) & 0xffff);
-            byteList.Add(a);// byteString = byteString + " " + a.ToString();
+            byteList.Add(a);
             return ziggyWin.zx.PeekWordNoContend(addr & 0xffff);
         }
 
@@ -1249,7 +1206,7 @@ namespace ZeroWin
 
         //Stores byte and opcode
         private void Log(int opcodeVal, String logMsg2) {
-            byteList.Add(opcodeVal);// byteString = byteString + opcodeVal.ToString();
+            byteList.Add(opcodeVal);
             opcodeString = logMsg2;
         }
 
@@ -1273,7 +1230,6 @@ namespace ZeroWin
             int opcode;
             int disp = 0; //used later on to calculate relative jumps
             int opcodeMatches = 0;
-            //int line = disassemblyList.Find("Address", startAddr);
             int line = -1;
 
             if (!disassemblyLookup.TryGetValue(startAddr, out line)) {
@@ -1284,8 +1240,6 @@ namespace ZeroWin
                 if (PC > endAddr)
                     break;
 
-                // OpcodeDisassembly od = new OpcodeDisassembly(this);
-                //od.LineNo = line;
                 int address = PC;
 
                 param1 = int.MaxValue;
@@ -1301,7 +1255,7 @@ namespace ZeroWin
                 opcode = PeekByte(PC);
                 PC = (PC + 1);
 
-            jmp4Undoc:  //We will jump here for undocumented instructions.
+                jmp4Undoc:  //We will jump here for undocumented instructions.
                 bool jumpForUndoc = false;
                 disp = 0;
                 //Massive switch-case to decode the instructions!
@@ -5084,7 +5038,8 @@ namespace ZeroWin
                         if (opcode < 0x40) {
                             Log("NOP");
                             break;
-                        } else
+                        }
+                        else
                             switch (opcode) {
                                 case 0x40: //IN B, (C)
                                     Log("IN B, (C)");
@@ -6877,7 +6832,7 @@ namespace ZeroWin
                                 break;
                         }
                         break;
-                    #endregion
+                        #endregion
                 }
                 if (jumpForUndoc)
                     goto jmp4Undoc;
@@ -6891,7 +6846,8 @@ namespace ZeroWin
                     newOD.Param1 = param1;
                     newOD.Param2 = param2;
                     disassemblyList.Add(newOD);
-                } else if (!traceOn) {
+                }
+                else if (!traceOn) {
                     if (opcodeString == disassemblyList[line].Opcodes) {
                         //opcodeMatches++;
                         //if (opcodeMatches > 5)
@@ -6900,27 +6856,24 @@ namespace ZeroWin
                             line++;
                             continue;
                         }
-                    } else
+                    }
+                    else
                         opcodeMatches = 0;
 
                     disassemblyList[line].BytesAtAddress = byteList;
                     disassemblyList[line].Opcodes = opcodeString;
                     disassemblyList[line].Param1 = param1;
                     disassemblyList[line].Param2 = param2;
-                } else {
-                    if (useHexNumbers)
-                        TraceMessage.address = previousPC.ToString("x");
-                    else
-                        TraceMessage.address = previousPC.ToString();
+                }
+                else {
+                    TraceMessage.address = useHexNumbers ? previousPC.ToString("x") : previousPC.ToString();
 
-                    if (useHexNumbers)
-                        TraceMessage.opcodes = opcodeString.Replace(":D", ":x2");
-                    else
-                        TraceMessage.opcodes = opcodeString.Replace(":x2", ":D");
+                    TraceMessage.opcodes = useHexNumbers ? opcodeString.Replace(":D", ":x2") : opcodeString.Replace(":x2", ":D");
 
                     if (param2 != int.MaxValue) {
                         TraceMessage.opcodes = String.Format(TraceMessage.opcodes, disassemblyList[line].Param1, disassemblyList[line].Param2);
-                    } else if (param1 != int.MaxValue) {
+                    }
+                    else if (param1 != int.MaxValue) {
                         TraceMessage.opcodes = String.Format(TraceMessage.opcodes, disassemblyList[line].Param1);
                     }
                 }
@@ -6951,8 +6904,7 @@ namespace ZeroWin
             KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv = new KeyValuePair<SPECCY_EVENT, BreakPointCondition>(SPECCY_EVENT.OPCODE_PC, new BreakPointCondition(SPECCY_EVENT.OPCODE_PC, disassemblyList[e.RowIndex].Address, -1));
             //int index = disassemblyList.Find("Address", disassemblyList[e.RowIndex].Address);
             bool found = false;
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList) {
                 if (breakpoint.Equals(kv)) {
                     found = true;
                     break;
@@ -6962,24 +6914,20 @@ namespace ZeroWin
             if (found) {
                 breakPointConditions.Remove(kv.Value);
                 breakPointList.Remove(kv);
-                //dataGridView1.Rows[e.RowIndex].HeaderCell.Style.BackColor = Control.DefaultBackColor;
                 breakpointRowList.Remove(e.RowIndex);
-            } else {
+            }
+            else {
                 breakPointList.Add(kv);
                 breakPointConditions.Add(kv.Value);
-                //dataGridView1.Rows[e.RowIndex].HeaderCell.Style.BackColor = System.Drawing.Color.Red;
                 breakpointRowList.Add(e.RowIndex);
             }
             dataGridView1.Refresh();
         }
 
-        public void RemoveBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv)
-        {
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
-            {
+        public void RemoveBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv) {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList) {
                 if (breakpoint.Equals(_kv)) {
-                    if (_kv.Key == SPECCY_EVENT.OPCODE_PC)
-                    {
+                    if (_kv.Key == SPECCY_EVENT.OPCODE_PC) {
                         int index = disassemblyList.Find("Address", _kv.Value.Address);
                         if (index >= 0) {
                             breakpointRowList.Remove(index);
@@ -6996,10 +6944,8 @@ namespace ZeroWin
 
         //Clear all breakpoints
         public void RemoveAllBreakpoints() {
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
-            {
-                if (breakpoint.Key == SPECCY_EVENT.OPCODE_PC)
-                {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList) {
+                if (breakpoint.Key == SPECCY_EVENT.OPCODE_PC) {
                     int index = disassemblyList.Find("Address", breakpoint.Value.Address);
                     if (index >= 0)
                         dataGridView1.Rows[index].HeaderCell.Style.BackColor = DefaultBackColor;
@@ -7061,11 +7007,9 @@ namespace ZeroWin
         private void label29_Click(object sender, EventArgs e) {
         }
 
-        public void AddBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv)
-        {
+        public void AddBreakpoint(KeyValuePair<SPECCY_EVENT, BreakPointCondition> _kv) {
             bool found = false;
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList) {
                 if (breakpoint.Equals(_kv)) {
                     found = true;
                     break;
@@ -7073,8 +7017,7 @@ namespace ZeroWin
             }
 
             if (!found) {
-                if (_kv.Key == SPECCY_EVENT.OPCODE_PC)
-                {
+                if (_kv.Key == SPECCY_EVENT.OPCODE_PC) {
                     int index = disassemblyList.Find("Address", _kv.Value.Address);
                     if (index >= 0) {
                         breakpointRowList.Add(index);
@@ -7091,10 +7034,7 @@ namespace ZeroWin
             if (jumpAddrTextBox4.Text.Length < 1)
                 return;
 
-            int addr = -1;
-
-            addr = Utilities.ConvertToInt(jumpAddrTextBox4.Text);
-
+            int addr = Utilities.ConvertToInt(jumpAddrTextBox4.Text);
             if (addr > 65535) {
                 MessageBox.Show("The address is not within 0 to 65535!", "Invalid input", MessageBoxButtons.OK);
                 return;
@@ -7104,8 +7044,7 @@ namespace ZeroWin
         }
 
         public void JumpToAddress(int addr) {
-            int index = -1;
-            if (!disassemblyLookup.TryGetValue(addr, out index)) {
+            if (!disassemblyLookup.TryGetValue(addr, out int index)) {
                 index = disassemblyList.Find("Address", addr);
             }
             if (index < 0)
@@ -7226,7 +7165,6 @@ namespace ZeroWin
                 previousPC = ValuePC;
                 previousTState = ziggyWin.zx.totalTStates;
                 ziggyWin.zx.Resume();
-                //ziggyWin.Focus();
                 return;
             }
 
@@ -7242,7 +7180,6 @@ namespace ZeroWin
                 previousPC = ValuePC;
                 previousTState = ziggyWin.zx.totalTStates;
                 ziggyWin.zx.Resume();
-                //ziggyWin.Focus();
                 return;
             }
             ziggyWin.zx.ResetKeyboard();
@@ -7254,7 +7191,6 @@ namespace ZeroWin
             previousTState = ziggyWin.zx.totalTStates;
 
             Hide();
-            //ziggyWin.zx.monitorSaysRun = true;
             ziggyWin.zx.Resume();
             ziggyWin.Focus();
         }
@@ -7313,7 +7249,6 @@ namespace ZeroWin
             previousPC = ValuePC;
             previousTState = ziggyWin.zx.totalTStates;
             HideWindow();
-            //ziggyWin.zx.monitorSaysRun = true;
             ziggyWin.zx.Resume();
             ziggyWin.Focus();
         }
@@ -7336,8 +7271,7 @@ namespace ZeroWin
             KeyValuePair<SPECCY_EVENT, BreakPointCondition> kv = new KeyValuePair<SPECCY_EVENT, BreakPointCondition>(SPECCY_EVENT.OPCODE_PC, new BreakPointCondition(SPECCY_EVENT.OPCODE_PC, disassemblyList[rowIndex].Address, -1));
 
             bool found = false;
-            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList)
-            {
+            foreach (KeyValuePair<SPECCY_EVENT, BreakPointCondition> breakpoint in breakPointList) {
                 if (breakpoint.Equals(kv)) {
                     found = true;
                     break;
@@ -7348,12 +7282,11 @@ namespace ZeroWin
                 breakPointConditions.Remove(kv.Value);
                 breakPointList.Remove(kv);
                 breakpointRowList.Remove(rowIndex);
-                //dataGridView1.Rows[rowIndex].HeaderCell.Style.BackColor = Control.DefaultBackColor;
-            } else {
+            }
+            else {
                 breakPointList.Add(kv);
                 breakPointConditions.Add(kv.Value);
                 breakpointRowList.Add(rowIndex);
-                //dataGridView1.Rows[rowIndex].HeaderCell.Style.BackColor = System.Drawing.Color.Red;
             }
             dataGridView1.Refresh();
         }
@@ -7372,8 +7305,6 @@ namespace ZeroWin
                 System.Drawing.Brush circleColor = new System.Drawing.SolidBrush(rowColor);
                 // Draw the circle
                 e.Graphics.DrawImage(Properties.Resources.BreakpointEnabled_6584_16x, new System.Drawing.Point(e.RowBounds.Location.X + 3, e.RowBounds.Location.Y + 4));
-                //e.Graphics.FillEllipse(circleColor, e.RowBounds.Location.X + 5,
-                //                              e.RowBounds.Location.Y + 4, 10, 10);
             }
 
             if (e.RowIndex == dataGridView1.CurrentRow.Index)
@@ -7407,7 +7338,8 @@ namespace ZeroWin
             if (useHexNumbers) {
                 dataGridView1.Columns[0].DefaultCellStyle.Format = "x2";
                 aSCIICharactersToolStripMenuItem.Checked = false;
-            } else {
+            }
+            else {
                 dataGridView1.Columns[0].DefaultCellStyle.Format = "";
             }
 
@@ -7446,27 +7378,23 @@ namespace ZeroWin
             PokeMemoryButton_Click(sender, e);
         }
 
-        private void loadSymbolsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
+        private void loadSymbolsToolStripMenuItem_Click(object sender, EventArgs e) {
             openFileDialog1.Title = "Select Symbol File";
             openFileDialog1.FileName = "";
             openFileDialog1.Filter = "All supported files|*.txt;*.csv";
 
-            if(openFileDialog1.ShowDialog() == DialogResult.OK)
-            {
-                using(StreamReader reader = new StreamReader(openFileDialog1.SafeFileName))
-                {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK) {
+                using (StreamReader reader = new StreamReader(openFileDialog1.SafeFileName)) {
                     int count = 0;
-                    while(!reader.EndOfStream)
-                    {
+                    while (!reader.EndOfStream) {
                         var line = reader.ReadLine();
                         var values = line.Split(',');
                         int addr = Convert.ToInt32(values[0]);
                         if (addr > 65535)
                             continue;
 
-                        systemVariables[addr] =  Convert.ToString(values[1]).Trim();
-                        count++;                                                      
+                        systemVariables[addr] = Convert.ToString(values[1]).Trim();
+                        count++;
                     }
                 }
                 MessageBox.Show("Symbols loaded successfully!", "Symbol file", MessageBoxButtons.OK);
@@ -7520,7 +7448,8 @@ namespace ZeroWin
                         if (useHexNumbers) {
                             sw.WriteLine("All numbers in hex.");
                             sw.WriteLine("-------------------");
-                        } else {
+                        }
+                        else {
                             sw.WriteLine("All numbers in decimal.");
                             sw.WriteLine("-----------------------");
                         }
@@ -7529,10 +7458,9 @@ namespace ZeroWin
                             sw.WriteLine("{0,-5}   {1,-15}   {2,-20}", od.AddressAsString, od.BytesAtAddressAsString, od.Opcodes);
                         }
                         sw.Close();
-                        //System.Windows.Forms.MessageBox.Show("A log of the disassembly has been saved.",
-                        //                "Log created!", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.None);
                     }
-                } catch {
+                }
+                catch {
                     MessageBox.Show("Zero was unable to create a file! Either the disk is full, or there is a problem with access rights to the folder or something else entirely!",
                             "File Write Error!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
@@ -7597,14 +7525,13 @@ namespace ZeroWin
 
         private void callStackButton_Click(object sender, EventArgs e) {
             if (callStackViewer == null || callStackViewer.IsDisposed)
-                callStackViewer = new CallStackViewer(this);
+                callStackViewer = new CallStackViewer();
 
             callStackViewer.Show();
         }
 
         private void heatMapToolStripMenuItem_Click(object sender, EventArgs e) {
-            CodeProfiler cp = new CodeProfiler(ziggyWin);
-            cp.Show();
+            new CodeProfiler(ziggyWin).Show();
         }
     }
 }

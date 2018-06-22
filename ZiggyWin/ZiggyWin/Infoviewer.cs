@@ -52,17 +52,9 @@ namespace ZeroWin
 
         private class InfoDetails
         {
-            public InfoDetails() {
-            }
-
-            public String InfoseekID { get; set; }
-
             public String Authors { get; set; }
-
             public String Availability { get; set; }
-
             public String Publication { get; set; }
-
             public String Controls { get; set; }
 
             public String Protection { get; set; }
@@ -88,7 +80,7 @@ namespace ZeroWin
             public String PicIngameURL { get; set; }
         };
 
-        private void UpdateCheckbox(Control lst, String _info) {
+        private static void UpdateCheckbox(Control lst, String _info) {
             if (lst.InvokeRequired) {
                 UpdateCheckBoxCallback d = UpdateCheckbox;
                 lst.Invoke(d, lst, _info);
@@ -99,7 +91,7 @@ namespace ZeroWin
             }
         }
 
-        private void UpdateLabelInfo(Control lst, String _info) {
+        private static void UpdateLabelInfo(Control lst, String _info) {
             if (lst.InvokeRequired) {
                 UpdateLabelInfoCallback d = UpdateLabelInfo;
                 lst.Invoke(d, lst, _info);
@@ -162,7 +154,6 @@ namespace ZeroWin
             filesToDownload = 0;
             fileDownloadCount = 0;
             button1.Enabled = false;
-            // this.BackgroundImage = null;
         }
 
         public void ShowDetails(String infoId, String _imageLoc) {
@@ -188,7 +179,7 @@ namespace ZeroWin
                 ThreadPool.RegisterWaitForSingleObject(result.AsyncWaitHandle,
                                         InfoseekTimeout,
                                         rs,
-                                        (30 * 1000), // 30 second timeout
+                                        30 * 1000, // 30 second timeout
                                         true
                                     );
                 Show();
@@ -198,7 +189,7 @@ namespace ZeroWin
             }
         }
 
-        private void InfoseekTimeout(object state, bool timedOut) {
+        private static void InfoseekTimeout(object state, bool timedOut) {
             if (timedOut) {
                 RequestState2 reqState = (RequestState2)state;
                 reqState?.Request.Abort();
@@ -240,8 +231,7 @@ namespace ZeroWin
                 return;
             }
 
-            XmlNodeList memberNodes = xmlDoc.SelectNodes("//result");
-            foreach (XmlNode node in memberNodes) {
+            foreach (XmlNode node in xmlDoc.SelectNodes("//result")) {
                 details.ProgramName = GetNodeElement(node, "title");
                 details.Year = GetNodeElement(node, "year");
                 details.Publisher = GetNodeElement(node, "publisher");
@@ -266,38 +256,40 @@ namespace ZeroWin
             UpdateLabelInfo(availabilityLabel, details.Availability);
             UpdateLabelInfo(protectionLabel, details.Protection);
             string controls = "";
-            foreach (char c in details.Controls.ToCharArray()) {
-                if (c == 'K')
-                    controls += "Keyboard, ";
-                else if (c == '1')
-                    controls += "IF 2 Left, ";
-                else if (c == '2')
-                    controls += "IF 2 Right, ";
-                else if (c == 'C')
-                    controls += "Cursor, ";
-                else if (c == 'R')
-                    controls += "Redefinable, ";
+            foreach (char c in details.Controls) {
+                switch (c) {
+                    case 'K':
+                        controls += "Keyboard, ";
+                        break;
+                    case '1':
+                        controls += "IF 2 Left, ";
+                        break;
+                    case '2':
+                        controls += "IF 2 Right, ";
+                        break;
+                    case 'C':
+                        controls += "Cursor, ";
+                        break;
+                    case 'R':
+                        controls += "Redefinable, ";
+                        break;
+                }
             }
 
             UpdateLabelInfo(controlsLabel, controls);
             UpdateLabelInfo(machineLabel, details.MachineType);
 
-            XmlNodeList fileNodes = xmlDoc.SelectNodes("/result/downloads/file");
-
-            foreach (XmlNode node in fileNodes) {
+            foreach (XmlNode node in xmlDoc.SelectNodes("/result/downloads/file")) {
                 String full_link = node.SelectSingleNode("link").InnerText;
-                char delimiter = '/';
-                string[] splitWords = full_link.Split(delimiter);
+                string[] splitWords = full_link.Split('/');
                 String type = node.SelectSingleNode("type").InnerText;
                 fileList.Add(full_link);
                 UpdateCheckbox(checkedListBox1, " (" + type + ") " + splitWords[splitWords.Length - 1]);
             }
 
-            XmlNodeList fileNodes2 = xmlDoc.SelectNodes("/result/otherDownloads/file");
-            foreach (XmlNode node in fileNodes2) {
+            foreach (XmlNode node in xmlDoc.SelectNodes("/result/otherDownloads/file")) {
                 String full_link = node.SelectSingleNode("link").InnerText;
-                char delimiter = '/';
-                string[] splitWords = full_link.Split(delimiter);
+                string[] splitWords = full_link.Split('/');
                 String type = node.SelectSingleNode("type").InnerText;
                 fileList.Add(full_link);
                 UpdateCheckbox(checkedListBox1, " (" + type + ") " + splitWords[splitWords.Length - 1]);
@@ -318,7 +310,7 @@ namespace ZeroWin
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
                                             InfoseekTimeout,
                                             rs2,
-                                            (30 * 1000), // 30 second timeout
+                                            30 * 1000, // 30 second timeout
                                             true
                                         );
                 }
@@ -340,7 +332,7 @@ namespace ZeroWin
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
                                             InfoseekTimeout,
                                             rs2,
-                                            (30 * 1000), // 30 second timeout
+                                            30 * 1000, // 30 second timeout
                                             true
                                         );
                 }
@@ -362,22 +354,13 @@ namespace ZeroWin
                     ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
                                             InfoseekTimeout,
                                             rs2,
-                                            (30 * 1000), // 30 second timeout
+                                            30 * 1000, // 30 second timeout
                                             true
                                         );
                 }
                 catch (WebException we) {
                     MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            }
-        }
-
-        private void PictureLoadCallbackTimeout(object state, bool timedOut) {
-            if (timedOut) {
-                RequestState2 reqState = (RequestState2)state;
-
-                reqState?.Request.Abort();
-                MessageBox.Show("Request timed out.", reqState.webURL, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -393,8 +376,7 @@ namespace ZeroWin
                 WebResponse resp = req.EndGetResponse(result);
 
                 Stream ftpStream = resp.GetResponseStream();
-                char delimiter = '/';
-                string[] splitWords = fileList[rs.index].Split(delimiter);
+                string[] splitWords = fileList[rs.index].Split('/');
 
                 FileStream outputStream = new FileStream(folderBrowserDialog1.SelectedPath + "//" + splitWords[splitWords.Length - 1], FileMode.Create);
                 int bufferSize = 2048;
@@ -457,15 +439,6 @@ namespace ZeroWin
             return node.SelectSingleNode(value) != null ? node.SelectSingleNode(value).InnerText : "";
         }
 
-        private String GetNodeValue(XmlNodeList nodes, String value) {
-            foreach (XmlNode node in nodes) {
-                if (node.SelectSingleNode("type").InnerText == value) {
-                    return node.SelectSingleNode("link").InnerText;
-                }
-            }
-            return "";
-        }
-
         private void button1_Click(object sender, EventArgs e) {
             CheckedListBox.CheckedIndexCollection selectedItems = checkedListBox1.CheckedIndices;
             if (selectedItems.Count > 0) {
@@ -474,8 +447,7 @@ namespace ZeroWin
                     filesToDownload = 0;
                     fileDownloadCount = 0;
                     for (int f = 0; f < selectedItems.Count; f++) {
-                        char delimiter = '/';
-                        string[] splitWords = fileList[selectedItems[f]].Split(delimiter);
+                        string[] splitWords = fileList[selectedItems[f]].Split('/');
                         string localFilePath = folderBrowserDialog1.SelectedPath + "//" + splitWords[splitWords.Length - 1];
                         if (File.Exists(localFilePath)) {
                             if (MessageBox.Show(checkedListBox1.Items[selectedItems[f]] + " already exists at this location.\nOverwrite existing file?", "Confirm File Replace", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
@@ -502,7 +474,7 @@ namespace ZeroWin
                             ThreadPool.RegisterWaitForSingleObject(result2.AsyncWaitHandle,
                                                     InfoseekTimeout,
                                                     rs2,
-                                                    (30 * 1000), // 30 second timeout
+                                                    30 * 1000, // 30 second timeout
                                                     true
                                                 );
                         }
@@ -531,13 +503,12 @@ namespace ZeroWin
                 if (ext == "szx" || ext == "sna" || ext == "z80" || ext == "tap" || ext == "tzx" ||
                     ext == "pzx" || ext == "dsk" || ext == "trd" || ext == "scl") {
                     autoLoadComboBox.Items.Add(file);
-                    //autoLoadComboBox.SelectedIndex = autoLoadComboBox.Items.Count - 1;
                 }
             }
             else {
                 if (ext == "szx" || ext == "sna" || ext == "z80" || ext == "tap" || ext == "tzx" ||
                     ext == "pzx" || ext == "dsk" || ext == "trd" || ext == "scl") {
-                    if (/*autoLoadComboBox.SelectedIndex >= 0 && */(checkedListBox1.Items[e.Index] == autoLoadComboBox.Items[autoLoadComboBox.SelectedIndex]))
+                    if (checkedListBox1.Items[e.Index] == autoLoadComboBox.Items[autoLoadComboBox.SelectedIndex])
                         autoLoadComboBox.SelectedIndex = 0;
                     autoLoadComboBox.Items.Remove(checkedListBox1.Items[e.Index]);
                 }

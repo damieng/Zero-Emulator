@@ -23,7 +23,6 @@ namespace ZeroWin
 
         protected override void OnPaint(PaintEventArgs e) {
             if (BackgroundImage != null && text != null) {
-                //Graphics g = Graphics.FromImage(this.BackgroundImage);
                 e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 StringFormat strFormat = new StringFormat
                 {

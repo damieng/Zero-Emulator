@@ -9,8 +9,7 @@ namespace ZeroWin
     {
         public ZipArchiveEntry FileToOpen { get; set; }
 
-        public ArchiveHandler(IEnumerable<ZipArchiveEntry> entries)
-        {
+        public ArchiveHandler(IEnumerable<ZipArchiveEntry> entries) {
             InitializeComponent();
             // Set the default dialog font on each child control
             foreach (Control c in Controls) {
@@ -21,16 +20,14 @@ namespace ZeroWin
 
             foreach (ZipArchiveEntry entry in entries) {
                 ListViewItem listItem = new ListViewItem { Text = entry.FullName, Tag = entry };
-                ListViewItem.ListViewSubItem subItem = new ListViewItem.ListViewSubItem(listItem, entry.Length.ToString());
-                listItem.SubItems.Add(subItem);
+                listItem.SubItems.Add(new ListViewItem.ListViewSubItem(listItem, entry.Length.ToString()));
                 listView1.Items.Add(listItem);
             }
             listView1.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
             listView1.AutoResizeColumn(1, ColumnHeaderAutoResizeStyle.HeaderSize);
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
+        private void button1_Click(object sender, EventArgs e) {
             FileToOpen = (ZipArchiveEntry)listView1.SelectedItems[0].Tag;
             DialogResult = DialogResult.OK;
             Close();

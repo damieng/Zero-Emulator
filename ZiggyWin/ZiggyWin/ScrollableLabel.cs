@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace ZeroWin
 {
-    public partial class ScrollableLabel : ScrollableControl
+    public sealed partial class ScrollableLabel : ScrollableControl
     {
         public Label scrollLabel = new Label();
 

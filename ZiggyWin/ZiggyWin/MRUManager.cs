@@ -9,7 +9,6 @@ using Microsoft.Win32;
 public class MRUManager
 {
     #region Private members
-    private readonly string NameOfProgram;
     private readonly string SubKeyName;
     
     private readonly Action<object, EventArgs> OnRecentFileClick;
@@ -59,7 +58,6 @@ public class MRUManager
     private void _refreshRecentFilesMenu()
     {
         RegistryKey rK;
-        string s;
         ToolStripItem tSI;
         fullPath.Clear();
 
@@ -82,8 +80,7 @@ public class MRUManager
         string[] valueNames = rK.GetValueNames();
         foreach (string valueName in valueNames.Reverse())
         {
-            s = rK.GetValue(valueName, null) as string;
-            if (s == null)
+            if (!(rK.GetValue(valueName, null) is string s))
                 continue;
             fullPath.Add(s);
             tSI = ParentMenuItem.DropDownItems.Add(TruncatePath(s, MAX_FILE_PATH_CHARS));
@@ -105,13 +102,12 @@ public class MRUManager
     #region Public members
     public void AddRecentFile(string fileNameWithFullPath)
     {
-        string s;
         try
         {
             RegistryKey rK = Registry.CurrentUser.CreateSubKey(SubKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
             for (int i = 0;; i++)
             {
-                s = rK.GetValue(i.ToString(), null) as string;
+                var s = rK.GetValue(i.ToString(), null) as string;
                 if (s == null)
                 {
                     rK.SetValue(i.ToString(), fileNameWithFullPath);
@@ -170,10 +166,9 @@ public class MRUManager
             throw new ArgumentException("Bad argument.");
 
         ParentMenuItem = parentMenuItem;
-        NameOfProgram = nameOfProgram;
         OnRecentFileClick = onRecentFileClick;
         OnClearRecentFilesClick = onClearRecentFilesClick;
-        SubKeyName = string.Format("Software\\{0}\\MRU", NameOfProgram);
+        SubKeyName = string.Format("Software\\{0}\\MRU", nameOfProgram);
 
         _refreshRecentFilesMenu();
     }

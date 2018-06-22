@@ -5,14 +5,16 @@
 //The default list box can only draw 1 column, hence the need for the customListBox.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using ZeroWin.Properties;
 
 namespace ZeroWin
 {
     public delegate void ImageChangedEvent(object sender);
-    public class CustomListbox : ListBox
+    public sealed class CustomListbox : ListBox
     {
         private readonly Font customBoldFont = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold);
         private readonly Font customRegularFont = new Font(SystemFonts.MessageBoxFont.FontFamily, 10);
@@ -33,7 +35,6 @@ namespace ZeroWin
         }
 
         protected override void OnSelectedIndexChanged(EventArgs e) {
-            //base.OnSelectedIndexChanged(e);
             Invalidate();
         }
 
@@ -59,7 +60,6 @@ namespace ZeroWin
 
         protected override void OnDrawItem(DrawItemEventArgs e) {
             CustomListItem item = (e.Index < 0 || DesignMode ? null : Items[e.Index] as CustomListItem);
-            //bool draw = imageList != null && (item != null);
             if (item != null) {
                 CheckHorizontalScroll(e.Graphics, customBoldFont);
                 e.DrawBackground();
@@ -92,7 +92,7 @@ namespace ZeroWin
             }
         }
 
-        protected void CheckHorizontalScroll(Graphics g, Font f) {
+        private void CheckHorizontalScroll(Graphics g, Font f) {
             // Determine the size for HorizontalExtent using the MeasureString method using the last item in the list.
             int maxWidth = 0;
             int maxImageWidth = 0;
@@ -119,7 +119,7 @@ namespace ZeroWin
 
         public int Index { get; set; }
 
-        public System.Collections.Generic.List<String> textList = new System.Collections.Generic.List<String>();
+        public List<String> textList = new List<String>();
 
         public event ImageChangedEvent ImageChangedEventHandler;
 
@@ -133,7 +133,6 @@ namespace ZeroWin
         }
 
         public void RemoveEventHandlers() {
-            // this.SetImageChangedHandler(null);
             Pic.LoadCompleted -= Pic_LoadCompleted;
         }
 
@@ -144,10 +143,9 @@ namespace ZeroWin
         public CustomListItem(int _index, String _text) {
             Index = _index;
             textList.Add(_text);
-            Pic.Image = Properties.Resources.NoImage;
-            // Pic.ImageLocation = null;
-            Pic.Width = 150;// 85;
-            Pic.Height = 100;// 85;
+            Pic.Image = Resources.NoImage;
+            Pic.Width = 150;
+            Pic.Height = 100;
             Pic.SizeMode = PictureBoxSizeMode.StretchImage;
             Pic.LoadCompleted += Pic_LoadCompleted;
         }
@@ -169,5 +167,4 @@ namespace ZeroWin
             ImageChangedEventHandler += eventHandler;
         }
     }
-
 }

@@ -1,59 +1,41 @@
-﻿using DirectInput = Microsoft.DirectX.DirectInput;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
+using Microsoft.DirectX.DirectInput;
 
 namespace ZeroWin
 {
     public class MouseController
     {
-        private DirectInput.Device mouse;
+        private Device mouse;
         Form1 ziggyWin;
-        //Mouse mouse = null;
-        public int MouseX {
-            get;
-            set;
-        }
 
-        public int MouseY {
-            get;
-            set;
-        }
-
-        public bool MouseLeftButtonDown {
-            get;
-            set;
-        }
-
-        public bool MouseRightButtonDown {
-            get;
-            set;
-        }
+        public int MouseX { get; set; }
+        public int MouseY { get; set; }
+        public bool MouseLeftButtonDown { get; set; }
+        public bool MouseRightButtonDown { get; set; }
 
         public void AcquireMouse(Form1 zw) {
             ziggyWin = zw;
-            // DirectInput dinput = new DirectInput();
-            //mouse = new Mouse(dinput);
-            //CooperativeLevel coopLevel = CooperativeLevel.Exclusive | CooperativeLevel.Foreground;
-            mouse = new DirectInput.Device(DirectInput.SystemGuid.Mouse);
-            mouse.SetDataFormat(DirectInput.DeviceDataFormat.Mouse);
-            DirectInput.CooperativeLevelFlags coopLevel = DirectInput.CooperativeLevelFlags.Exclusive | DirectInput.CooperativeLevelFlags.Foreground;
-            mouse.SetCooperativeLevel(ziggyWin, coopLevel);
+            mouse = new Device(SystemGuid.Mouse);
+            mouse.SetDataFormat(DeviceDataFormat.Mouse);
+            mouse.SetCooperativeLevel(ziggyWin, CooperativeLevelFlags.Exclusive | CooperativeLevelFlags.Foreground);
             mouse.Acquire();
         }
 
         public void UpdateMouse() {
             if (mouse != null) {
 
-                try
-                {
-                    DirectInput.MouseState state = mouse.CurrentMouseState;
-
+                try {
+                    MouseState state = mouse.CurrentMouseState;
                     MouseX = state.X;
                     MouseY = state.Y;
                     byte[] buttons = state.GetMouseButtons();
                     MouseLeftButtonDown = buttons[0] > 0;//state.IsPressed(0);
                     MouseRightButtonDown = buttons[1] > 0;//state.IsPressed(1);
                 }
-                catch (System.Exception e)
-                {
+                catch (Exception) {
                     ziggyWin.EnableMouse(false);
                 }
             }
@@ -70,13 +52,12 @@ namespace ZeroWin
 
     public class JoystickController
     {
-        public DirectInput.Device joystick;
-        public DirectInput.JoystickState state;
-        public static System.Collections.Generic.List<DirectInput.DeviceInstance> joystickList = new System.Collections.Generic.List<DirectInput.DeviceInstance>();
+        public Device joystick;
+        public JoystickState state;
+        public static List<DeviceInstance> joystickList = new List<DeviceInstance>();
         public string name;
         public bool isInitialized;
 
-        //public Dictionary<int, int> buttonMap = new Dictionary<int, int>();
         public int[] buttonMap = new int[0];
 
         //Specifies which button will act as the 'Fire' button.
@@ -85,63 +66,42 @@ namespace ZeroWin
 
         public static void EnumerateJosticks() {
             joystickList.Clear();
-            DirectInput.DeviceList deviceList = DirectInput.Manager.GetDevices(DirectInput.DeviceClass.GameControl, DirectInput.EnumDevicesFlags.AttachedOnly);
-            foreach (DirectInput.DeviceInstance di in deviceList) {
+
+            DeviceList deviceList = Manager.GetDevices(DeviceClass.GameControl, EnumDevicesFlags.AttachedOnly);
+
+            foreach (DeviceInstance di in deviceList) {
                 joystickList.Add(di);
             }
         }
 
         public static string[] GetDeviceNames() {
-            // DirectInput dinput = new DirectInput();
-            // DirectInput.DeviceList deviceList = DirectInput.Manager.GetDevices(DirectInput.DeviceClass.GameControl, DirectInput.EnumDevicesFlags.AttachedOnly);
-            string[] names = new string[joystickList.Count];
-            int deviceCount = 0;
-
-            foreach (DirectInput.DeviceInstance di in joystickList) {
-                names[deviceCount++] = di.InstanceName;
-                
-            }
-            return names;
+            return joystickList.Select(j => j.InstanceName).ToArray();
         }
 
         public bool InitJoystick(Form1 zw, int deviceNum) {
-            //DirectInput dinput = new DirectInput();
-            //System.Collections.Generic.IList<DeviceInstance> deviceList = dinput.GetDevices(DeviceClass.GameController, DeviceEnumerationFlags.AttachedOnly);
-            //DirectInput.DeviceList deviceList = DirectInput.Manager.GetDevices(DirectInput.DeviceClass.GameControl, DirectInput.EnumDevicesFlags.AttachedOnly);
             try {
-                joystick = new DirectInput.Device(joystickList[deviceNum].InstanceGuid);
-                joystick.SetCooperativeLevel(zw, DirectInput.CooperativeLevelFlags.NonExclusive | DirectInput.CooperativeLevelFlags.Background);
-                joystick.SetDataFormat(DirectInput.DeviceDataFormat.Joystick);
+                joystick = new Device(joystickList[deviceNum].InstanceGuid);
+                joystick.SetCooperativeLevel(zw, CooperativeLevelFlags.NonExclusive | CooperativeLevelFlags.Background);
+                joystick.SetDataFormat(DeviceDataFormat.Joystick);
                 name = joystickList[deviceNum].ProductName;
-            } catch (DirectInput.InputException de) {
-                System.Windows.Forms.MessageBox.Show("Couldn't connect to joystick!", "Joystick Problem", System.Windows.Forms.MessageBoxButtons.OK);
+            }
+            catch (InputException) {
+                MessageBox.Show("Couldn't connect to joystick!", "Joystick Problem", MessageBoxButtons.OK);
                 return false;
             }
-            foreach (DirectInput.DeviceObjectInstance deviceObject in joystick.Objects) {
-                if ((deviceObject.ObjectId & (int)DirectInput.DeviceObjectTypeFlags.Axis) != 0)
-                    joystick.Properties.SetRange(DirectInput.ParameterHow.ById,
-                                                  deviceObject.ObjectId,
-                                                  new DirectInput.InputRange(-1000, 1000));
-
-                //joystick.Properties.SetDeadZone(
-                //                       DirectInput.ParameterHow.ById,
-                //                       deviceObject.ObjectId,
-                //                       2000);
+            foreach (DeviceObjectInstance deviceObject in joystick.Objects) {
+                if ((deviceObject.ObjectId & (int)DeviceObjectTypeFlags.Axis) != 0)
+                    joystick.Properties.SetRange(ParameterHow.ById, deviceObject.ObjectId, new InputRange(-1000, 1000));
             }
             // acquire the device
             try {
                 joystick.Acquire();
             }
-            catch (DirectInput.InputException de) {
-                System.Windows.Forms.MessageBox.Show(de.Message, "Joystick Error", System.Windows.Forms.MessageBoxButtons.OK);
+            catch (InputException de) {
+                MessageBox.Show(de.Message, "Joystick Error", MessageBoxButtons.OK);
                 return false;
             }
 
-            //Initially no keys are mapped to buttons on the controller.
-            /*for (int f = 0; f < joystick.Caps.NumberButtons; f++) {
-                if (!buttonMap.ContainsKey(f))
-                    buttonMap.Add(f, -1);
-            }*/
             buttonMap = new int[joystick.Caps.NumberButtons];
             for (int f = 0; f < buttonMap.Length; f++)
                 buttonMap[f] = -1;
@@ -158,8 +118,8 @@ namespace ZeroWin
                 joystick.Poll();
                 state = joystick.CurrentJoystickState;
             }
-            catch (DirectInput.InputException) {
-                System.Windows.Forms.MessageBox.Show("The connection to the joystick has been lost.", "Joystick Problem", System.Windows.Forms.MessageBoxButtons.OK);
+            catch (InputException) {
+                MessageBox.Show("The connection to the joystick has been lost.", "Joystick Problem", MessageBoxButtons.OK);
                 isInitialized = false;
             }
         }
@@ -171,17 +131,6 @@ namespace ZeroWin
             }
             joystick = null;
             isInitialized = false;
-            // buttonMap.Clear();
         }
-
-        /*
-        public void RemapButtons(Dictionary<int, int> newButtonMap, int newFireButtonIndex)
-        {
-            buttonMap.Clear();
-            foreach (KeyValuePair<int, int> pair in newButtonMap) {
-                buttonMap.Add(pair.Key, pair.Value);
-            }
-            fireButtonIndex = newFireButtonIndex;
-        }*/
     }
 }

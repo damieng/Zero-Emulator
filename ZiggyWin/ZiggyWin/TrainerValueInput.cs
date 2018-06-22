@@ -15,9 +15,7 @@ namespace ZeroWin
         }
 
         public string Title {
-            set {
-                Text = value;
-            }
+            set => Text = value;
         }
 
         public TrainerValueInput() {

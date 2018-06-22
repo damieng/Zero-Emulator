@@ -1,6 +1,6 @@
 ﻿namespace ZeroWin
 {
-    partial class LoadBinary
+    sealed partial class LoadBinary
     {
         /// <summary>
         /// Required designer variable.

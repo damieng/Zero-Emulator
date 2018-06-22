@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -9,10 +10,8 @@ using System.Xml;
 
 namespace ZeroWin
 {
-
     //Since the search button cannot be updated from Async web callback as it's on another thread.
     public delegate void UpdateSearchButtonHandler(BoolArgs arg);
-
     public delegate void FileDownloadHandler(object sender, AutoLoadArgs arg);
 
     public partial class Infoseeker : Form
@@ -30,7 +29,6 @@ namespace ZeroWin
 
         public void OnFileDownloadEvent(Object sender, AutoLoadArgs arg) {
             DownloadCompleteEvent?.Invoke(this, arg);
-            //infoView.BeginInvoke(new MethodInvoker(Close));
         }
 
         public void UpdateSearchButtonEvent(BoolArgs arg) {
@@ -44,7 +42,7 @@ namespace ZeroWin
             public StringBuilder RequestData;
             public byte[] BufferRead;
             public WebRequest Request;
-            public System.IO.Stream ResponseStream;
+            public Stream ResponseStream;
 
             // Create Decoder for appropriate enconding type.
             public Decoder StreamDecode = Encoding.UTF8.GetDecoder();
@@ -59,28 +57,15 @@ namespace ZeroWin
 
         private class InfoseekResult
         {
-            public InfoseekResult() {
-                Inlay = null;
-            }
-
-            public String InfoseekID { get; set; } //new c# 3.0 way! Yay!
-
+            public String InfoseekID { get; set; }
             public String ProgramName { get; set; }
-
             public String Year { get; set; }
-
             public String Publisher { get; set; }
-
             public String ProgramType { get; set; }
-
             public String Language { get; set; }
-
             public String Score { get; set; }
-
             public String PicInlayURL { get; set; }
-
-            public Bitmap Inlay { get; }
-        };
+        }
 
         private readonly BindingList<InfoseekResult> infoList = new BindingList<InfoseekResult>();
 
@@ -143,7 +128,7 @@ namespace ZeroWin
                 ThreadPool.RegisterWaitForSingleObject(result.AsyncWaitHandle,
                                         MySearchCallbackTimeout,
                                         rs,
-                                        (30 * 1000), // 30 second timeout
+                                        30 * 1000, // 30 second timeout
                                         true
                                     );
             }
@@ -152,11 +137,6 @@ namespace ZeroWin
                 MessageBox.Show(we.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 searchButton.Enabled = true;
             }
-        }
-
-        private void UpdateSearchButton(object sender, BoolArgs e) {
-            // Update the user interface.
-            searchButton.Enabled = e.IsTrue;
         }
 
         private void MySearchCallbackTimeout(object state, bool timedOut) {
@@ -196,7 +176,7 @@ namespace ZeroWin
                 WebResponse resp = req.EndGetResponse(result);
 
                 //  Start reading data from the response stream.
-                System.IO.Stream responseStream = resp.GetResponseStream();
+                Stream responseStream = resp.GetResponseStream();
 
                 // Store the response stream in RequestState to read
                 // the stream asynchronously.
@@ -230,8 +210,8 @@ namespace ZeroWin
                 toolStripStatusLabel2.Text = "";
                 return;
             }
-            XmlNodeList memberNodes = xmlDoc.SelectNodes("//result");
-            foreach (XmlNode node in memberNodes) {
+
+            foreach (XmlNode node in xmlDoc.SelectNodes("//result")) {
                 InfoseekResult ir = new InfoseekResult
                 {
                     InfoseekID = node.SelectSingleNode("id").InnerText,
@@ -244,7 +224,6 @@ namespace ZeroWin
                     PicInlayURL = node.SelectSingleNode("picInlay").InnerText
                 };
                 infoList.Add(ir);
-                // ProgramTitleList.Add(progTitle);
                 AddItemToListBox(infoListBox, infoList.Count - 1, ir.ProgramName,
                                 ir.PicInlayURL, ir.Publisher, ir.ProgramType,
                                 ir.Year, ir.Language, ir.Score);
@@ -277,16 +256,13 @@ namespace ZeroWin
                 if (!detailsButton.Visible)
                     detailsButton.Show();
 
-                if (!moreButton.Visible && (currentResultPage < totalResultPages))
+                if (!moreButton.Visible && currentResultPage < totalResultPages)
                     moreButton.Show();
             }
         }
 
         private void titleBox_TextChanged(object sender, EventArgs e) {
-            if (titleBox.TextLength == 0)
-                searchButton.Enabled = false;
-            else
-                searchButton.Enabled = true;
+            searchButton.Enabled = titleBox.TextLength != 0;
         }
 
         private void moreButton_Click_1(object sender, EventArgs e) {
@@ -310,7 +286,6 @@ namespace ZeroWin
 
                 currentResultPage++;
                 toolStripStatusLabel2.Text = "Showing page " + currentResultPage + " of " + totalResultPages;
-                //if (currentResultPage >= totalResultPages)
                 moreButton.Hide();
             }
             catch (WebException we) {
@@ -324,7 +299,6 @@ namespace ZeroWin
         private void detailsButton_Click(object sender, EventArgs e) {
             infoView.ResetDetails();
             infoView.ShowDetails(infoList[infoListBox.SelectedIndex].InfoseekID, infoList[infoListBox.SelectedIndex].PicInlayURL);
-            //infoView.Owner = this;
         }
 
         private void Infoseeker_FormClosed(object sender, FormClosedEventArgs e) {

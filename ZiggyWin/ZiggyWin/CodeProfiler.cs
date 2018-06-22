@@ -15,7 +15,7 @@ namespace ZeroWin
         const int MAP_HEIGHT = 256;
         readonly uint[] heatMap = new uint[65536];
         readonly Bitmap bmpOut = new Bitmap(MAP_WIDTH, MAP_HEIGHT, PixelFormat.Format32bppArgb);
-        private readonly Color[] heatColors = { Color.Black, Color.Cyan, Color.Blue, Color.LightGreen, Color.Green, Color.Yellow, Color.Red, Color.Crimson };
+        readonly Color[] heatColors = { Color.Black, Color.Cyan, Color.Blue, Color.LightGreen, Color.Green, Color.Yellow, Color.Red, Color.Crimson };
         bool run = true;
 
         public CodeProfiler(Form1 zw) {
@@ -45,9 +45,7 @@ namespace ZeroWin
                 lastTime = currentTime;
 
                 Rectangle rect = new Rectangle(0, 0, bmpOut.Width, bmpOut.Height);
-                BitmapData bmpData =
-                    bmpOut.LockBits(rect, ImageLockMode.ReadWrite,
-                    bmpOut.PixelFormat);
+                BitmapData bmpData = bmpOut.LockBits(rect, ImageLockMode.ReadWrite, bmpOut.PixelFormat);
                 IntPtr ptr = bmpData.Scan0;
 
                 unsafe {
@@ -69,25 +67,6 @@ namespace ZeroWin
 
         protected override void OnPaint(PaintEventArgs e) {
 
-        }
-
-        private void panel1_Paint(object sender, PaintEventArgs e) {
-            /*
-            Graphics g = e.Graphics;
-            SolidBrush myBrush = new SolidBrush(Color.Red);
-
-            for (int f = 0; f < 256; f++) {
-                for (int i = 0; i < 256; i++) {
-                    int colorIndex = (int)(heatMap[f * 256 + i] % 1000);
-                    
-                    if (colorIndex > 7)
-                        colorIndex = 7;
-
-                    myBrush.Color = heatColors[colorIndex];
-                    g.FillRectangle(myBrush, new Rectangle(i * 3, f * 3, 2, 2));
-                }
-            }
-             */
         }
 
         void FrameEndEventHandler(object sender) {

@@ -1,6 +1,6 @@
 ﻿namespace ZeroWin
 {
-    partial class ScrollableLabel
+    sealed partial class ScrollableLabel
     {
         /// <summary> 
         /// Required designer variable.

@@ -8,8 +8,7 @@ namespace ZeroWin
             InitializeComponent();
         }
 
-        public void SetText(string text)
-        {
+        public void SetText(string text) {
             textBox1.Text = text;
             textBox1.SelectionLength = 0;
         }
@@ -18,6 +17,5 @@ namespace ZeroWin
             e.Cancel = true;
             Hide();
         }
-
     }
 }

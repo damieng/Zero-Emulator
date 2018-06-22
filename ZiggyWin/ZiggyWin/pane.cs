@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace ZeroWin
 {
-    public partial class pane : UserControl
+    public sealed partial class pane : UserControl
     {
         public pane() {
             InitializeComponent();
@@ -22,8 +22,6 @@ namespace ZeroWin
 
         protected override void OnPaint(PaintEventArgs e) {
             //Do not paint background
-            //e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            //base.OnPaintBackground(e);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace ZeroWin
 {
-    partial class pane
+    sealed partial class pane
     {
         /// <summary> 
         /// Required designer variable.

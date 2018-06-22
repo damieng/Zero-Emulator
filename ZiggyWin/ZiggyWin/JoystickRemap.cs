@@ -12,15 +12,8 @@ namespace ZeroWin
     {
         public class ButtonKeyCombo
         {
-            public String Button {
-                get;
-                set;
-            }
-
-            public String Key {
-                get;
-                set;
-            }
+            public String Button { get; set; }
+            public String Key { get; set; }
         }
 
         public BindingList<ButtonKeyCombo> ButtonKeyList = new BindingList<ButtonKeyCombo>();
@@ -43,7 +36,8 @@ namespace ZeroWin
                 DataSet ds = new DataSet();
                 ds.ReadXml(Application.UserAppDataPath + jc.name + ".xml", XmlReadMode.InferSchema);
                 dataGridView1.DataSource = ds;
-            } else {
+            }
+            else {
                 for (int f = 0; f < jc.joystick.Caps.NumberButtons; f++) {
                     ButtonKeyCombo buttonKey = new ButtonKeyCombo
                     {

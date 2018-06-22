@@ -14,7 +14,7 @@ namespace ZeroWin
                 c.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, c.Font.Size);
             }
             monitor = _monitor;
-            // dataGridView1.DoubleBuffered(true);
+
             //Set up the datagridview for memory
             dataGridView1.AutoGenerateColumns = false;
 

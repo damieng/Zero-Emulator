@@ -18,7 +18,6 @@ namespace ZeroWin
             }
 
             monitor = _monitor;
-            dataGridView2.ColumnHeadersBorderStyle = Monitor.ProperColumnHeadersBorderStyle;
 
             //Define Header Style
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle
@@ -31,7 +30,6 @@ namespace ZeroWin
                 SelectionForeColor = SystemColors.WindowText,
                 WrapMode = DataGridViewTriState.False
             };
-            dataGridView2.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
 
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle
             {
@@ -43,12 +41,13 @@ namespace ZeroWin
                 SelectionForeColor = SystemColors.HighlightText
             };
 
+            dataGridView2.ColumnHeadersBorderStyle = Monitor.ProperColumnHeadersBorderStyle;
+            dataGridView2.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             dataGridView2.DefaultCellStyle = dataGridViewCellStyle3;
-
-            //Set up the datagridview for breakpoints
             dataGridView2.AutoGenerateColumns = false;
             dataGridView2.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridView2.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridView2.DataSource = monitor.breakPointConditions;
 
             DataGridViewTextBoxColumn dgrid2ColCondition = new DataGridViewTextBoxColumn
             {
@@ -77,8 +76,6 @@ namespace ZeroWin
             };
             dataGridView2.Columns.Add(dgrid3ColData);
 
-            dataGridView2.DataSource = monitor.breakPointConditions;
-
             //Setup the listbox for valid breakpoint registers
             foreach (SPECCY_EVENT speccyEvent in Utilities.EnumToList<SPECCY_EVENT>())
                 comboBox2.Items.Add(Utilities.GetStringFromEnum(speccyEvent));
@@ -87,8 +84,7 @@ namespace ZeroWin
             comboBox2_SelectedIndexChanged(this, null); //sanity check for case ULA port breakpoints are selected
         }
 
-        public void RefreshView(bool isHexView)
-        {
+        public void RefreshView(bool isHexView) {
             dataGridView2.Columns[1].DefaultCellStyle.Format = isHexView ? "x2" : "";
         }
 
@@ -149,31 +145,31 @@ namespace ZeroWin
             else
                 val = -1;
 
-            string _str = comboBox2.SelectedItem.ToString();// +"@" + addr.ToString();
+            string _str = comboBox2.SelectedItem.ToString();
             SPECCY_EVENT speccEventFromString = Utilities.GetEnumFromString(_str, SPECCY_EVENT.OPCODE_PC);
-
             KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition> kv = new KeyValuePair<SPECCY_EVENT, Monitor.BreakPointCondition>(speccEventFromString, new Monitor.BreakPointCondition(speccEventFromString, addr, val));
-
             monitor.AddBreakpoint(kv);
         }
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e) {
             maskedTextBox3.Text = "";
-            SPECCY_EVENT speccyEvent = Utilities.GetEnumFromString(comboBox2.Text, SPECCY_EVENT.OPCODE_PC);
-            if (speccyEvent == SPECCY_EVENT.ULA_WRITE || speccyEvent == SPECCY_EVENT.ULA_READ) {
-                maskedTextBox2.Text = "$fe";
-                maskedTextBox2.ReadOnly = true;
-                maskedTextBox3.ReadOnly = false;
-            }
-            else if (speccyEvent == SPECCY_EVENT.INTERRUPT || speccyEvent == SPECCY_EVENT.RE_INTERRUPT) {
-                maskedTextBox2.Text = "";
-
-                maskedTextBox3.ReadOnly = true;
-                maskedTextBox2.ReadOnly = true;
-            }
-            else {
-                maskedTextBox3.ReadOnly = false;
-                maskedTextBox2.ReadOnly = false;
+            switch (Utilities.GetEnumFromString(comboBox2.Text, SPECCY_EVENT.OPCODE_PC)) {
+                case SPECCY_EVENT.ULA_WRITE:
+                case SPECCY_EVENT.ULA_READ:
+                    maskedTextBox2.Text = "$fe";
+                    maskedTextBox2.ReadOnly = true;
+                    maskedTextBox3.ReadOnly = false;
+                    break;
+                case SPECCY_EVENT.INTERRUPT:
+                case SPECCY_EVENT.RE_INTERRUPT:
+                    maskedTextBox2.Text = "";
+                    maskedTextBox3.ReadOnly = true;
+                    maskedTextBox2.ReadOnly = true;
+                    break;
+                default:
+                    maskedTextBox3.ReadOnly = false;
+                    maskedTextBox2.ReadOnly = false;
+                    break;
             }
         }
     }

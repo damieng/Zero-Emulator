@@ -37,25 +37,30 @@ namespace ZeroWin
                 do {
                     line = sr.ReadLine();
 
-                    if (line[0] == 'N') {
+                    if (line != null && line[0] == 'N') {
                         Trainer trainer = new Trainer { name = line.Substring(1, line.Length - 1) };
-                        string[] fields;
+                        string[] fields = null;
 
                         do {
-                            Pokes poke = new Pokes();
                             line = sr.ReadLine();
-                            fields = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
-                            poke.bank = Convert.ToByte(fields[1]);
-                            poke.address = Convert.ToInt32(fields[2]);
-                            poke.newVal = Convert.ToInt32(fields[3]);
-                            poke.oldVal = Convert.ToInt32(fields[4]);
-                            trainer.pokeList.Add(poke);
-                        } while (fields[0] != "Z");
+                            if (line != null)
+                            {
+                                fields = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                                Pokes poke = new Pokes
+                                {
+                                    bank = Convert.ToByte(fields[1]),
+                                    address = Convert.ToInt32(fields[2]),
+                                    newVal = Convert.ToInt32(fields[3]),
+                                    oldVal = Convert.ToInt32(fields[4])
+                                };
+                                trainer.pokeList.Add(poke);
+                            }
+                        } while (fields != null && fields[0] != "Z");
 
                         pokesListBox.Items.Add(trainer.name);
                         TrainerList.Add(trainer);
                     }
-                } while (line[0] != 'Y');
+                } while (line != null && line[0] != 'Y');
             }
         }
 
@@ -86,7 +91,6 @@ namespace ZeroWin
                         if (!applyPokes && (p.oldVal == 0))
                             continue;
 
-                        // ziggyWin.zx.PokeBank(p.bank * 2 + (p.address >> 14), p.address % 16384, (applyPokes ? p.newVal : p.oldVal));
                         ziggyWin.zx.PokeByteNoContend(p.address, (applyPokes ? p.newVal : p.oldVal));
                     }
                 }

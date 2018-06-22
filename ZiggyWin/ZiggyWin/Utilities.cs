@@ -10,8 +10,7 @@ namespace ZeroWin
 {
     class Utilities
     {
-        public static string GetStringFromEnum(Enum value)
-        {
+        public static string GetStringFromEnum(Enum value) {
             FieldInfo fi = value.GetType().GetField(value.ToString());
 
             DescriptionAttribute[] attributes =
@@ -20,16 +19,13 @@ namespace ZeroWin
             return attributes.Length > 0 ? attributes[0].Description : value.ToString();
         }
 
-        public static T GetEnumFromString<T>(string s, T defaultValue) where T: struct
-        {
+        public static T GetEnumFromString<T>(string s, T defaultValue) where T : struct {
             T enumToReturn = defaultValue;
 
-            foreach (var val in Enum.GetValues(typeof(T)))
-            {
+            foreach (var val in Enum.GetValues(typeof(T))) {
                 string enumDesc = GetStringFromEnum((Enum)val);
 
-                if (enumDesc == s)
-                {
+                if (enumDesc == s) {
                     enumToReturn = (T)val;
                     break;
                 }
@@ -37,8 +33,7 @@ namespace ZeroWin
             return enumToReturn;
         }
 
-        public static IEnumerable<T> EnumToList<T>()
-        {
+        public static IEnumerable<T> EnumToList<T>() {
             Type enumType = typeof(T);
 
             // Can't use generic type constraints on value types,
@@ -49,8 +44,7 @@ namespace ZeroWin
             Array enumValArray = Enum.GetValues(enumType);
             List<T> enumValList = new List<T>(enumValArray.Length);
 
-            foreach (int val in enumValArray)
-            {
+            foreach (int val in enumValArray) {
                 enumValList.Add((T)Enum.Parse(enumType, val.ToString()));
             }
 
@@ -69,29 +63,15 @@ namespace ZeroWin
         }
 
         public static bool ReadBytesFromFile(string file, out byte[] data) {
-            FileStream fs;
-            data = new byte[0];
-
-            try {
-                fs = new FileStream(file, FileMode.Open, FileAccess.Read);
-            } catch {
+            try
+            {
+                data = File.ReadAllBytes(file);
+                return data.Length != 0;
+            }
+            catch {
+                data = new byte[0];
                 return false;
             }
-
-            int length = (int)fs.Length;
-
-            using (BinaryReader r = new BinaryReader(fs)) {
-                data = new byte[length];
-
-                int bytesRead = r.Read(data, 0, length);
-
-                if (bytesRead == 0) {
-                    fs.Close();
-                    return false; //something bad happened!
-                }
-            }
-
-            return true;
         }
     }
 }

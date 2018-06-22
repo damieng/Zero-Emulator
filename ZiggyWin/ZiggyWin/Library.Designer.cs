@@ -141,7 +141,6 @@
             this.textBox2.Size = new System.Drawing.Size(100, 13);
             this.textBox2.TabIndex = 14;
             this.textBox2.Text = "Publisher";
-            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
             // linkLabel1
             // 
