@@ -182,12 +182,15 @@ namespace Speccy
             addr = addr & 0xc000;
 
             //Low port contention
-            if (addr == 0x4000)
-                return true;
+            switch (addr)
+            {
+                case 0x4000:
+                    return true;
+                case 0xc000 when contendedBankPagedIn:
+                    return true;
+            }
 
             //High port contention
-            if (addr == 0xc000 && contendedBankPagedIn)
-                return true;
 
             return false;
         }
@@ -198,7 +201,6 @@ namespace Speccy
             if (isPlayingRZX) {
                 if (rzx.inputCount < rzx.frame.inputCount)
                     rzxIN = rzx.frame.inputs[rzx.inputCount++];
-                //rzxIN = rzx.frame.inputs[rzx.inputCount++];
                 return rzxIN;
             }
 
@@ -385,10 +387,7 @@ namespace Speccy
 
             PageWritePointer[0] = JunkMemory[0];
             PageWritePointer[1] = JunkMemory[1];
-            if (romSelect == 3)
-                lowROMis48K = true;
-            else
-                lowROMis48K = false;
+            lowROMis48K = romSelect == 3;
             //Debugging string for monitor
             BankInPage0 = romSelect > 1 ? romSelect == 3 ? ROM_48_BAS : ROM_PLUS3_DOS : romSelect == 1 ? ROM_128_SYN : ROM_128_BAS;
 
@@ -526,10 +525,6 @@ namespace Speccy
             } else //normal mode
             {
                 special64KRAM = false;
-                //bit 2 of val is high bit and bit 4 of 0x7ffd out is low bit
-                //int romSelect = ((val & 0x04) >> 1) | ((last7ffdOut & 0x10) >> 4);
-                //PagePointer[0] = ROMpage[romSelect * 2];
-                //PagePointer[1] = ROMpage[romSelect * 2 + 1];
                 PageReadPointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];  //Bank 5
                 PageReadPointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];  //Bank 5
                 PageReadPointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];   //Bank 2
@@ -683,9 +678,7 @@ namespace Speccy
                 return false;
             }
 
-            fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
             using (BinaryReader r = new BinaryReader(fs)) {
-                //int bytesRead = ReadBytes(r, mem, 0, 16384);
                 byte[] buffer = new byte[16384 * 2];
                 int bytesRead = r.Read(buffer, 0, 16384 * 2);
 
@@ -703,9 +696,6 @@ namespace Speccy
         }
 
         public override void UseSNA(SNA_SNAPSHOT sna) {
-            if (sna == null)
-                return;
-
             if (sna is SNA_128K) {
                 I = sna.HEADER.I;
                 _HL = sna.HEADER.HL_;

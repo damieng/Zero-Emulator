@@ -191,8 +191,7 @@ namespace Speccy
     {
         private readonly SPECCY_EVENT eventType;
 
-        public StateChangeEventArgs(SPECCY_EVENT _eventType)
-        {
+        public StateChangeEventArgs(SPECCY_EVENT _eventType) {
             eventType = _eventType;
         }
 
@@ -244,14 +243,12 @@ namespace Speccy
         public event FrameEndEventHandler FrameEndEvent;
         public event FrameStartEventHandler FrameStartEvent;
 
-        protected virtual void OnFrameEndEvent()
-        {
+        protected virtual void OnFrameEndEvent() {
             if (FrameEndEvent != null)
                 FrameEndEvent(this);
         }
 
-        protected virtual void OnFrameStartEvent()
-        {
+        protected virtual void OnFrameStartEvent() {
             if (FrameStartEvent != null)
                 FrameStartEvent(this);
         }
@@ -456,7 +453,7 @@ namespace Speccy
 
         public BindingList<CallStack> callStackList = new BindingList<CallStack>();
         */
-        
+
         //Paging
         protected bool lowROMis48K = true;
         protected bool trDosPagedIn;//TR DOS is swapped in only if the lower ROM is 48k.
@@ -511,7 +508,7 @@ namespace Speccy
         protected byte[][] ROMpage = new byte[8][];
 
         //For writing to ROM space
-        protected byte[][] JunkMemory = new byte[2][]; 
+        protected byte[][] JunkMemory = new byte[2][];
 
         //8 "pointers" to the pages
         //NOTE: In the case of +3, Pages 0 and 1 *can* point to a RAMpage. In other cases they point to a
@@ -597,7 +594,7 @@ namespace Speccy
 
         public int joystickType = 0; //A bit field of above joysticks to emulate (usually not more than 2).
         public bool UseKempstonPort1F = false; //If 1f, decoding scheme uses top 3 bits (5,6,7) else only the 5th bit is tested (port d4).
-        
+
         ////Each joystickState corresponds to an emulated joystick
         //Bits: 0 = button 3, 1 = button 2, 3 = button 1, 4 = up, 5 = down, 6 = left, 7 = right
         public int[] joystickState = new int[(int)JoysticksEmulated.LAST];
@@ -678,42 +675,13 @@ namespace Speccy
 
         public void Start() {
             doRun = true;
-            return;//THREAD
-            isSuspended = false;
-            if (!emulationThread.IsAlive) {
-                emulationThread = new System.Threading.Thread(new System.Threading.ThreadStart(Run));
-                emulationThread.Name = @"Emulation Thread";
-                emulationThread.Priority = System.Threading.ThreadPriority.AboveNormal;
-            }
-            emulationThread.Start();
+            return;
         }
 
         public void Pause() {
-            //beeper.Stop();
-            return; //THREAD
-            if (isSuspended) // || !doRun)
-                return;
-            isSuspended = true;
-            doRun = false;
-            emulationThread.Join();
-
-            //emulationThread.Suspend();
         }
 
         public void Resume() {
-            //beeper.Play();
-            return;//THREAD
-            if (!isSuspended)// || doRun)
-                return;
-            doRun = true;
-            isSuspended = false;
-            if (!emulationThread.IsAlive) {
-                emulationThread = new System.Threading.Thread(new System.Threading.ThreadStart(Run));
-                emulationThread.Name = @"Emulation Thread";
-                emulationThread.Priority = System.Threading.ThreadPriority.AboveNormal;
-            }
-            if (emulationThread.ThreadState != System.Threading.ThreadState.WaitSleepJoin)
-                emulationThread.Start();
         }
 
         public void SetEmulationSpeed(int speed) {
@@ -721,7 +689,8 @@ namespace Speccy
                 speed = MAX_CPU_SPEED;
                 soundTStatesToSample = 79;
                 beeper.SetVolume(2.0f);
-            } else {
+            }
+            else {
                 beeper.SetVolume(soundVolume);
                 soundTStatesToSample = (int)(FrameLength * (50.0f * (speed / 100.0f)) / 44100.0f);
             }
@@ -761,23 +730,6 @@ namespace Speccy
             rzx = null;
         }
 
-        /*
-        public void PlaybackRZX(RZXFile _rzx) {
-            isRecordingRZX = false;
-            rzx = _rzx;
-            rzx.InitPlayback();
-            isPlayingRZX = true;
-            totalTStates = (int)rzx.record.tstatesAtStart;
-        }
-        
-        public void ContinueRecordingRZX(RZXFile _rzx) {
-            isRecordingRZX = true;
-            isPlayingRZX = false;
-            rzx = _rzx;
-            rzx.ContinueRecording();
-            rzxInputs = new System.Collections.Generic.List<byte>();
-        }
-        */
         public bool ContinueRZXSession(string filename) {
             isRecordingRZX = true;
             isPlayingRZX = false;
@@ -786,7 +738,6 @@ namespace Speccy
 
         public void InsertBookmark() {
             if (isRecordingRZX) {
-                //rzx.InsertBookmark(CreateSZX(), rzxInputs);
                 rzx.UpdateRecording(totalTStates);
                 rzx.Bookmark(CreateSZX());
             }
@@ -794,17 +745,13 @@ namespace Speccy
 
         public void RollbackRZX() {
 
-            //SZXFile snapshot = rzx.Rollback();
             rzx.UpdateRecording(totalTStates);
             rzx.Rollback();
-            //if (snapshot != null)
-            //    UseSZX(snapshot);
         }
 
         public void DiscardRZX() {
             isRecordingRZX = false;
             isPlayingRZX = false;
-            //rzx.Discard();
         }
 
         public void SaveRZX(bool doFinalise) {
@@ -813,38 +760,21 @@ namespace Speccy
                 isPlayingRZX = false;
                 isRecordingRZX = false;
                 rzx.UpdateRecording(totalTStates);
-#if NEW_RZX_METHODS
                 rzx.SaveSession(CreateSZX().GetSZXData(), doFinalise);
-
                 rzx.Close();
-#else
-                rzx.Save(filename, (doFinalise ? null : CreateSZX().GetSZXData()));
-#endif
             }
         }
 
         public void StartRecordingRZX(string filename, Action<RZXFileEventArgs> callback) {
             rzx = new RZXFile();
-#if NEW_RZX_METHODS
             rzx.RZXFileEventHandler += callback;
             rzx.Record(filename);
             rzx.AddSnapshot(CreateSZX().GetSZXData());
-#else
-            rzx.StartRecording(CreateSZX().GetSZXData(), totalTStates);
-#endif
             isPlayingRZX = false;
             isRecordingRZX = true;
-
-            //rzx.record.tstatesAtStart = (uint)totalTStates;
-            //rzx.record.flags |= 0x2; //Frames are compressed.
-            //rzx.snapshotData[0] = CreateSZX().GetSZXData();
-
         }
 
         public bool IsValidSessionRZX() {
-            //if (!rzx.IsValidSession())
-            //    return false;
-
             isPlayingRZX = false;
             isRecordingRZX = true;
             return true;
@@ -899,17 +829,8 @@ namespace Speccy
             LateTiming = lateTimingModel ? 1 : 0;
             tapeBitWasFlipped = false;
 
-            //THREAD
-            //lock (lockThis)
-            {
-                beeper = new ZeroSound.SoundManager(handle, 16, 2, 44100);
-                beeper.Play();
-            }
-
-            //THREAD
-            //emulationThread = new System.Threading.Thread(new System.Threading.ThreadStart(Run));
-            //emulationThread.Name = @"Emulation Thread";
-            //emulationThread.Priority = System.Threading.ThreadPriority.AboveNormal;
+            beeper = new ZeroSound.SoundManager(handle, 16, 2, 44100);
+            beeper.Play();
 
             //During warm start, all registers are set to 0xffff
             //http://worldofspectrum.org/forums/showthread.php?t=34574&page=3
@@ -938,8 +859,7 @@ namespace Speccy
             HL = 0xffff;
         }
 
-        public void ResetTapeEdgeDetector()
-        {
+        public void ResetTapeEdgeDetector() {
             tape_detectionCount = 0;
             tape_PC = 0;
             tape_PCatLastIn = 0;
@@ -970,17 +890,12 @@ namespace Speccy
             if (!tape_flashLoad)
                 return;
 
-            //if (TapeEvent != null)
-            //    OnTapeEvent(new TapeEventArgs(TapeEventType.FLASH_LOAD));
             DoTapeEvent(new TapeEventArgs(TapeEventType.FLASH_LOAD));
         }
         //Reads next instruction from address pointed to by PC
         public int FetchInstruction() {
             R++;
 
-            //if (isPlayingRZX || isRecordingRZX) {
-            //    rzxFetchCount++;
-            //}
             if (isPlayingRZX || isRecordingRZX)
                 rzx.fetchCount++;
 
@@ -1007,11 +922,10 @@ namespace Speccy
             isRecordingRZX = false;
 
             DoTapeEvent(new TapeEventArgs(TapeEventType.STOP_TAPE));
-           
+
             //All registers are set to 0xffff during a cold boot
             //http://worldofspectrum.org/forums/showthread.php?t=34574&page=3
-            if (coldBoot)
-            {
+            if (coldBoot) {
                 SP = 0xffff;
                 IY = 0xffff;
                 IX = 0xffff;
@@ -1080,8 +994,7 @@ namespace Speccy
         public void UpdateTapeState(int tstates) {
             if (tapeIsPlaying && !tape_edgeDetectorRan) {
                 tapeTStates += tstates;
-                while (tapeTStates >= edgeDuration) 
-                {
+                while (tapeTStates >= edgeDuration) {
                     tapeTStates = (int)(tapeTStates - edgeDuration);
                     DoTapeEvent(new TapeEventArgs(TapeEventType.EDGE_LOAD));
                 }
@@ -1091,13 +1004,6 @@ namespace Speccy
 
         //Shutsdown the speccy
         public virtual void Shutdown() {
-            //THREAD
-            //if (!isSuspended)
-            //{
-            //    doRun = false;
-            //    emulationThread.Join();
-            //    emulationThread = null;
-            // }
             lock (lockThis) {
                 beeper.Shutdown();
                 beeper = null;
@@ -1135,8 +1041,8 @@ namespace Speccy
                             tapeBitFlipAck = true;
                             tapeBitWasFlipped = false;
                             return;
-                        } else {
-                            //bool doLoop = false;
+                        }
+                        else {
                             switch (tape_whichRegToCheck) {
                                 case 1:
                                     tape_regValue = A;
@@ -1167,7 +1073,6 @@ namespace Speccy
                                     break;
 
                                 default:
-                                    //doLoop = false;
                                     return;
                             }
 
@@ -1178,7 +1083,7 @@ namespace Speccy
 
                                 tapeTStates += totalTStates - oldTStates;
 
-                                 if (tapeBitWasFlipped) {
+                                if (tapeBitWasFlipped) {
                                     tapeBitFlipAck = true;
                                     return;
                                 }
@@ -1189,7 +1094,7 @@ namespace Speccy
                                     DoTapeEvent(new TapeEventArgs(TapeEventType.EDGE_LOAD));
                                 }
 
-                               
+
                                 tapeTStates += tape_tstatesStep;
                                 switch (tape_whichRegToCheck) {
                                     case 1:
@@ -1228,7 +1133,6 @@ namespace Speccy
                                         break;
 
                                     default:
-                                        //doLoop = false;
                                         break;
                                 }
                             }
@@ -1236,7 +1140,8 @@ namespace Speccy
                     }
                     tape_tstatesSinceLastIn = totalTStates;
                 }
-            } else {
+            }
+            else {
                 if (FrameCount != tape_FrameCount)
                     tape_detectionCount = 0;
 
@@ -1310,8 +1215,6 @@ namespace Speccy
                                     tapeIsPlaying = true;
                                     tape_AutoStarted = true;
                                     tape_stopTimeOut = TAPE_TIMEOUT;
-                                    //if (TapeEvent != null)
-                                    //    OnTapeEvent(new TapeEventArgs(TapeEventType.START_TAPE)); //Yes! Start tape!
                                     DoTapeEvent(new TapeEventArgs(TapeEventType.START_TAPE));
                                     tapeTStates = 0;
                                 }
@@ -1338,31 +1241,19 @@ namespace Speccy
         private readonly int NO_PAINT_REP = 50;
 
         public void Run() {
-            for (int rep = 0; rep < (tapeIsPlaying && tape_edgeLoad ? NO_PAINT_REP : 1); rep++)
-            {
-                while (doRun)
-                {
+            for (int rep = 0; rep < (tapeIsPlaying && tape_edgeLoad ? NO_PAINT_REP : 1); rep++) {
+                while (doRun) {
                     //Raise event for debugger
-                    if (OpcodeExecutedEvent != null)
-                    {
-                        // lock (lockThis2)
-                        {
-                            //monitorIsRunning = true;
-                            OnOpcodeExecutedEvent();
-                            //   while (monitorIsRunning)
-                            //       System.Threading.Monitor.Wait(lockThis2);
-                        }
+                    if (OpcodeExecutedEvent != null) {
+                        OnOpcodeExecutedEvent();
                     }
 
-                    lock (lockThis)
-                    {
-#region Tape Save Trap
+                    lock (lockThis) {
+                        #region Tape Save Trap
                         //Tape Save trap
-                        if (PC == 0x04d1 && !tapeTrapsDisabled)
-                        {
+                        if (PC == 0x04d1 && !tapeTrapsDisabled) {
                             //Trap the tape only if lower ROM is 48k!
-                            if (lowROMis48K)
-                            {
+                            if (lowROMis48K) {
                                 if (TapeEvent != null)
                                     OnTapeEvent(new TapeEventArgs(TapeEventType.SAVE_TAP));
                                 IX = IX + DE;
@@ -1371,30 +1262,23 @@ namespace Speccy
                                 ResetKeyboard();
                             }
                         }
-#endregion Tape Deck events
+                        #endregion Tape Deck events
 
                         if (isPlayingRZX && doRun)
                             ProcessRZX();
                         else
                             if (doRun)
-                                Process();
+                            Process();
 
                     } //lock
 
-                    if (needsPaint)
-                    {
-#region Tape Deck event for stopping tape on tape play timeout
+                    if (needsPaint) {
+                        #region Tape Deck event for stopping tape on tape play timeout
 
-                        if (tapeIsPlaying)
-                        {
-                            if (tape_AutoPlay && tape_AutoStarted)
-                            {
-                                if (!(isPauseBlockPreproccess && edgeDuration > 0 && and_32_Or_64))
-                                {
-                                    if (tape_stopTimeOut <= 0)
-                                    {
-                                        // if (TapeEvent != null)
-                                        //     OnTapeEvent(new TapeEventArgs(TapeEventType.STOP_TAPE)); //stop the tape!
+                        if (tapeIsPlaying) {
+                            if (tape_AutoPlay && tape_AutoStarted) {
+                                if (!(isPauseBlockPreproccess && edgeDuration > 0 && and_32_Or_64)) {
+                                    if (tape_stopTimeOut <= 0) {
                                         DoTapeEvent(new TapeEventArgs(TapeEventType.STOP_TAPE));
                                         tape_AutoStarted = false;
                                     }
@@ -1404,21 +1288,18 @@ namespace Speccy
                             }
                         }
 
-#endregion Tape Deck event for stopping tape on tape play timeout
+                        #endregion Tape Deck event for stopping tape on tape play timeout
                         FrameCount++;
-                        if (FrameCount > 50)
-                        {
+                        if (FrameCount > 50) {
                             FrameCount = 0;
                         }
 
-                        if (!externalSingleStep)
-                        {
+                        if (!externalSingleStep) {
                             while (!beeper.FinishedPlaying() && !tapeIsPlaying)
                                 System.Threading.Thread.Sleep(1);
                         }
 
-                        if (tapeIsPlaying && rep != NO_PAINT_REP - 1)
-                        {
+                        if (tapeIsPlaying && rep != NO_PAINT_REP - 1) {
                             needsPaint = false;
                             System.Threading.Thread.Sleep(1); //TO DO: Remove?
                         }
@@ -1434,17 +1315,7 @@ namespace Speccy
         //In r, (C)
         public int In() {
             int result = In(BC);
-            /*
-            SetNeg(false);
-            SetParity(parity[result]);
-            SetSign((result & F_SIGN) != 0);
-            SetZero(result == 0);
-            SetHalf(false);
-            SetF3((result & F_3) != 0);
-            SetF5((result & F_5) != 0);
-
-            return result;*/
-            F = ( F & F_CARRY) | sz53p[result];
+            F = (F & F_CARRY) | sz53p[result];
             return result;
         }
 
@@ -1471,7 +1342,6 @@ namespace Speccy
         //trigger Memory Execute in debugger.
         public byte GetOpcode(int addr) {
             addr &= 0xffff;
-            //Contend(addr, 3, 1);
             if (IsContended(addr)) {
                 totalTStates += contentionTable[totalTStates];
             }
@@ -1492,7 +1362,6 @@ namespace Speccy
         //Returns the byte at a given 16 bit address (can be contended)
         public byte PeekByte(int addr) {
             addr &= 0xffff;
-            //Contend(addr, 3, 1);
             if (IsContended(addr)) {
                 totalTStates += contentionTable[totalTStates];
             }
@@ -1563,15 +1432,11 @@ namespace Speccy
             SP = (SP - 2) & 0xffff;
             PokeByte((SP + 1) & 0xffff, val >> 8);
             PokeByte(SP, val & 0xff);
-            //if (PushStackEvent != null)
-            //    OnPushStackEvent(SP, val);
         }
 
         public int PopStack() {
             int val = PeekByte(SP) | (PeekByte(SP + 1) << 8);
             SP = (SP + 2) & 0xffff;
-            //if (PopStackEvent != null)
-            //    OnPopStackEvent(val);
             return val;
         }
 
@@ -1657,7 +1522,8 @@ namespace Speccy
         public virtual void UpdateScreenBuffer(int _tstates) {
             if (_tstates < ActualULAStart) {
                 return;
-            } else if (_tstates >= FrameLength) {
+            }
+            else if (_tstates >= FrameLength) {
                 _tstates = FrameLength - 1;
                 //Since we're updating the entire screen here, we don't need to re-paint
                 //it again in the  process loop on framelength overflow.
@@ -1673,9 +1539,7 @@ namespace Speccy
             int numBytes = (elapsedTStates >> 2) + (elapsedTStates % 4 > 0 ? 1 : 0);
 
             int pixelData;
-            int pixel2Data = 0xff;
             int attrData;
-            int attr2Data;
             int bright;
             int ink;
             int paper;
@@ -1683,83 +1547,56 @@ namespace Speccy
 
             for (int i = 0; i < numBytes; i++) {
                 if (tstateToDisp[lastTState] > 1) {
-                   // for (int p = 0; p < 2; p++) {
-                        screenByteCtr = tstateToDisp[lastTState] - 16384; //adjust for actual screen offset
-                  
-                        pixelData = screen[screenByteCtr];
-                        attrData = screen[attr[screenByteCtr] - 16384];
+                    screenByteCtr = tstateToDisp[lastTState] - 16384; //adjust for actual screen offset
 
-                        lastPixelValue = pixelData;
-                        lastAttrValue = attrData;
-                       /* if ((I & 0x40) == 0x40) {
-                            {
-                                if (p == 0) {
-                                    screenByteCtr = (screenByteCtr + 16384) | (R & 0xff);
-                                    pixel2Data = screenByteCtr & 0xff;
-                                }
-                                else
-                                    screenByteCtr = (screenByteCtr + 16384) | (pixel2Data);
-                                pixelData = screen[(screenByteCtr - 1) - 16384];
-                                lastAttrValue = screen[attr[(screenByteCtr - 1) - 16384] - 16384];
-                            }
-                        }
-                        */
-                        bright = (attrData & 0x40) >> 3;
-                        flash = (attrData & 0x80) >> 7;
-                        ink = attrData & 0x07;
-                        paper = (attrData >> 3) & 0x7;
-                        int paletteInk = AttrColors[ink + bright];
-                        int palettePaper = AttrColors[paper + bright];
+                    pixelData = screen[screenByteCtr];
+                    attrData = screen[attr[screenByteCtr] - 16384];
 
-                        if (flashOn && flash != 0) //swap paper and ink when flash is on
-                        {
-                            int temp = paletteInk;
-                            paletteInk = palettePaper;
-                            palettePaper = temp;
-                        }
+                    lastPixelValue = pixelData;
+                    lastAttrValue = attrData;
 
-                        if (ULAPlusEnabled && ULAPaletteEnabled) {
-                            paletteInk = ULAPlusColours[(((flash << 1) + (bright >> 3)) << 4) + ink]; //(flash*2 + bright) * 16 + ink
-                            palettePaper = ULAPlusColours[(((flash << 1) + (bright >> 3)) << 4) + paper + 8]; //(flash*2 + bright) * 16 + paper + 8
-                        }
+                    bright = (attrData & 0x40) >> 3;
+                    flash = (attrData & 0x80) >> 7;
+                    ink = attrData & 0x07;
+                    paper = (attrData >> 3) & 0x7;
+                    int paletteInk = AttrColors[ink + bright];
+                    int palettePaper = AttrColors[paper + bright];
 
-                        for (int a = 0; a < 8; ++a) {
-                            if ((pixelData & 0x80) != 0) {
-                                //PAL interlacing
-                                //int pal = paletteInk/2 + (0xffffff - LastScanlineColor[lastScanlineColorCounter]/2);
-                                //ScreenBuffer[ULAByteCtr++] = pal;
-                                //LastScanlineColor[lastScanlineColorCounter++] = paletteInk;
-                                ScreenBuffer[ULAByteCtr++] = paletteInk;
-                                lastAttrValue = ink;
-                            } else {
-                                //PAL interlacing
-                                //int pal = palettePaper/2 + (0xffffff - LastScanlineColor[lastScanlineColorCounter]/2);
-                                //ScreenBuffer[ULAByteCtr++] = pal;
-                                //LastScanlineColor[lastScanlineColorCounter++] = palettePaper;
-                                ScreenBuffer[ULAByteCtr++] = palettePaper;
-                                lastAttrValue = paper;
-                            }
-                            pixelData <<= 1;
-                        }                 
-                    // pixelData = lastPixelValue;
-                } else if (tstateToDisp[lastTState] == 1) {
-                    int bor;
+                    if (flashOn && flash != 0) //swap paper and ink when flash is on
+                    {
+                        int temp = paletteInk;
+                        paletteInk = palettePaper;
+                        palettePaper = temp;
+                    }
+
                     if (ULAPlusEnabled && ULAPaletteEnabled) {
-                        bor = ULAPlusColours[borderColour + 8];
-                    } else
-                        bor = AttrColors[borderColour];
+                        paletteInk = ULAPlusColours[(((flash << 1) + (bright >> 3)) << 4) + ink]; //(flash*2 + bright) * 16 + ink
+                        palettePaper = ULAPlusColours[(((flash << 1) + (bright >> 3)) << 4) + paper + 8]; //(flash*2 + bright) * 16 + paper + 8
+                    }
 
-                    for(int g = 0; g < 8; g++) {
-                        //PAL interlacing
-                        //int pal = bor/2 + (0xffffff -  LastScanlineColor[lastScanlineColorCounter]/2);
-                        //ScreenBuffer[ULAByteCtr++] = pal;
-                        //LastScanlineColor[lastScanlineColorCounter++] = bor;                        
+                    for (int a = 0; a < 8; ++a) {
+                        if ((pixelData & 0x80) != 0) {
+                            ScreenBuffer[ULAByteCtr++] = paletteInk;
+                            lastAttrValue = ink;
+                        }
+                        else {
+                            ScreenBuffer[ULAByteCtr++] = palettePaper;
+                            lastAttrValue = paper;
+                        }
+                        pixelData <<= 1;
+                    }
+                }
+                else if (tstateToDisp[lastTState] == 1) {
+                    int bor;
+                    bor = ULAPlusEnabled && ULAPaletteEnabled ? ULAPlusColours[borderColour + 8] : AttrColors[borderColour];
+
+                    for (int g = 0; g < 8; g++) {
                         ScreenBuffer[ULAByteCtr++] = bor;
                     }
                 }
                 lastTState += 4;
 
-                if(lastScanlineColorCounter >= ScanLineWidth)
+                if (lastScanlineColorCounter >= ScanLineWidth)
                     lastScanlineColorCounter = 0;
             }
         }
@@ -1767,7 +1604,8 @@ namespace Speccy
         public unsafe void UpdateScreenBuffer2(int _tstates) {
             if (_tstates < ActualULAStart) {
                 return;
-            } else if (_tstates >= FrameLength) {
+            }
+            else if (_tstates >= FrameLength) {
                 _tstates = FrameLength - 1;
                 //Since we're updating the entire screen here, we don't need to re-paint
                 //it again in the  process loop on framelength overflow.
@@ -1795,15 +1633,6 @@ namespace Speccy
 
                             lastPixelValue = pixelData;
                             lastAttrValue = attrData;
-                            /*if ((I & 192) == 192)
-                            {
-                                if (screenByteCtr % 2 != 0)
-                                {
-                                    pixelData = screen[(screenByteCtr-1) - 16384];
-                                    lastAttrValue = screen[attr[(screenByteCtr-1) - 16384] - 16384];
-                                }
-                            }
-                            */
                             bright = (attrData & 0x40) >> 3;
                             flashBitOn = (attrData & 0x80) != 0;
                             ink = AttrColors[(attrData & 0x07) + bright];
@@ -1825,19 +1654,18 @@ namespace Speccy
                                 for (int a = 0; a < 8; ++a) {
                                     if ((pixelData & 0x80) != 0) {
                                         *(p + ULAByteCtr) = ink;
-                                    } else {
+                                    }
+                                    else {
                                         *(p + ULAByteCtr) = paper;
                                     }
                                     pixelData <<= 1;
                                     ULAByteCtr++;
                                 }
                             }
-                        } else if (tstateToDisp[lastTState] == 1) {
+                        }
+                        else if (tstateToDisp[lastTState] == 1) {
                             int bor;
-                            if (ULAPlusEnabled && ULAPaletteEnabled) {
-                                bor = ULAPlusColours[borderColour];
-                            } else
-                                bor = AttrColors[borderColour];
+                            bor = ULAPlusEnabled && ULAPaletteEnabled ? ULAPlusColours[borderColour] : AttrColors[borderColour];
                             lock (this) {
                                 for (int g = 0; g < 8; g++) {
                                     *(p + ULAByteCtr) = bor;
@@ -1857,279 +1685,264 @@ namespace Speccy
         //Updates the state of all inputs from the user
         public void UpdateInput() {
 
-#region Row 0: fefe - CAPS SHIFT, Z, X, C , V
+            #region Row 0: fefe - CAPS SHIFT, Z, X, C , V
 
-            if (keyBuffer[(int)keyCode.SHIFT]) {
-                keyLine[0] = keyLine[0] & ~0x1;
-            } else {
-                keyLine[0] = keyLine[0] | 0x1;
-            }
+            keyLine[0] = keyBuffer[(int) keyCode.SHIFT] ? keyLine[0] & ~0x1 : keyLine[0] | 0x1;
 
-            if (keyBuffer[(int)keyCode.Z]) {
-                keyLine[0] = keyLine[0] & ~0x02;
-            } else {
-                keyLine[0] = keyLine[0] | 0x02;
-            }
+            keyLine[0] = keyBuffer[(int) keyCode.Z] ? keyLine[0] & ~0x02 : keyLine[0] | 0x02;
 
-            if (keyBuffer[(int)keyCode.X]) {
-                keyLine[0] = keyLine[0] & ~0x04;
-            } else {
-                keyLine[0] = keyLine[0] | 0x04;
-            }
+            keyLine[0] = keyBuffer[(int) keyCode.X] ? keyLine[0] & ~0x04 : keyLine[0] | 0x04;
 
-            if (keyBuffer[(int)keyCode.C]) {
-                keyLine[0] = keyLine[0] & ~0x08;
-            } else {
-                keyLine[0] = keyLine[0] | 0x08;
-            }
+            keyLine[0] = keyBuffer[(int) keyCode.C] ? keyLine[0] & ~0x08 : keyLine[0] | 0x08;
 
-            if (keyBuffer[(int)keyCode.V]) {
-                keyLine[0] = keyLine[0] & ~0x10;
-            } else {
-                keyLine[0] = keyLine[0] | 0x10;
-            }
+            keyLine[0] = keyBuffer[(int) keyCode.V] ? keyLine[0] & ~0x10 : keyLine[0] | 0x10;
 
-#endregion Row 0: fefe - CAPS SHIFT, Z, X, C , V
+            #endregion Row 0: fefe - CAPS SHIFT, Z, X, C , V
 
-#region Row 1: fdfe - A, S, D, F, G
+            #region Row 1: fdfe - A, S, D, F, G
 
-            if (keyBuffer[(int)keyCode.A]) {
-                keyLine[1] = keyLine[1] & ~0x1;
-            } else {
-                keyLine[1] = keyLine[1] | 0x1;
-            }
+            keyLine[1] = keyBuffer[(int) keyCode.A] ? keyLine[1] & ~0x1 : keyLine[1] | 0x1;
 
-            if (keyBuffer[(int)keyCode.S]) {
-                keyLine[1] = keyLine[1] & ~0x02;
-            } else {
-                keyLine[1] = keyLine[1] | 0x02;
-            }
+            keyLine[1] = keyBuffer[(int) keyCode.S] ? keyLine[1] & ~0x02 : keyLine[1] | 0x02;
 
-            if (keyBuffer[(int)keyCode.D]) {
-                keyLine[1] = keyLine[1] & ~0x04;
-            } else {
-                keyLine[1] = keyLine[1] | 0x04;
-            }
+            keyLine[1] = keyBuffer[(int) keyCode.D] ? keyLine[1] & ~0x04 : keyLine[1] | 0x04;
 
-            if (keyBuffer[(int)keyCode.F]) {
-                keyLine[1] = keyLine[1] & ~0x08;
-            } else {
-                keyLine[1] = keyLine[1] | 0x08;
-            }
+            keyLine[1] = keyBuffer[(int) keyCode.F] ? keyLine[1] & ~0x08 : keyLine[1] | 0x08;
 
-            if (keyBuffer[(int)keyCode.G]) {
-                keyLine[1] = keyLine[1] & ~0x10;
-            } else {
-                keyLine[1] = keyLine[1] | 0x10;
-            }
+            keyLine[1] = keyBuffer[(int) keyCode.G] ? keyLine[1] & ~0x10 : keyLine[1] | 0x10;
 
-#endregion Row 1: fdfe - A, S, D, F, G
+            #endregion Row 1: fdfe - A, S, D, F, G
 
-#region Row 2: fbfe - Q, W, E, R, T
+            #region Row 2: fbfe - Q, W, E, R, T
 
-            if (keyBuffer[(int)keyCode.Q]) {
-                keyLine[2] = keyLine[2] & ~0x1;
-            } else {
-                keyLine[2] = keyLine[2] | 0x1;
-            }
+            keyLine[2] = keyBuffer[(int) keyCode.Q] ? keyLine[2] & ~0x1 : keyLine[2] | 0x1;
 
             if (keyBuffer[(int)keyCode.W]) {
                 keyLine[2] = keyLine[2] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[2] = keyLine[2] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.E]) {
                 keyLine[2] = keyLine[2] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[2] = keyLine[2] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.R]) {
                 keyLine[2] = keyLine[2] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[2] = keyLine[2] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.T]) {
                 keyLine[2] = keyLine[2] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[2] = keyLine[2] | 0x10;
             }
 
-#endregion Row 2: fbfe - Q, W, E, R, T
+            #endregion Row 2: fbfe - Q, W, E, R, T
 
-#region Row 3: f7fe - 1, 2, 3, 4, 5
+            #region Row 3: f7fe - 1, 2, 3, 4, 5
 
             if (keyBuffer[(int)keyCode._1]) {
                 keyLine[3] = keyLine[3] & ~0x1;
-            } else {
+            }
+            else {
                 keyLine[3] = keyLine[3] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode._2]) {
                 keyLine[3] = keyLine[3] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[3] = keyLine[3] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode._3]) {
                 keyLine[3] = keyLine[3] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[3] = keyLine[3] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode._4]) {
                 keyLine[3] = keyLine[3] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[3] = keyLine[3] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode._5]) {
                 keyLine[3] = keyLine[3] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[3] = keyLine[3] | 0x10;
             }
 
-#endregion Row 3: f7fe - 1, 2, 3, 4, 5
+            #endregion Row 3: f7fe - 1, 2, 3, 4, 5
 
-#region Row 4: effe - 0, 9, 8, 7, 6
+            #region Row 4: effe - 0, 9, 8, 7, 6
 
             if (keyBuffer[(int)keyCode._0]) {
                 keyLine[4] = keyLine[4] & ~0x1;
-            } else {
+            }
+            else {
                 keyLine[4] = keyLine[4] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode._9]) {
                 keyLine[4] = keyLine[4] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[4] = keyLine[4] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode._8]) {
                 keyLine[4] = keyLine[4] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[4] = keyLine[4] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode._7]) {
                 keyLine[4] = keyLine[4] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[4] = keyLine[4] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode._6]) {
                 keyLine[4] = keyLine[4] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[4] = keyLine[4] | 0x10;
             }
 
-#endregion Row 4: effe - 0, 9, 8, 7, 6
+            #endregion Row 4: effe - 0, 9, 8, 7, 6
 
-#region Row 5: dffe - P, O, I, U, Y
+            #region Row 5: dffe - P, O, I, U, Y
 
             if (keyBuffer[(int)keyCode.P]) {
                 keyLine[5] = keyLine[5] & ~0x1;
-            } else {
+            }
+            else {
                 keyLine[5] = keyLine[5] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.O]) {
                 keyLine[5] = keyLine[5] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[5] = keyLine[5] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.I]) {
                 keyLine[5] = keyLine[5] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[5] = keyLine[5] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.U]) {
                 keyLine[5] = keyLine[5] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[5] = keyLine[5] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.Y]) {
                 keyLine[5] = keyLine[5] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[5] = keyLine[5] | 0x10;
             }
 
-#endregion Row 5: dffe - P, O, I, U, Y
+            #endregion Row 5: dffe - P, O, I, U, Y
 
-#region Row 6: bffe - ENTER, L, K, J, H
+            #region Row 6: bffe - ENTER, L, K, J, H
 
             if (keyBuffer[(int)keyCode.ENTER]) {
                 keyLine[6] = keyLine[6] & ~0x1;
-            } else {
+            }
+            else {
                 keyLine[6] = keyLine[6] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.L]) {
                 keyLine[6] = keyLine[6] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[6] = keyLine[6] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.K]) {
                 keyLine[6] = keyLine[6] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[6] = keyLine[6] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.J]) {
                 keyLine[6] = keyLine[6] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[6] = keyLine[6] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.H]) {
                 keyLine[6] = keyLine[6] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[6] = keyLine[6] | 0x10;
             }
 
-#endregion Row 6: bffe - ENTER, L, K, J, H
+            #endregion Row 6: bffe - ENTER, L, K, J, H
 
-#region Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
+            #region Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
 
             if (keyBuffer[(int)keyCode.SPACE]) {
                 keyLine[7] = keyLine[7] & ~0x1;
-            } else {
+            }
+            else {
                 keyLine[7] = keyLine[7] | 0x1;
             }
 
             if (keyBuffer[(int)keyCode.CTRL]) {
                 keyLine[7] = keyLine[7] & ~0x02;
-            } else {
+            }
+            else {
                 keyLine[7] = keyLine[7] | 0x02;
             }
 
             if (keyBuffer[(int)keyCode.M]) {
                 keyLine[7] = keyLine[7] & ~0x04;
-            } else {
+            }
+            else {
                 keyLine[7] = keyLine[7] | 0x04;
             }
 
             if (keyBuffer[(int)keyCode.N]) {
                 keyLine[7] = keyLine[7] & ~0x08;
-            } else {
+            }
+            else {
                 keyLine[7] = keyLine[7] | 0x08;
             }
 
             if (keyBuffer[(int)keyCode.B]) {
                 keyLine[7] = keyLine[7] & ~0x10;
-            } else {
+            }
+            else {
                 keyLine[7] = keyLine[7] | 0x010;
             }
 
-#endregion Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
+            #endregion Row 7: 7ffe - SPACE, SYMBOL SHIFT, M, N, B
 
-#region Misc utility key functions
+            #region Misc utility key functions
 
             //Check for caps lock key
             if (keyBuffer[(int)keyCode.CAPS]) {
@@ -2171,11 +1984,11 @@ namespace Speccy
                 keyLine[4] = keyLine[4] & ~0x10;
             }
 
-#endregion Misc utility key functions
+            #endregion Misc utility key functions
 
-#region Function key presses
+            #region Function key presses
 
-#endregion Function key presses
+            #endregion Function key presses
         }
 
         //Resets the state of all the keys
@@ -2237,7 +2050,7 @@ namespace Speccy
                 snapshot = new SNA_48K();
             else
                 snapshot = new SNA_128K();
-                
+
             snapshot.HEADER.I = (byte)I;
             snapshot.HEADER.HL_ = (ushort)_HL;
             snapshot.HEADER.DE_ = (ushort)_DE;
@@ -2253,7 +2066,7 @@ namespace Speccy
             snapshot.HEADER.IFF2 = (byte)(IFF1 ? 1 << 2 : 0);
             snapshot.HEADER.R = (byte)R;
             snapshot.HEADER.AF = (ushort)AF;
-        
+
             snapshot.HEADER.IM = (byte)interruptMode;
             snapshot.HEADER.BORDER = (byte)borderColour;
 
@@ -2266,7 +2079,7 @@ namespace Speccy
                 int screenAddr = DisplayStart;
 
                 for (int f = 0; f < 49152; ++f)
-                    ((SNA_48K)snapshot).RAM[f] = PeekByteNoContend(screenAddr +f);
+                    ((SNA_48K)snapshot).RAM[f] = PeekByteNoContend(screenAddr + f);
 
                 PC = PopStack();
             }
@@ -2275,7 +2088,7 @@ namespace Speccy
                 ((SNA_128K)snapshot).PC = (ushort)PC;
                 ((SNA_128K)snapshot).PORT_7FFD = (byte)last7ffdOut;
                 ((SNA_128K)snapshot).TR_DOS = (byte)(trDosPagedIn ? 1 : 0);
-                
+
                 for (int f = 0; f < 16; f++)
                     ((SNA_128K)snapshot).RAM_BANK[f] = new byte[8192];
 
@@ -2303,7 +2116,7 @@ namespace Speccy
 
             SNAFile.SaveSNA(filename, snapshot);
         }
-        
+
         //Sets the speccy state to that of the SNA file
         public abstract void UseSNA(SNA_SNAPSHOT sna);
 
@@ -2328,14 +2141,12 @@ namespace Speccy
             lastOpcodeWasEI = (byte)((szx.z80Regs.Flags & SZXFile.ZXSTZF_EILAST) != 0 ? 2 : 0);
             HaltOn = (szx.z80Regs.Flags & SZXFile.ZXSTZF_HALTED) != 0;
             Issue2Keyboard = (szx.keyboard.Flags & SZXFile.ZXSTKF_ISSUE2) != 0;
-            
-            if (szx.paletteLoaded)
-            {
+
+            if (szx.paletteLoaded) {
                 ULAPaletteEnabled = szx.palette.flags > 0 ? true : false;
                 ULAPaletteGroup = szx.palette.currentRegister;
 
-                for (int f = 0; f < 64 ; f++)
-                {
+                for (int f = 0; f < 64; f++) {
                     byte val = szx.palette.paletteRegs[f];
 
                     //3 bits to 8 bits to be stored as hmlhmlml for each color
@@ -2545,7 +2356,8 @@ namespace Speccy
                 for (int f = 0; f < _count; f++) {
                     totalTStates += contentionTable[totalTStates] + _time;
                 }
-            } else
+            }
+            else
                 totalTStates += _count * _time;
         }
 
@@ -2553,12 +2365,6 @@ namespace Speccy
         public void SetPalette(int[] newPalette) {
             AttrColors = newPalette;
         }
-
-        //Returns true if the last submitted buffer has finished playing
-        //public bool AudioDone()
-        //{
-        //    return beeper.FinishedPlaying();
-        //}
 
         //Loads the ULAPlus palette
         public bool LoadULAPlusPalette(string filename) {
@@ -2594,7 +2400,6 @@ namespace Speccy
 
         public void NextRZXFrame() {
             totalTStates = 0;
-            //isPlayingRZX = rzx.NextPlaybackFrame();
             isPlayingRZX = rzx.UpdatePlayback();
         }
 
@@ -2627,7 +2432,6 @@ namespace Speccy
         public void ProcessRZX() {
             R++;
 
-            // if (rzx.fetchCount > rzx.frames[rzx.frameCount].instructionCount - 1) 
             if (rzx.fetchCount > rzx.frame.instructionCount - 1)
                 EndRZXFrame();
 
@@ -2701,19 +2505,7 @@ namespace Speccy
             //Handle re-triggered interrupts!
             if (IFF1 && lastOpcodeWasEI == 0 && totalTStates < InterruptPeriod) {
                 if (isRecordingRZX) {
-                    /* rzxFrame = new RZXFile.RZX_Frame();
-                     rzxFrame.inputCount = (ushort)rzxInputs.Count;
-                     rzxFrame.instructionCount = (ushort)rzxFetchCount;
-                     rzxFrame.inputs = rzxInputs.ToArray();
-                     rzx.frames.Add(rzxFrame);
-                     rzxFetchCount = 0;
-                     rzxInputCount = 0;*/
-#if NEW_RZX_METHODS
                     rzx.UpdateRecording(totalTStates);
-#else
-                    rzx.RecordFrame(rzxInputs);
-#endif
-                    //rzxInputs = new System.Collections.Generic.List<byte>();
                 }
 
                 if (StateChangeEvent != null)
@@ -2738,7 +2530,8 @@ namespace Speccy
                             PageWritePointer[1] = JunkMemory[1];
                             BankInPage0 = ROM_48_BAS;
                             lowROMis48K = true;
-                        } else {
+                        }
+                        else {
                             //128k basic
                             PageReadPointer[0] = ROMpage[0];
                             PageReadPointer[1] = ROMpage[1];
@@ -2751,7 +2544,7 @@ namespace Speccy
                     }
                 }
                 else if (lowROMis48K) {
-                     if (PC >> 8 == 0x3d) {
+                    if (PC >> 8 == 0x3d) {
                         PageReadPointer[0] = ROMpage[4];
                         PageReadPointer[1] = ROMpage[5];
                         PageWritePointer[0] = JunkMemory[0];
@@ -2759,14 +2552,14 @@ namespace Speccy
                         trDosPagedIn = true;
                         BankInPage0 = ROM_TR_DOS;
                     }
-                } 
+                }
             }
             //Inlined version of FetchInstruction()
             R++;
 
             if (isRecordingRZX)
                 rzx.fetchCount++;
-           
+
             oldTStates = totalTStates;
             opcode = GetOpcode(PC);
 
@@ -2774,7 +2567,7 @@ namespace Speccy
             totalTStates++; //effectively, totalTStates + 4 because PeekByte does the other 3
             Execute();
             deltaTStates = totalTStates - oldTStates;
-            
+
             //// Change CPU speed///////////////////////
             if (emulationSpeed > 0 && !tapeIsPlaying /*!isPauseBlockPreproccess*/) {
                 deltaTStates /= emulationSpeed;
@@ -2783,7 +2576,7 @@ namespace Speccy
 
                 totalTStates = oldTStates + deltaTStates;
                 if (tapeIsPlaying)
-                   soundTStatesToSample = 79;
+                    soundTStatesToSample = 79;
             }
             /////////////////////////////////////////////////
             timeToOutSound += deltaTStates;
@@ -2791,11 +2584,10 @@ namespace Speccy
             //UpdateTape
             if (tapeIsPlaying && !tape_edgeDetectorRan) {
                 tapeTStates += deltaTStates;
-           
+
                 if (!isProcessingPauseBlock) {
                     while (tapeTStates >= edgeDuration) {
                         tapeTStates = (int)(tapeTStates - edgeDuration);
-
                         DoTapeEvent(new TapeEventArgs(TapeEventType.EDGE_LOAD));
                     }
                 }
@@ -2875,19 +2667,7 @@ namespace Speccy
                 UpdateInput();
 
                 if (isRecordingRZX) {
-                    /*  rzxFrame = new RZXFile.RZX_Frame();
-                      rzxFrame.inputCount = (ushort)rzxInputs.Count;
-                      rzxFrame.instructionCount = (ushort)rzxFetchCount;
-                      rzxFrame.inputs = rzxInputs.ToArray();
-                      rzx.frames.Add(rzxFrame);
-                      rzxFetchCount = 0;
-                      rzxInputCount = 0;*/
-#if NEW_RZX_METHODS
                     rzx.UpdateRecording(totalTStates);
-#else
-                    rzx.RecordFrame(rzxInputs);
-#endif
-                    //rzxInputs = new System.Collections.Generic.List<byte>();
                 }
 
                 //Need interrupt?
@@ -2908,15 +2688,15 @@ namespace Speccy
             //Massive switch-case to decode the instructions!
             switch (opcode) {
 
-#region NOP
+                #region NOP
 
                 case 0x00: //NOP
                     // Log("NOP");
                     break;
 
-#endregion NOP
+                #endregion NOP
 
-#region 16 bit load operations (LD rr, nn)
+                #region 16 bit load operations (LD rr, nn)
                 /** LD rr, nn (excluding DD prefix) **/
                 case 0x01: //LD BC, nn
                     BC = PeekWord(PC);
@@ -2958,9 +2738,9 @@ namespace Speccy
                     // Log("LD SP, HL");
                     SP = HL;
                     break;
-#endregion
+                #endregion
 
-#region 16 bit increments (INC rr)
+                #region 16 bit increments (INC rr)
                 /** INC rr **/
                 case 0x03:  //INC BC
                     //if (model == MachineModel._plus3)
@@ -2997,9 +2777,9 @@ namespace Speccy
                     // Log("INC SP");
                     SP++;
                     break;
-#endregion INC rr
+                #endregion INC rr
 
-#region 8 bit increments (INC r)
+                #region 8 bit increments (INC r)
                 /** INC r + INC (HL) **/
                 case 0x04:  //INC B
                     B = Inc(B);
@@ -3043,9 +2823,9 @@ namespace Speccy
                     // Log("INC A");
                     A = Inc(A);
                     break;
-#endregion
+                #endregion
 
-#region 8 bit decrement (DEC r)
+                #region 8 bit decrement (DEC r)
                 /** DEC r + DEC (HL)**/
                 case 0x05: //DEC B
                     // Log("DEC B");
@@ -3102,11 +2882,11 @@ namespace Speccy
                                     A = 0;
                                     F |= 64;
                                 }
-                    }
+                            }
                     break;
-#endregion
+                #endregion
 
-#region 16 bit decrements
+                #region 16 bit decrements
                 /** DEC rr **/
                 case 0x0B:  //DEC BC
                     // Log("DEC BC");
@@ -3143,9 +2923,9 @@ namespace Speccy
                     Contend(IR, 1, 2);
                     SP--;
                     break;
-#endregion
+                #endregion
 
-#region Immediate load operations (LD (nn), r)
+                #region Immediate load operations (LD (nn), r)
                 /** LD (rr), r + LD (nn), HL  + LD (nn), A **/
                 case 0x02: //LD (BC), A
                     // Log("LD (BC), A");
@@ -3184,9 +2964,9 @@ namespace Speccy
                     PokeByte(HL, val);
                     PC += 1;
                     break;
-#endregion
+                #endregion
 
-#region Indirect load operations (LD r, r)
+                #region Indirect load operations (LD r, r)
                 /** LD r, r **/
                 case 0x06: //LD B, n
                     B = PeekByte(PC);
@@ -3572,9 +3352,9 @@ namespace Speccy
                     // Log("LD A, A");
                     A = A;
                     break;
-#endregion
+                #endregion
 
-#region Rotates on Accumulator
+                #region Rotates on Accumulator
                 /** Accumulator Rotates **/
                 case 0x07: //RLCA
                     // Log("RLCA");
@@ -3582,7 +3362,8 @@ namespace Speccy
 
                     if (ac) {
                         A = ((A << 1) | F_CARRY) & 0xff;
-                    } else {
+                    }
+                    else {
                         A = (A << 1) & 0xff;
                     }
                     SetF3((A & F_3) != 0);
@@ -3599,7 +3380,8 @@ namespace Speccy
 
                     if (ac) {
                         A = (A >> 1) | F_SIGN;
-                    } else {
+                    }
+                    else {
                         A = A >> 1;
                     }
 
@@ -3618,7 +3400,8 @@ namespace Speccy
 
                     if (msb != 0) {
                         A = (A << 1) | F_CARRY;
-                    } else {
+                    }
+                    else {
                         A = A << 1;
                     }
                     SetF3((A & F_3) != 0);
@@ -3635,7 +3418,8 @@ namespace Speccy
 
                     if (lsb != 0) {
                         A = (A >> 1) | F_SIGN;
-                    } else {
+                    }
+                    else {
                         A = A >> 1;
                     }
                     SetF3((A & F_3) != 0);
@@ -3644,9 +3428,9 @@ namespace Speccy
                     SetHalf(false);
                     SetNeg(false);
                     break;
-#endregion
+                #endregion
 
-#region Exchange operations (EX)
+                #region Exchange operations (EX)
                 /** Exchange operations **/
                 case 0x08:     //EX AF, AF'
                     // Log("EX AF, AF'");
@@ -3676,9 +3460,9 @@ namespace Speccy
                     DE = HL;
                     HL = temp;
                     break;
-#endregion
+                #endregion
 
-#region 16 bit addition to HL (Add HL, rr)
+                #region 16 bit addition to HL (Add HL, rr)
                 /** Add HL, rr **/
                 case 0x09:     //ADD HL, BC
                     // Log("ADD HL, BC");
@@ -3722,9 +3506,9 @@ namespace Speccy
                     MemPtr = HL + 1;
                     HL = Add_RR(HL, SP);
                     break;
-#endregion
+                #endregion
 
-#region 8 bit addition to accumulator (Add r, r)
+                #region 8 bit addition to accumulator (Add r, r)
                 /*** ADD r, r ***/
                 case 0x80:  //ADD A,B
                     // Log("ADD A, B");
@@ -3772,9 +3556,9 @@ namespace Speccy
                     Add_R(disp);
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region Add to accumulator with carry (Adc A, r)
+                #region Add to accumulator with carry (Adc A, r)
                 /** Adc a, r **/
                 case 0x88:  //ADC A,B
                     // Log("ADC A, B");
@@ -3822,9 +3606,9 @@ namespace Speccy
                     Adc_R(disp);
                     PC += 1;
                     break;
-#endregion
+                #endregion
 
-#region 8 bit subtraction from accumulator(SUB r)
+                #region 8 bit subtraction from accumulator(SUB r)
                 case 0x90:  //SUB B
                     // Log("SUB B");
                     Sub_R(B);
@@ -3871,9 +3655,9 @@ namespace Speccy
                     Sub_R(disp);
                     PC += 1;
                     break;
-#endregion
+                #endregion
 
-#region 8 bit subtraction from accumulator with carry(SBC A, r)
+                #region 8 bit subtraction from accumulator with carry(SBC A, r)
                 case 0x98:  //SBC A, B
                     // Log("SBC A, B");
                     Sbc_R(B);
@@ -3920,9 +3704,9 @@ namespace Speccy
                     Sbc_R(disp);
                     PC += 1;
                     break;
-#endregion
+                #endregion
 
-#region Relative Jumps (JR / DJNZ)
+                #region Relative Jumps (JR / DJNZ)
                 /*** Relative Jumps ***/
                 case 0x10:  //DJNZ n
                     Contend(IR, 1, 1);
@@ -3993,16 +3777,17 @@ namespace Speccy
                     }
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region Direct jumps (JP)
+                #region Direct jumps (JP)
                 /*** Direct jumps ***/
                 case 0xC2:  //JPNZ nn
                     disp = PeekWord(PC);
                     // Log(String.Format("JP NZ, {0,-6:X}", disp));
                     if ((F & F_ZERO) == 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4020,7 +3805,8 @@ namespace Speccy
                     // Log(String.Format("JP Z, {0,-6:X}", disp));
                     if ((F & F_ZERO) != 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4031,7 +3817,8 @@ namespace Speccy
                     // Log(String.Format("JP NC, {0,-6:X}", disp));
                     if ((F & F_CARRY) == 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4042,7 +3829,8 @@ namespace Speccy
                     // Log(String.Format("JP C, {0,-6:X}", disp));
                     if ((F & F_CARRY) != 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4053,7 +3841,8 @@ namespace Speccy
                     // Log(String.Format("JP PO, {0,-6:X}", disp));
                     if ((F & F_PARITY) == 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4071,7 +3860,8 @@ namespace Speccy
                     // Log(String.Format("JP PE, {0,-6:X}", disp));
                     if ((F & F_PARITY) != 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4082,7 +3872,8 @@ namespace Speccy
                     // Log(String.Format("JP P, {0,-6:X}", disp));
                     if ((F & F_SIGN) == 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
@@ -4093,14 +3884,15 @@ namespace Speccy
                     // Log(String.Format("JP M, {0,-6:X}", disp));
                     if ((F & F_SIGN) != 0) {
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     MemPtr = disp;
                     break;
-#endregion
+                #endregion
 
-#region Compare instructions (CP)
+                #region Compare instructions (CP)
                 /*** Compare instructions **/
                 case 0xB8:  //CP B
                     // Log("CP B");
@@ -4154,9 +3946,9 @@ namespace Speccy
                     Cp_R(disp);
                     PC += 1;
                     break;
-#endregion
+                #endregion
 
-#region Carry Flag operations
+                #region Carry Flag operations
                 /*** Carry Flag operations ***/
                 case 0x37:  //SCF
                     // Log("SCF");
@@ -4177,9 +3969,9 @@ namespace Speccy
                     SetCarry((F & F_CARRY) != 0 ? false : true);
 
                     break;
-#endregion
+                #endregion
 
-#region Bitwise AND (AND r)
+                #region Bitwise AND (AND r)
                 case 0xA0:  //AND B
                     // Log("AND B");
                     And_R(B);
@@ -4227,9 +4019,9 @@ namespace Speccy
 
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region Bitwise XOR (XOR r)
+                #region Bitwise XOR (XOR r)
                 case 0xA8: //XOR B
                     // Log("XOR B");
                     Xor_R(B);
@@ -4277,9 +4069,9 @@ namespace Speccy
                     PC++;
                     break;
 
-#endregion
+                #endregion
 
-#region Bitwise OR (OR r)
+                #region Bitwise OR (OR r)
                 case 0xB0:  //OR B
                     // Log("OR B");
                     Or_R(B);
@@ -4326,9 +4118,9 @@ namespace Speccy
                     Or_R(disp);
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region Return instructions
+                #region Return instructions
                 case 0xC0:  //RET NZ
                     // Log("RET NZ");
                     Contend(IR, 1, 1);
@@ -4406,9 +4198,9 @@ namespace Speccy
                         MemPtr = PC;
                     }
                     break;
-#endregion
+                #endregion
 
-#region POP/PUSH instructions
+                #region POP/PUSH instructions
                 case 0xC1:  //POP BC
                     // Log("POP BC");
                     BC = PopStack();
@@ -4453,9 +4245,9 @@ namespace Speccy
                     Contend(IR, 1, 1);
                     PushStack(AF);
                     break;
-#endregion
+                #endregion
 
-#region CALL instructions
+                #region CALL instructions
                 case 0xC4:  //CALL NZ, nn
                     disp = PeekWord(PC);
                     MemPtr = disp;
@@ -4464,7 +4256,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4477,7 +4270,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4499,7 +4293,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4512,7 +4307,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4525,7 +4321,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4538,7 +4335,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4551,7 +4349,8 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
@@ -4564,13 +4363,14 @@ namespace Speccy
                         Contend(PC + 1, 1, 1);
                         PushStack(PC + 2);
                         PC = disp;
-                    } else {
+                    }
+                    else {
                         PC += 2;
                     }
                     break;
-#endregion
+                #endregion
 
-#region Restart instructions (RST n)
+                #region Restart instructions (RST n)
                 case 0xC7:  //RST 0x00
                     // Log("RST 00");
                     Contend(IR, 1, 1);
@@ -4634,28 +4434,28 @@ namespace Speccy
                     PC = 0x38;
                     MemPtr = PC;
                     break;
-#endregion
+                #endregion
 
-#region IN A, (n)
+                #region IN A, (n)
                 case 0xDB:  //IN A, (n)
-                    
+
                     disp = PeekByte(PC);
                     int port = (A << 8) | disp;
-                    if ((disp & 0x1) == 0 &&  and_32_Or_64)
+                    if ((disp & 0x1) == 0 && and_32_Or_64)
                         CheckEdgeLoader2();
-          
+
                     // Log(String.Format("IN A, ({0:X})", disp));
                     MemPtr = (A << 8) + disp + 1;
                     A = In(port);
                     //Auto-load tape routine kicks in here
                     //ULA port?
-   
+
                     and_32_Or_64 = false;
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region OUT (n), A
+                #region OUT (n), A
                 case 0xD3:  //OUT (n), A
                     disp = PeekByte(PC);
                     // Log(String.Format("OUT ({0:X}), A", disp));
@@ -4663,16 +4463,16 @@ namespace Speccy
                     MemPtr = ((disp + 1) & 0xff) | (A << 8);
                     PC++;
                     break;
-#endregion
+                #endregion
 
-#region Decimal Adjust Accumulator (DAA)
+                #region Decimal Adjust Accumulator (DAA)
                 case 0x27:  //DAA
                     // Log("DAA");
                     DAA();
                     break;
-#endregion
+                #endregion
 
-#region Complement (CPL)
+                #region Complement (CPL)
                 case 0x2f:  //CPL
                     // Log("CPL");
                     A = A ^ 0xff;
@@ -4681,17 +4481,17 @@ namespace Speccy
                     SetNeg(true);
                     SetHalf(true);
                     break;
-#endregion
+                #endregion
 
-#region Halt (HALT) - TO BE CHECKED!
+                #region Halt (HALT) - TO BE CHECKED!
                 case 0x76:  //HALT
                     // Log("HALT");
                     HaltOn = true;
                     PC--;
                     break;
-#endregion
+                #endregion
 
-#region Interrupts
+                #region Interrupts
                 case 0xF3:  //DI
                     // Log("DI");
                     IFF1 = false;
@@ -4705,12 +4505,12 @@ namespace Speccy
                     lastOpcodeWasEI = 1;
 
                     break;
-#endregion
+                #endregion
 
-#region Opcodes with CB prefix
+                #region Opcodes with CB prefix
                 case 0xCB:
                     switch (opcode = FetchInstruction()) {
-#region Rotate instructions
+                        #region Rotate instructions
                         case 0x00: //RLC B
                             // Log("RLC B");
                             B = Rlc_R(B);
@@ -4878,9 +4678,9 @@ namespace Speccy
                             // Log("RR A");
                             A = Rr_R(A);
                             break;
-#endregion
+                        #endregion
 
-#region Register shifts
+                        #region Register shifts
                         case 0x20:  //SLA B
                             // Log("SLA B");
                             B = Sla_R(B);
@@ -5055,9 +4855,9 @@ namespace Speccy
                             // Log("SRL A");
                             A = Srl_R(A);
                             break;
-#endregion
+                        #endregion
 
-#region Bit test operation (BIT b, r)
+                        #region Bit test operation (BIT b, r)
                         case 0x40:  //BIT 0, B
                             // Log("BIT 0, B");
                             Bit_R(0, B);
@@ -5401,9 +5201,9 @@ namespace Speccy
                             // Log("BIT 7, A");
                             Bit_R(7, A);
                             break;
-#endregion
+                        #endregion
 
-#region Reset bit operation (RES b, r)
+                        #region Reset bit operation (RES b, r)
                         case 0x80:  //RES 0, B
                             // Log("RES 0, B");
                             B = Res_R(0, B);
@@ -5740,9 +5540,9 @@ namespace Speccy
                             // Log("RES 7, A");
                             A = Res_R(7, A);
                             break;
-#endregion
+                        #endregion
 
-#region Set bit operation (SET b, r)
+                        #region Set bit operation (SET b, r)
                         case 0xC0:  //SET 0, B
                             // Log("SET 0, B");
                             B = Set_R(0, B);
@@ -6078,21 +5878,21 @@ namespace Speccy
                             // Log("SET 7, A");
                             A = Set_R(7, A);
                             break;
-#endregion
+                            #endregion
 
-                        //  default:
-                        //      String msg = "ERROR: Could not handle DD " + opcode.ToString();
-                        //      MessageBox.Show(msg, "Opcode handler",
-                        //                  MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
-                        //      break;
+                            //  default:
+                            //      String msg = "ERROR: Could not handle DD " + opcode.ToString();
+                            //      MessageBox.Show(msg, "Opcode handler",
+                            //                  MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                            //      break;
                     }
                     break;
-#endregion
+                #endregion
 
-#region Opcodes with DD prefix (includes DDCB)
+                #region Opcodes with DD prefix (includes DDCB)
                 case 0xDD:
                     switch (opcode = FetchInstruction()) {
-#region Addition instructions
+                        #region Addition instructions
                         case 0x09:  //ADD IX, BC
                             // Log("ADD IX, BC");
                             Contend(IR, 1, 7);
@@ -6166,9 +5966,9 @@ namespace Speccy
                             MemPtr = offset;
                             PC++;
                             break;
-#endregion
+                        #endregion
 
-#region Subtraction instructions
+                        #region Subtraction instructions
                         case 0x94:  //SUB A, IXH
                             // Log("SUB A, IXH");
                             Sub_R(IXH);
@@ -6214,9 +6014,9 @@ namespace Speccy
                             Sbc_R(PeekByte(offset));
                             PC++;
                             break;
-#endregion
+                        #endregion
 
-#region Increment/Decrements
+                        #region Increment/Decrements
                         case 0x23:  //INC IX
                             // Log("INC IX");
                             //if (model == MachineModel._plus3)
@@ -6278,9 +6078,9 @@ namespace Speccy
                             MemPtr = offset;
                             PC++;
                             break;
-#endregion
+                        #endregion
 
-#region Bitwise operators
+                        #region Bitwise operators
 
                         case 0xA4:  //AND IXH
                             // Log("AND IXH");
@@ -6352,9 +6152,9 @@ namespace Speccy
                             MemPtr = offset;
                             PC++;
                             break;
-#endregion
+                        #endregion
 
-#region Compare operator
+                        #region Compare operator
                         case 0xBC:  //CP IXH
                             // Log("CP IXH");
                             Cp_R(IXH);
@@ -6378,9 +6178,9 @@ namespace Speccy
                             MemPtr = offset;
                             PC++;
                             break;
-#endregion
+                        #endregion
 
-#region Load instructions
+                        #region Load instructions
                         case 0x21:  //LD IX, nn
                             // Log(string.Format("LD IX, {0,-6:X}", PeekWord(PC)));
                             IX = PeekWord(PC);
@@ -6769,9 +6569,9 @@ namespace Speccy
                             Contend(IR, 1, 2);
                             SP = IX;
                             break;
-#endregion
+                        #endregion
 
-#region All DDCB instructions
+                        #region All DDCB instructions
                         case 0xCB:
                             disp = GetDisplacement(PeekByte(PC));
                             offset = IX + disp; //The displacement required
@@ -8032,9 +7832,9 @@ namespace Speccy
                                     break;
                             }
                             break;
-#endregion
+                        #endregion
 
-#region Pop/Push instructions
+                        #region Pop/Push instructions
                         case 0xE1:  //POP IX
                             // Log("POP IX");
                             IX = PopStack();
@@ -8045,9 +7845,9 @@ namespace Speccy
                             Contend(IR, 1, 1);
                             PushStack(IX);
                             break;
-#endregion
+                        #endregion
 
-#region Exchange instruction
+                        #region Exchange instruction
                         case 0xE3:  //EX (SP), IX
                             // Log("EX (SP), IX");
                             //disp = IX;
@@ -8059,14 +7859,14 @@ namespace Speccy
                             IX = addr;
                             MemPtr = IX;
                             break;
-#endregion
+                        #endregion
 
-#region Jump instruction
+                        #region Jump instruction
                         case 0xE9:  //JP (IX)
                             // Log("JP (IX)");
                             PC = IX;
                             break;
-#endregion
+                        #endregion
 
                         //  case 0xED:
                         //     MessageBox.Show("DD ED encountered!", "Opcode handler",
@@ -8082,14 +7882,15 @@ namespace Speccy
                             break;
                     }
                     break;
-#endregion
+                #endregion
 
-#region Opcodes with ED prefix
+                #region Opcodes with ED prefix
                 case 0xED:
                     opcode = FetchInstruction();
                     if (opcode < 0x40) {
                         break;
-                    } else
+                    }
+                    else
                         switch (opcode) {
                             case 0x40: //IN B, (C)
                                 // Log("IN B, (C)");
@@ -8717,7 +8518,8 @@ namespace Speccy
                                 Contend(HL, 1, 5);
                                 if (BC == 1 || A == disp) {
                                     MemPtr++;
-                                } else {
+                                }
+                                else {
                                     MemPtr = PC - 1;
                                 }
                                 BC--;
@@ -8808,7 +8610,8 @@ namespace Speccy
                                 Contend(HL, 1, 5);
                                 if (BC == 1 || A == disp) {
                                     MemPtr--;
-                                } else {
+                                }
+                                else {
                                     MemPtr = PC - 1;
                                 }
 
@@ -8870,12 +8673,12 @@ namespace Speccy
                                 break;  //Carry on to next instruction then
                         }
                     break;
-#endregion
+                #endregion
 
-#region Opcodes with FD prefix (includes FDCB)
+                #region Opcodes with FD prefix (includes FDCB)
                 case 0xFD:
                     switch (opcode = FetchInstruction()) {
-#region Addition instructions
+                        #region Addition instructions
                         case 0x09:  //ADD IY, BC
                             // Log("ADD IY, BC");
                             Contend(IR, 1, 7);
@@ -8949,9 +8752,9 @@ namespace Speccy
                             PC++;
                             MemPtr = offset;
                             break;
-#endregion
+                        #endregion
 
-#region Subtraction instructions
+                        #region Subtraction instructions
                         case 0x94:  //SUB A, IYH
                             // Log("SUB A, IYH");
                             Sub_R(IYH);
@@ -8997,9 +8800,9 @@ namespace Speccy
                             PC++;
                             MemPtr = offset;
                             break;
-#endregion
+                        #endregion
 
-#region Increment/Decrements
+                        #region Increment/Decrements
                         case 0x23:  //INC IY
                             // Log("INC IY");
                             //if (model == MachineModel._plus3)
@@ -9061,9 +8864,9 @@ namespace Speccy
                             PC++;
                             MemPtr = offset;
                             break;
-#endregion
+                        #endregion
 
-#region Bitwise operators
+                        #region Bitwise operators
 
                         case 0xA4:  //AND IYH
                             // Log("AND IYH");
@@ -9135,9 +8938,9 @@ namespace Speccy
                             PC++;
                             MemPtr = offset;
                             break;
-#endregion
+                        #endregion
 
-#region Compare operator
+                        #region Compare operator
                         case 0xBC:  //CP IYH
                             // Log("CP IYH");
                             Cp_R(IYH);
@@ -9161,9 +8964,9 @@ namespace Speccy
                             PC++;
                             MemPtr = offset;
                             break;
-#endregion
+                        #endregion
 
-#region Load instructions
+                        #region Load instructions
                         case 0x21:  //LD IY, nn
                             // Log(string.Format("LD IY, {0,-6:X}", PeekWord(PC)));
                             IY = PeekWord(PC);
@@ -9552,9 +9355,9 @@ namespace Speccy
                             Contend(IR, 1, 2);
                             SP = IY;
                             break;
-#endregion
+                        #endregion
 
-#region All FDCB instructions
+                        #region All FDCB instructions
                         case 0xCB:
                             disp = GetDisplacement(PeekByte(PC));
                             offset = IY + disp; //The displacement required
@@ -10815,9 +10618,9 @@ namespace Speccy
                                     break;
                             }
                             break;
-#endregion
+                        #endregion
 
-#region Pop/Push instructions
+                        #region Pop/Push instructions
                         case 0xE1:  //POP IY
                             // Log("POP IY");
                             IY = PopStack();
@@ -10828,9 +10631,9 @@ namespace Speccy
                             Contend(IR, 1, 1);
                             PushStack(IY);
                             break;
-#endregion
+                        #endregion
 
-#region Exchange instruction
+                        #region Exchange instruction
                         case 0xE3:  //EX (SP), IY
                             {
                                 // Log("EX (SP), IY");
@@ -10843,14 +10646,14 @@ namespace Speccy
                                 MemPtr = IY;
                                 break;
                             }
-#endregion
+                        #endregion
 
-#region Jump instruction
+                        #region Jump instruction
                         case 0xE9:  //JP (IY)
                             // Log("JP (IY)");
                             PC = IY;
                             break;
-#endregion
+                        #endregion
 
                         default:
                             //According to Sean's doc: http://z80.info/z80sean.txt
@@ -10861,7 +10664,7 @@ namespace Speccy
                             break;
                     }
                     break;
-#endregion
+                    #endregion
             }
         }
 
@@ -10882,11 +10685,9 @@ namespace Speccy
                 //When interrupts are enabled we can be sure that the reset sequence is over.
                 //However, it actually takes a few more frames before the speccy reaches the copyright message,
                 //so we have to wait a bit.
-                if (!isResetOver)
-                {
+                if (!isResetOver) {
                     resetFrameCounter++;
-                    if (resetFrameCounter > resetFrameTarget)
-                    {
+                    if (resetFrameCounter > resetFrameTarget) {
                         isResetOver = true;
                         resetFrameCounter = 0;
                     }
@@ -10896,8 +10697,9 @@ namespace Speccy
                 totalTStates += 7;
                 PC = 0x38;
                 MemPtr = PC;
-            } else    //IM 2
-            {
+            }
+            else    //IM 2
+          {
                 int ptr = (I << 8) | 0xff;
                 PushStack(PC);
                 PC = PeekWord(ptr);
@@ -10927,7 +10729,8 @@ namespace Speccy
 
             if (pulseLevel == 0) {
                 soundOut = 0;
-            } else
+            }
+            else
                 soundOut = short.MinValue >> 1; //half
         }
 
@@ -10942,7 +10745,7 @@ namespace Speccy
                 }
 
                 currentBlock = PZXFile.blocks[blockCounter];
-               
+
                 if (currentBlock is PZXFile.PULS_Block) {
                     //Initialise for PULS loading
                     pulseCounter = -1;
@@ -10951,39 +10754,40 @@ namespace Speccy
                     //Pulse is low by default for PULS blocks
                     if (pulseLevel != 0)
                         FlipTapeBit();
-                   
+
                     //Process pulse if there is one
                     if (!NextPULS()) {
                         continue; //No? Next block please!
-                    } else
+                    }
+                    else
                         break;
-                } else if (currentBlock is PZXFile.DATA_Block) {
+                }
+                else if (currentBlock is PZXFile.DATA_Block) {
                     pulseCounter = -1;
                     bitCounter = -1;
                     dataCounter = -1;
                     bitShifter = 0;
-                    
+
                     if (pulseLevel != ((PZXFile.DATA_Block)currentBlock).initialPulseLevel)
                         FlipTapeBit();
 
                     if (!NextDataBit()) {
                         continue;
-                    } else
+                    }
+                    else
                         break;
-                } else if (currentBlock is PZXFile.PAUS_Block) {
+                }
+                else if (currentBlock is PZXFile.PAUS_Block) {
                     //Would have been nice to skip PAUS blocks when doing fast loading
                     //but some loaders like Auf Wiedersehen Monty (Kixx) rely on the pause
                     //length to do processing during loading. In this case, fill in the
                     //loading screen.
 
-                    //Ensure previous edge is finished correctly by flipping the edge one last time
-                    //edgeDuration = (35000 * 2);
-                    //isPauseBlockPreproccess = true;
                     PZXFile.PAUS_Block block = (PZXFile.PAUS_Block)currentBlock;
 
                     if (block.initialPulseLevel != pulseLevel)
                         FlipTapeBit();
-                   
+
                     edgeDuration = block.duration;
 
                     int diff = (int)edgeDuration - tapeTStates;
@@ -10992,21 +10796,19 @@ namespace Speccy
                         tapeTStates = 0;
                         isPauseBlockPreproccess = true;
                         break;
-                    } else {
+                    }
+                    else {
                         tapeTStates = -diff;
                     }
                     continue;
-                } else if (currentBlock is PZXFile.STOP_Block) {
+                }
+                else if (currentBlock is PZXFile.STOP_Block) {
                     TapeStopped();
-                   // if (ziggyWin.zx.keyBuffer[(int)ZeroWin.Form1.keyCode.ALT])
-                   //     ziggyWin.saveSnapshotMenuItem_Click(this, null);
                     break;
                 }
             }
             if (TapeEvent != null)
                 OnTapeEvent(new TapeEventArgs(TapeEventType.NEXT_BLOCK));
-            //dataGridView1.Rows[blockCounter - 1].Selected = true;
-           // dataGridView1.CurrentCell = dataGridView1.Rows[blockCounter - 1].Cells[0];
         }
 
         public bool NextPULS() {
@@ -11016,8 +10818,8 @@ namespace Speccy
                 pulseCounter++; //b'cos pulseCounter is -1 when it reaches here initially
                 repeatCount = block.pulse[pulseCounter].count;
                 if (block.pulse[pulseCounter].duration == 0 && repeatCount > 0) {
-                    if ((repeatCount & 0x01) != 0) 
-                         FlipTapeBit();                        
+                    if ((repeatCount & 0x01) != 0)
+                        FlipTapeBit();
                     continue; //next pulse
                 }
                 edgeDuration = block.pulse[pulseCounter].duration;
@@ -11028,15 +10830,16 @@ namespace Speccy
                         edgeDuration = (uint)diff;
                         tapeTStates = 0;
                         return true;
-                    } else
+                    }
+                    else
                         tapeTStates = -diff;
                 }
 
-                FlipTapeBit(); 
+                FlipTapeBit();
                 repeatCount--;
                 if (repeatCount <= 0)
                     continue;
-                
+
                 return true;
             }
 
@@ -11046,7 +10849,7 @@ namespace Speccy
 
         public bool NextDataBit() {
             PZXFile.DATA_Block block = (PZXFile.DATA_Block)currentBlock;
-           
+
             //Bits left for processing?
             while (bitCounter < block.count - 1) {
                 bitCounter++;
@@ -11077,7 +10880,7 @@ namespace Speccy
 
                 if (edgeDuration > 0) {
                     int diff = (int)edgeDuration - tapeTStates;
-                    if(diff > 0) {
+                    if (diff > 0) {
                         edgeDuration = (uint)diff;
                         tapeTStates = 0;
                         return true;
@@ -11100,26 +10903,17 @@ namespace Speccy
                         edgeDuration = (uint)diff;
                         tapeTStates = 0;
                         return true;
-                    } else
+                    }
+                    else
                         tapeTStates = -diff;
                 }
                 FlipTapeBit();
-            }/* else {
-                //HACK: Sometimes a tape might have it's last tail pulse missing.
-                //In case it's the last block in the tape, it's best to flip the tape bit
-                //a last time to ensure that the process is terminated properly.
-                if (blockCounter == PZXFile.blocks.Count - 1) {
-                    currentBit = -1;
-                    edgeDuration = (3500 * 2);
-                    return true;
-                }
-            }*/
+            }
 
             return false;
         }
 
-        private void FlashLoad()
-        {
+        private void FlashLoad() {
             if (blockCounter < 0)
                 blockCounter = 0;
 
@@ -11131,7 +10925,7 @@ namespace Speccy
                     isProcessingPauseBlock = true;
                     edgeDuration = ((PZXFile.PAUS_Block)currBlock).duration;
                     pauseCounter = (int)edgeDuration;
-                    //tapeTStates = 0;
+
                     return;
                 }
                 else {
@@ -11148,16 +10942,14 @@ namespace Speccy
             if (!(currBlock is PZXFile.PULS_Block))
                 blockCounter++;
 
-            if (blockCounter >= PZXFile.tapeBlockInfo.Count)
-            {
+            if (blockCounter >= PZXFile.tapeBlockInfo.Count) {
                 blockCounter--;
                 tape_readToPlay = false;
                 TapeStopped();
                 return;
             }
 
-            if (!PZXFile.tapeBlockInfo[blockCounter].IsStandardBlock)
-            {
+            if (!PZXFile.tapeBlockInfo[blockCounter].IsStandardBlock) {
                 if (!(currBlock is PZXFile.PULS_Block))
                     blockCounter--;
                 return;
@@ -11165,16 +10957,13 @@ namespace Speccy
 
             PZXFile.DATA_Block dataBlock = (PZXFile.DATA_Block)PZXFile.blocks[blockCounter + 1];
             edgeDuration = 1000;
-            //if (pulse != dataBlock.initialPulseLevel)
-            //    FlipTapeBit();
+
             H = 0;
             int byteCounter = dataBlock.data.Count;
             int dataIndex = 0;
             bool loadStageFlagByte = true;
-            while (true)
-            {
-                if (byteCounter == 0)
-                {
+            while (true) {
+                if (byteCounter == 0) {
                     A = C & 32;
                     B = 0;
                     F = 0x50; //01010000b
@@ -11183,22 +10972,19 @@ namespace Speccy
                 byteCounter--;
                 L = dataBlock.data[dataIndex++];
                 H ^= L;
-                if (DE == 0)
-                {
+                if (DE == 0) {
                     A = H;
                     Cp_R(1);
                     break;
                 }
-                if (loadStageFlagByte)
-                {
+                if (loadStageFlagByte) {
                     loadStageFlagByte = false;
                     A = (_AF >> 8) & 0xff;
                     Xor_R(L);
                     if ((F & 0x040) == 0)
                         break;
                 }
-                else
-                {
+                else {
                     PokeByteNoContend(IX++, L);
                     DE--;
                 }
@@ -11209,8 +10995,7 @@ namespace Speccy
             MemPtr = PC;
 
             blockCounter++;
-            if (blockCounter >= PZXFile.blocks.Count)
-            {
+            if (blockCounter >= PZXFile.blocks.Count) {
                 blockCounter--;
                 tape_readToPlay = false;
                 TapeStopped();
@@ -11225,17 +11010,18 @@ namespace Speccy
             if (e.EventType == TapeEventType.EDGE_LOAD) {
                 FlipTapeBit();
 
-#region PULS
+                #region PULS
 
                 if (currentBlock is PZXFile.PULS_Block) {
                     PZXFile.PULS_Block block = (PZXFile.PULS_Block)currentBlock;
                     repeatCount--;
                     //progressBar1.Value += progressStep;
                     //Need to repeat?
-                   // if (repeatCount < block.pulse[pulseCounter].count) {
-                     if (repeatCount > 0) {
-                       edgeDuration = block.pulse[pulseCounter].duration;
-                    } else {
+                    // if (repeatCount < block.pulse[pulseCounter].count) {
+                    if (repeatCount > 0) {
+                        edgeDuration = block.pulse[pulseCounter].duration;
+                    }
+                    else {
                         if (!NextPULS()) //All pulses done for the block?
                         {
                             NextPZXBlock();
@@ -11244,9 +11030,9 @@ namespace Speccy
                     }
                     return;
                 }
-#endregion PULS
+                #endregion PULS
 
-#region DATA
+                #region DATA
                 else if (currentBlock is PZXFile.DATA_Block) {
                     PZXFile.DATA_Block block = (PZXFile.DATA_Block)currentBlock;
 
@@ -11255,67 +11041,60 @@ namespace Speccy
                         pulseCounter++;
                         if (pulseCounter < block.p0) {
                             edgeDuration = block.s0[pulseCounter];
-                        } else {
+                        }
+                        else {
                             //All pulses done for this bit so fetch next bit
                             if (!NextDataBit()) {
                                 NextPZXBlock();
                                 return;
                             }
                         }
-                    } else if (currentBit == 1) {
+                    }
+                    else if (currentBit == 1) {
                         pulseCounter++;
                         if (pulseCounter < block.p1) {
                             edgeDuration = block.s1[pulseCounter];
-                        } else {
+                        }
+                        else {
                             //All pulses done for this bit so fetch next bit
                             if (!NextDataBit()) {
                                 NextPZXBlock();
                                 return;
                             }
                         }
-                    } else //we were doing the tail!
-                    {
+                    }
+                    else //we were doing the tail!
+                  {
                         NextPZXBlock();
                         return;
                     }
                     return;
                 }
 
-#endregion DATA
+                #endregion DATA
 
-#region PAUS
+                #region PAUS
                 else if (currentBlock is PZXFile.PAUS_Block) {
                     isPauseBlockPreproccess = false;
                     NextPZXBlock();
                     return;
                 }
-/*
- else if (currentBlock is PZXFile.PAUS_Block) {
-                    if (isPauseBlockPreproccess) {
-                        PZXFile.PAUS_Block block = (PZXFile.PAUS_Block)currentBlock;
-                        isPauseBlockPreproccess = false;
-                        edgeDuration = (block.duration);
-                        if (pulse != block.initialPulseLevel)
-                            FlipTapeBit();
-                    } else {
-                        NextPZXBlock();
-                    }
-                    return;
-                }
-                */
-#endregion PAUS
-            } else if (e.EventType == TapeEventType.STOP_TAPE) //stop
-            {
+                #endregion PAUS
+            }
+            else if (e.EventType == TapeEventType.STOP_TAPE) //stop
+          {
                 TapeStopped();
                 blockCounter--;
 
-            } else if (e.EventType == TapeEventType.START_TAPE) {
+            }
+            else if (e.EventType == TapeEventType.START_TAPE) {
                 if (TapeEvent != null)
                     OnTapeEvent(new TapeEventArgs(TapeEventType.START_TAPE));
 
                 NextPZXBlock();
-               
-            } else if (e.EventType == TapeEventType.FLASH_LOAD) {
+
+            }
+            else if (e.EventType == TapeEventType.FLASH_LOAD) {
                 FlashLoad();
             }
         }

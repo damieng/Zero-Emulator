@@ -243,7 +243,6 @@ namespace Peripherals
                     return false;
                 }
 
-                string formatName = GetID(header.Magic);
                 int bufferCounter = Marshal.SizeOf(header);
 
                 while (bufferCounter < bytesRead) {

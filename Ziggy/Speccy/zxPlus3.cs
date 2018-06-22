@@ -55,8 +55,7 @@ namespace Speccy
             udpDrive.DiskInitialise();
         }
 
-        public override void Reset(bool coldBoot)
-        {
+        public override void Reset(bool coldBoot) {
             lock (lockThis) {
                 special64KRAM = false;
                 udpDrive.DiskReset();
@@ -218,12 +217,14 @@ namespace Speccy
             addr = addr & 0xc000;
 
             //Low port contention
-            if (addr == 0x4000)
-                return true;
+            switch (addr) {
+                case 0x4000:
+                    return true;
+                case 0xc000 when contendedBankPagedIn:
+                    return true;
+            }
 
             //High port contention
-            if (addr == 0xc000 && contendedBankPagedIn)
-                return true;
 
             return false;
         }
@@ -253,7 +254,7 @@ namespace Speccy
             }
             else if (lowBitReset)    //Even address, so get input
             {
-                 totalTStates += 3;
+                totalTStates += 3;
 
                 if (!externalSingleStep) {
                     if ((port & 0x8000) == 0)
@@ -297,28 +298,43 @@ namespace Speccy
             }
             else {
                 totalTStates += 3;
-                if ((port & 0xc002) == 0xc000) //AY register activate on Port FFFD
-                    result = aySound.PortRead();
-                else if ((port & 0xc002) == 0x8000) //Port BFFD also activates AY on the +3/2A
+                switch (port & 0xc002) {
+                    case 0xc000:
                         result = aySound.PortRead();
-                else if (HasKempstonMouse)//Kempston Mouse
-                {
-                    if (port == 64479)
-                        result = MouseX % 0xff;     //X ranges from 0 to 255
-                    else if (port == 65503)
-                        result = MouseY % 0xff;     //Y ranges from 0 to 255
-                    else if (port == 64223)
-                        result = MouseButton;// MouseButton;
-                }
-                else if ((port & 0xF002) == 0x2000) //Is bit 12 set and bits 13,14,15 and 1 reset?
-                    result = udpDrive.DiskStatusRead();
-                else if ((port & 0xF002) == 0x3000)
-                    result = udpDrive.DiskReadByte();
-                else if ((port & 0xF002) == 0x0) {
-                    if (pagingDisabled)
-                        result = 0x1;
-                    else
-                        result = 0xff;
+                        break;
+
+                    case 0x8000:
+                        result = aySound.PortRead();
+                        break;
+
+                    default:
+                        if (HasKempstonMouse)//Kempston Mouse
+                        {
+                            switch (port) {
+                                case 64479:
+                                    result = MouseX % 0xff;     //X ranges from 0 to 255
+                                    break;
+                                case 65503:
+                                    result = MouseY % 0xff;     //Y ranges from 0 to 255
+                                    break;
+                                case 64223:
+                                    result = MouseButton;// MouseButton;
+                                    break;
+                            }
+                        }
+                        else switch (port & 0xF002) {
+                                case 0x2000:
+                                    result = udpDrive.DiskStatusRead();
+                                    break;
+                                case 0x3000:
+                                    result = udpDrive.DiskReadByte();
+                                    break;
+                                case 0x0:
+                                    result = pagingDisabled ? 0x1 : 0xff;
+                                    break;
+                            }
+
+                        break;
                 }
             }
             totalTStates += 3;
@@ -417,10 +433,8 @@ namespace Speccy
 
             PageWritePointer[0] = JunkMemory[0];
             PageWritePointer[1] = JunkMemory[1];
-            if (romSelect == 3)
-                lowROMis48K = true;
-            else
-                lowROMis48K = false;
+            lowROMis48K = romSelect == 3;
+
             //Debugging string for monitor
             BankInPage0 = romSelect > 1 ? romSelect == 3 ? ROM_48_BAS : ROM_PLUS3_DOS : romSelect == 1 ? ROM_128_SYN : ROM_128_BAS;
 
@@ -430,7 +444,8 @@ namespace Speccy
 
                 showShadowScreen = true;
                 screen = GetPageData(7); //Bank 7
-            } else {
+            }
+            else {
                 if (showShadowScreen)
                     UpdateScreenBuffer(totalTStates);
 
@@ -450,7 +465,8 @@ namespace Speccy
             if ((val & 0x8) != 0) {
                 diskDriveState |= 1 << 4;
                 OnDiskEvent(new DiskEventArgs(diskDriveState));
-            } else {
+            }
+            else {
                 diskDriveState &= ~(1 << 4);
                 OnDiskEvent(new DiskEventArgs(diskDriveState));
             }
@@ -484,7 +500,6 @@ namespace Speccy
                         BankInPage2 = "Bank 2";
                         BankInPage3 = "Bank 3";
                         contendedBankPagedIn = false;
-
                         break;
 
                     case 1:
@@ -510,7 +525,6 @@ namespace Speccy
                         BankInPage2 = "Bank 6";
                         BankInPage3 = "Bank 7";
                         contendedBankPagedIn = true;
-
                         break;
 
                     case 2:
@@ -536,7 +550,6 @@ namespace Speccy
                         BankInPage2 = "Bank 6";
                         BankInPage3 = "Bank 3";
                         contendedBankPagedIn = false;
-
                         break;
 
                     case 3:
@@ -565,13 +578,10 @@ namespace Speccy
 
                         break;
                 }
-            } else //normal mode
-            {
+            }
+            else //normal mode
+          {
                 special64KRAM = false;
-                //bit 2 of val is high bit and bit 4 of 0x7ffd out is low bit
-                //int romSelect = ((val & 0x04) >> 1) | ((last7ffdOut & 0x10) >> 4);
-                //PagePointer[0] = ROMpage[romSelect * 2];
-                //PagePointer[1] = ROMpage[romSelect * 2 + 1];
                 PageReadPointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];  //Bank 5
                 PageReadPointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];  //Bank 5
                 PageReadPointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];   //Bank 2
@@ -609,7 +619,8 @@ namespace Speccy
 
                 showShadowScreen = true;
                 screen = GetPageData(7); //Bank 7
-            } else {
+            }
+            else {
                 if (showShadowScreen)
                     UpdateScreenBuffer(totalTStates);
 
@@ -641,96 +652,108 @@ namespace Speccy
                     if (beepVal != lastSoundOut) {
                         if (beepVal == 0) {
                             soundOut = MIN_SOUND_VOL;
-                        } else {
+                        }
+                        else {
                             soundOut = MAX_SOUND_VOL;
                         }
                         lastSoundOut = beepVal;
                     }
                 }
                 totalTStates += 2;
-            } else {
+            }
+            else {
                 totalTStates += 3;
                 //AY register activate
-                if ((port & 0xC002) == 0xC000) {
-                    aySound.SelectedRegister = val & 0x0F;
-                } else
-                    //AY data
-                    if ((port & 0xC002) == 0x8000) {
+                switch (port & 0xC002) {
+                    case 0xC000:
+                        aySound.SelectedRegister = val & 0x0F;
+                        break;
+
+                    case 0x8000:
                         lastAYPortOut = val;
                         aySound.PortWrite(val);
-                    } else
-                        //Memory paging activate
-                        if ((port & 0xC002) == 0x4000) //Are bits 1 and 15 reset and bit 14 set?
-                        {
-                            Out_7ffd(val);
-                        } else
-                            //Extra Memory Paging feature activate
-                            if ((port & 0xF002) == 0x1000) //Is bit 12 set and bits 13,14,15 and 1 reset?
-                            {
+                        break;
+
+                    case 0x4000:
+                        Out_7ffd(val);
+                        break;
+
+                    default:
+                        switch (port & 0xF002) {
+                            case 0x1000:
                                 Out_1ffd(val);
-                            } else
-                                //Disk write port
-                                if ((port & 0xF002) == 0x3000) //Is bit 12 set and bits 13,14,15 and 1 reset?
-                                {
-                                    udpDrive.DiskWriteByte((byte)(val & 0xff));
-                                } else
-                                    //ULA Plus
-                                    if (port == 0xbf3b) {
+                                break;
+
+                            case 0x3000:
+                                udpDrive.DiskWriteByte((byte)(val & 0xff));
+                                break;
+
+                            default:
+                                switch (port) {
+                                    case 0xbf3b:
                                         int mode = (val & 0xc0) >> 6;
 
                                         //mode group
-                                        if (mode == 1) {
-                                            ULAGroupMode = 1;
-                                        } else if (mode == 0) //palette group
-                                        {
-                                            ULAGroupMode = 0;
-                                            ULAPaletteGroup = val & 0x3f;
-                                        }
-                                    } else
-                                        if (port == 0xff3b) {
-                                            if (lastULAPlusOut != val)
-                                                UpdateScreenBuffer(totalTStates);
+                                        switch (mode) {
+                                            case 1:
+                                                ULAGroupMode = 1;
+                                                break;
 
-                                            lastULAPlusOut = val;
-
-                                            if (ULAGroupMode == 1) {
-                                                ULAPaletteEnabled = (val & 0x01) != 0;
-                                            } else {
-                                                int bl = val & 0x01;
-                                                int bm = bl;
-                                                int bh = (val & 0x02) >> 1;
-                                                val >>= 2;
-                                                int rl = val & 0x01;
-                                                int rm = (val & 0x02) >> 1;
-                                                int rh = (val & 0x04) >> 2;
-                                                val >>= 3;
-                                                int gl = val & 0x01;
-                                                int gm = (val & 0x02) >> 1;
-                                                int gh = (val & 0x04) >> 2;
-                                                int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
-                                                          | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
-                                                ULAPlusColours[ULAPaletteGroup] = bgr;
-                                            }
+                                            case 0:
+                                                ULAGroupMode = 0;
+                                                ULAPaletteGroup = val & 0x3f;
+                                                break;
                                         }
+
+                                        break;
+                                    case 0xff3b:
+                                        if (lastULAPlusOut != val)
+                                            UpdateScreenBuffer(totalTStates);
+
+                                        lastULAPlusOut = val;
+
+                                        if (ULAGroupMode == 1) {
+                                            ULAPaletteEnabled = (val & 0x01) != 0;
+                                        }
+                                        else {
+                                            int bl = val & 0x01;
+                                            int bm = bl;
+                                            int bh = (val & 0x02) >> 1;
+                                            val >>= 2;
+                                            int rl = val & 0x01;
+                                            int rm = (val & 0x02) >> 1;
+                                            int rh = (val & 0x04) >> 2;
+                                            val >>= 3;
+                                            int gl = val & 0x01;
+                                            int gm = (val & 0x02) >> 1;
+                                            int gh = (val & 0x04) >> 2;
+                                            int bgr = (((rh << 7) | (rm << 6) | (rl << 5) | (rh << 4) | (rm << 3) | (rl << 2) | (rm << 1) | rl) << 16)
+                                                      | (((gh << 7) | (gm << 6) | (gl << 5) | (gh << 4) | (gm << 3) | (gl << 2) | (gm << 1) | gl) << 8) | (bh << 7) | (bm << 6) | (bl << 5) | (bh << 4) | (bm << 3) | (bl << 2) | (bm << 1) | bl;
+                                            ULAPlusColours[ULAPaletteGroup] = bgr;
+                                        }
+                                        break;
+                                }
+                                break;
+                        }
+                        break;
+                }
             }
         }
 
         public override bool LoadROM(string path, string file) {
             FileStream fs;
 
-            String filename = path + file;
-
             //Check if we can find the ROM file!
             try {
-                fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            } catch {
+                fs = new FileStream(path + file, FileMode.Open, FileAccess.Read);
+            }
+            catch {
                 return false;
             }
 
-            fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            using (BinaryReader r = new BinaryReader(fs)) {
+            using (BinaryReader reader = new BinaryReader(fs)) {
                 byte[] buffer = new byte[65536];
-                int bytesRead = r.Read(buffer, 0, 65536);
+                int bytesRead = reader.Read(buffer, 0, 65536);
 
                 if (bytesRead == 0 || bytesRead < 65536)
                     return false; //something bad happened!
@@ -745,47 +768,47 @@ namespace Speccy
         }
 
         public override void UseSNA(SNA_SNAPSHOT sna) {
-            if (sna == null)
-                return;
+            switch (sna) {
+                case null:
+                    return;
 
-            if (sna is SNA_128K) {
-                I = sna.HEADER.I;
-                _HL = sna.HEADER.HL_;
-                _DE = sna.HEADER.DE_;
-                _BC = sna.HEADER.BC_;
-                _AF = sna.HEADER.AF_;
+                case SNA_128K _:
+                    I = sna.HEADER.I;
+                    _HL = sna.HEADER.HL_;
+                    _DE = sna.HEADER.DE_;
+                    _BC = sna.HEADER.BC_;
+                    _AF = sna.HEADER.AF_;
 
-                HL = sna.HEADER.HL;
-                DE = sna.HEADER.DE;
-                BC = sna.HEADER.BC;
-                IY = sna.HEADER.IY;
-                IX = sna.HEADER.IX;
+                    HL = sna.HEADER.HL;
+                    DE = sna.HEADER.DE;
+                    BC = sna.HEADER.BC;
+                    IY = sna.HEADER.IY;
+                    IX = sna.HEADER.IX;
 
-                IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
-                _R = sna.HEADER.R;
-                AF = sna.HEADER.AF;
-                SP = sna.HEADER.SP;
-                interruptMode = sna.HEADER.IM;
-                borderColour = sna.HEADER.BORDER;
-                PC = ((SNA_128K)sna).PC;
+                    IFF1 = (sna.HEADER.IFF2 & 0x04) != 0;
+                    _R = sna.HEADER.R;
+                    AF = sna.HEADER.AF;
+                    SP = sna.HEADER.SP;
+                    interruptMode = sna.HEADER.IM;
+                    borderColour = sna.HEADER.BORDER;
+                    PC = ((SNA_128K)sna).PC;
 
-                int val = ((SNA_128K)sna).PORT_7FFD;
+                    for (int f = 0; f < 16; f++) {
+                        Array.Copy(((SNA_128K)sna).RAM_BANK[f], 0, RAMpage[f], 0, 8192);
+                    }
 
-                for (int f = 0; f < 16; f++) {
-                    Array.Copy(((SNA_128K)sna).RAM_BANK[f], 0, RAMpage[f], 0, 8192);
-                }
+                    PageReadPointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];
+                    PageReadPointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];
+                    PageReadPointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];
+                    PageReadPointer[5] = RAMpage[(int)RAM_BANK.TWO_HIGH];
 
-                PageReadPointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];
-                PageReadPointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];
-                PageReadPointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];
-                PageReadPointer[5] = RAMpage[(int)RAM_BANK.TWO_HIGH];
+                    PageWritePointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];
+                    PageWritePointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];
+                    PageWritePointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];
+                    PageWritePointer[5] = RAMpage[(int)RAM_BANK.TWO_HIGH];
 
-                PageWritePointer[2] = RAMpage[(int)RAM_BANK.FIVE_LOW];
-                PageWritePointer[3] = RAMpage[(int)RAM_BANK.FIVE_HIGH];
-                PageWritePointer[4] = RAMpage[(int)RAM_BANK.TWO_LOW];
-                PageWritePointer[5] = RAMpage[(int)RAM_BANK.TWO_HIGH];
-
-                Out(0x7ffd, val); //Perform a dummy Out to setup the remaining stuff!
+                    Out(0x7ffd, ((SNA_128K)sna).PORT_7FFD); //Perform a dummy Out to setup the remaining stuff!
+                    break;
             }
         }
 

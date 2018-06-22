@@ -179,28 +179,18 @@ namespace Speccy
             addr = addr & 0xc000;
 
             //Low port contention
-            if (addr == 0x4000)
-                return true;
+            switch (addr)
+            {
+                case 0x4000:
+                    return true;
+                case 0xc000 when contendedBankPagedIn:
+                    return true;
+            }
 
             //High port contention
-            if (addr == 0xc000 && contendedBankPagedIn)
-                return true;
 
             return false;
         }
-
-        //public override void Contend(int _addr, int _time, int _count)
-        //{
-        //    bool addrIsContended = IsContended(_addr);
-        //    for (int f = 0; f < _count; f++)
-        //    {
-        //        if (addrIsContended)
-        //        {
-        //            totalTStates += contentionTable[totalTStates];
-        //        }
-        //        totalTStates += _time;
-        //    }
-        //}
 
         public override int In(int port) {
             base.In(port);
@@ -208,13 +198,11 @@ namespace Speccy
             if (isPlayingRZX) {
                 if (rzx.inputCount < rzx.frame.inputCount)
                     rzxIN = rzx.frame.inputs[rzx.inputCount++];
-                //rzxIN = rzx.frame.inputs[rzx.inputCount++];
                 return rzxIN;
             }
 
             int result = 0xff;
-            //bool portIsContended = IsContended(port);
-
+ 
             bool lowBitReset = (port & 0x01) == 0;
 
             Contend(port);
@@ -613,10 +601,7 @@ namespace Speccy
                 return false;
             }
 
-            fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-
             using (BinaryReader r = new BinaryReader(fs)) {
-                //int bytesRead = ReadBytes(r, mem, 0, 16384);
                 byte[] buffer = new byte[16384 * 2];
                 int bytesRead = r.Read(buffer, 0, 16384 * 2);
 
@@ -632,9 +617,6 @@ namespace Speccy
         }
 
         public override void UseSNA(SNA_SNAPSHOT sna) {
-            if (sna == null)
-                return;
-
             if (sna is SNA_128K) {
                 I = sna.HEADER.I;
                 _HL = sna.HEADER.HL_;

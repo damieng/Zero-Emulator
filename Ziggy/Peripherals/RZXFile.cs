@@ -1,10 +1,11 @@
 ﻿#define NEW_RZX_METHODS
 
 using System;
-using System.IO;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Forms;
 using zlib;
 
 namespace Peripherals
@@ -22,7 +23,7 @@ namespace Peripherals
         SECURITY_INFO = 0x20,
         SECURITY_SIG = 0x21,
         SNAPSHOT = 0x30,
-        RECORD = 0x80,
+        RECORD = 0x80
     }
 
 
@@ -98,7 +99,7 @@ namespace Peripherals
         public List<RZX_Block> blocks;
 
         public override string ToString() {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(255);
+            StringBuilder sb = new StringBuilder(255);
             sb.Append(header.signature);
             sb.Append(" " + header.majorVersion + "." + header.minorVersion + "\nCreated by ");
             sb.Append(new String(creator.author, 0, creator.author.Length - 1));
@@ -148,7 +149,6 @@ namespace Peripherals
         private BinaryReader frameInfoReader;
 
         private uint tstatesAtRecordStart;
-        private uint frameDataSize;
         public int frameCount;
         private RZX_State state = RZX_State.NONE;
         private bool isRecordingBlock;
@@ -169,7 +169,7 @@ namespace Peripherals
             public SZXFile snapshot;
             public long irbFilePos;
             public uint tstates;
-        };
+        }
 
         public List<byte> inputs = new List<byte>();
         private List<byte> oldInputs = new List<byte>();
@@ -667,7 +667,6 @@ namespace Peripherals
 
                     default:
                     case (int)RZX_BlockType.RECORD:
-                        RZXFileEventArgs recArgs = new RZXFileEventArgs();
                         record = (RZX_Record)Marshal.PtrToStructure(Marshal.UnsafeAddrOfPinnedArrayElement(fileBuffer, 0),
                                                                         typeof(RZX_Record));
                         rzxArgs.totalFramesInRecords += (int)record.numFrames;
@@ -842,19 +841,6 @@ namespace Peripherals
             return false;
         }
 
-        private void WriteFrame(byte[] _inputs, ushort inCount) {
-            BinaryWriter bw = new BinaryWriter(rzxFile);
-            bw.Write((ushort)fetchCount);
-            bw.Write(inCount);
-
-            frameDataSize += 2 + 2;
-
-            if (inputs != null && _inputs.Length > 0) {
-                bw.Write(_inputs);
-                frameDataSize += (uint)_inputs.Length;
-            }
-        }
-
         private int ReadFromZStream(BinaryReader reader, ref byte[] buffer, int numBytesToRead) {
             zStream.next_out = buffer;
             zStream.avail_out = numBytesToRead;
@@ -1016,9 +1002,11 @@ namespace Peripherals
             }
 
             if (RZXFileEventHandler != null) {
-                RZXFileEventArgs rzxArgs = new RZXFileEventArgs();
-                rzxArgs.blockID = RZX_BlockType.SNAPSHOT;
-                rzxArgs.snapData = snapShotData[1];
+                RZXFileEventArgs rzxArgs = new RZXFileEventArgs
+                {
+                    blockID = RZX_BlockType.SNAPSHOT,
+                    snapData = snapShotData[1]
+                };
                 rzxArgs.snapData.extension = new String(snap.extension).ToLower();
 
                 RZXFileEventHandler(rzxArgs);
@@ -1190,8 +1178,6 @@ namespace Peripherals
                     size = (uint)Marshal.SizeOf(record) + 5
                 };
                 //This will be adjusted later when closing the record
-                byte[] buf;
-
                 rzxFileWrite.Write(RawSerialize(block));
                 rzxFileWrite.Write(RawSerialize(record));
 
@@ -1254,7 +1240,7 @@ namespace Peripherals
             RZX_Block block = new RZX_Block
             {
                 id = 0x30,
-                size = (uint) Marshal.SizeOf(snap) + (uint) rawSZXData.Length + 5
+                size = (uint)Marshal.SizeOf(snap) + (uint)rawSZXData.Length + 5
             };
 
             rzxFileWrite.Write(RawSerialize(block));

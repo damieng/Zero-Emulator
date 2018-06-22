@@ -51,8 +51,8 @@ namespace Speccy
 
         //Tables for parity and flags. Pretty much taken from Fuse.
         protected byte[] parity = new byte[256];
-        protected byte[] IOIncParityTable = new byte[16] { 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0 };
-        protected byte[] IODecParityTable = new byte[16] { 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1 };
+        protected byte[] IOIncParityTable = { 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0 };
+        protected byte[] IODecParityTable = { 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1 };
         protected byte[] halfcarry_add = { 0, F_HALF, F_HALF, F_HALF, 0, 0, 0, F_HALF };
         protected byte[] halfcarry_sub = { 0, 0, F_HALF, 0, F_HALF, 0, F_HALF, F_HALF };
         protected byte[] overflow_add = { 0, 0, 0, F_PARITY, F_PARITY, 0, 0, 0 };
@@ -296,85 +296,17 @@ namespace Speccy
         #endregion Flag manipulation
 
         public Z80Core() {
-            //Build Parity Table
-            /*
-            for (int f = 0; f < 256; f++) {
-                int val = f;
-                bool _parity = false;
-                int runningCounter = 0;
-                for (int count = 0; count < 8; count++) {
-                    if ((val & 0x80) != 0)
-                        runningCounter++;
-                    val = val << 1;
-                }
-
-                if (runningCounter % 2 == 0)
-                    _parity = true;
-
-                parity[f] = _parity;
-            }
-            */
-            int i, j, k;
-            byte p;
-
-            for (i = 0; i < 256; i++) {
+            for (int i = 0; i < 256; i++) {
                 sz53[i] = (byte)(i & (F_3 | F_5 | F_SIGN));
-                j = i; p = 0;
-                for (k = 0; k < 8; k++) { p ^= (byte)(j & 1); j >>= 1; }
+                var j = i; byte p = 0;
+                for (int k = 0; k < 8; k++) { p ^= (byte)(j & 1); j >>= 1; }
                 parity[i] = (byte)(p > 0 ? 0 : F_PARITY);
                 sz53p[i] = (byte)(sz53[i] | parity[i]);
             }
 
-            sz53[0] |= (byte)F_ZERO;
-            sz53p[0] |= (byte)F_ZERO;
+            sz53[0] |= F_ZERO;
+            sz53p[0] |= F_ZERO;
         }
-
-        #region old Functions
-        /*
-                public virtual int PeekByte(int addr)
-                {
-                    //return  PeekByte(addr);
-                    return 0;
-                }
-
-                public virtual int PeekByteNoContend(int addr)
-                {
-                    //return  PeekByteNoContend(addr);
-                    return 0;
-                }
-
-                public virtual void PokeByte(int addr, int b)
-                {
-                    // PokeByte(addr, b);
-                }
-
-                public virtual int PeekWord(int addr)
-                {
-                    //int w =  PeekByte(addr) + ( PeekByte(addr + 1) << 8);
-                    //return w;
-                    return 0;
-                }
-
-                public virtual void PokeWord(int addr, int w)
-                {
-                    // PokeByte(addr, w);
-                    // PokeByte((addr + 1), w >> 8);
-                }
-
-                //In A, (n)
-                public virtual int In(int port)
-                {
-                   // return  In(port);
-                    return 0;
-                }
-
-                //Out
-                public virtual void Out(int port, int val)
-                {
-                   //  Out(port, val);
-                }
-        */
-        #endregion
 
         public void exx() {
             int temp = _hl;
@@ -396,30 +328,7 @@ namespace Speccy
             AF = temp;
         }
 
-        //Reads next instruction from address pointed to by PC
-        /*   public int FetchInstruction()
-           {
-               R++;
-               int b = PeekByte(PC);
-               PC = (PC + 1) & 0xffff;
-               totalTStates++; //effectively, totalTStates + 4 because PeekByte does the other 3
-               return b;
-           }
-   */
-
         public int Inc(int reg) {
-            /*
-            SetParity((reg == 0x7f));   //reg = 127? We're gonna overflow on inc!
-            SetNeg(false);               //Negative is always reset (0)
-            SetHalf((((reg & 0x0f) + 1) & F_HALF) != 0);
-
-            reg = (reg + 1) & 0xff;
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            return reg;*/
-
             reg = reg + 1;
             F = (F & F_CARRY) | (reg == 0x80 ? F_PARITY : 0) | ((reg & 0x0f) > 0 ? 0 : F_HALF);
             reg &= 0xff;
@@ -428,18 +337,6 @@ namespace Speccy
         }
 
         public int Dec(int reg) {
-            /*
-            SetNeg(true);                //Negative is always set (1)
-            SetParity((reg == 0x80));   //reg = -128? We're gonna overflow on dec!
-            SetHalf((((reg & 0x0f) - 1) & F_HALF) != 0);
-
-            reg = (reg - 1) & 0xff;
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-
-            return reg;*/
             F = (F & F_CARRY) | ((reg & 0x0f) > 0 ? 0 : F_HALF) | F_NEG;
             reg = reg - 1;
             F |= reg == 0x7f ? F_PARITY : 0;
@@ -450,39 +347,15 @@ namespace Speccy
 
         //16 bit addition (no carry)
         public int Add_RR(int rr1, int rr2) {
-            /*
-            SetNeg(false);
-            //SetHalf(((((rr1 >> 8) & 0x0f) + ((rr2 >> 8) & 0x0f)) & F_HALF) != 0); //Set from high byte of operands
-            SetHalf((((rr1 & 0xfff) + (rr2 & 0xfff)) & 0x1000) != 0); //Set from high byte of operands
-            rr1 += rr2;
-
-            SetCarry((rr1 & 0x10000) != 0);
-            SetF3(((rr1 >> 8) & F_3) != 0);
-            SetF5(((rr1 >> 8) & F_5) != 0);
-            return (rr1 & 0xffff);*/
             int add16temp = rr1 + rr2;
             byte lookup = (byte)(((rr1 & 0x0800) >> 11) | ((rr2 & 0x0800) >> 10) | ((add16temp & 0x0800) >> 9));
             rr1 = add16temp;
             F = (F & (F_PARITY | F_ZERO | F_SIGN)) | ((add16temp & 0x10000) > 0 ? F_CARRY : 0) | ((add16temp >> 8) & (F_3 | F_5)) | halfcarry_add[lookup];
-            return rr1 & 0xffff; ;
+            return rr1 & 0xffff;
         }
 
         //8 bit add to accumulator (no carry)
         public void Add_R(int reg) {
-            /*
-            SetNeg(false);
-            SetHalf((((A & 0x0f) + (reg & 0x0f)) & F_HALF) != 0);
-
-            int ans = (A + reg) & 0xff;
-            SetCarry(((A + reg) & 0x100) != 0);
-            SetParity(((A ^ ~reg) & (A ^ ans) & 0x80) != 0);
-            SetSign((ans & F_SIGN) != 0);
-            SetZero(ans == 0);
-            SetHalf((((A & 0x0f) + (reg & 0x0f)) & F_HALF) != 0);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            A = ans;
-             * */
             int addtemp = A + reg;
             byte lookup = (byte)(((A & 0x88) >> 3) | ((reg & 0x88) >> 2) | ((addtemp & 0x88) >> 1));
             A = addtemp & 0xff;
@@ -491,20 +364,6 @@ namespace Speccy
 
         //Add with carry into accumulator
         public void Adc_R(int reg) {
-            /*
-            SetNeg(false);
-            int fc = ((F & F_CARRY) != 0 ? 1 : 0);
-            SetHalf((((A & 0x0f) + (reg & 0x0f) + fc) & F_HALF) != 0);
-            int ans = (A + reg + fc) & 0xff;
-
-            SetCarry(((A + reg + fc) & 0x100) != 0);
-
-            SetParity(((A ^ ~reg) & (A ^ ans) & 0x80) != 0);
-            SetSign((ans & F_SIGN) != 0);
-            SetZero(ans == 0);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            A = ans;*/
             int adctemp = A + reg + (F & F_CARRY);
             byte lookup = (byte)(((A & 0x88) >> 3) | ((reg & 0x88) >> 2) | ((adctemp & 0x88) >> 1));
             A = adctemp & 0xff;
@@ -513,19 +372,6 @@ namespace Speccy
 
         //Add with carry into HL
         public void Adc_RR(int reg) {
-            /*
-            SetNeg(false);
-            int fc = ((F & F_CARRY) != 0 ? 1 : 0);
-            int ans = (HL + reg + fc) & 0xffff;
-            SetCarry(((HL + reg + fc) & 0x10000) != 0);
-            SetHalf((((HL & 0xfff) + (reg & 0xfff) + fc) & 0x1000) != 0); //Set from high byte of operands
-            //SetHalf(((((HL >> 8) & 0x0f + (reg >> 8) & 0x0f) + fc) & F_HALF) != 0); //Set from high byte of operands
-            SetParity(((HL ^ ~reg) & (HL ^ ans) & 0x8000) != 0);
-            SetSign((ans & (F_SIGN << 8)) != 0);
-            SetZero(ans == 0);
-            SetF3(((ans >> 8) & F_3) != 0);
-            SetF5(((ans >> 8) & F_5) != 0);
-            HL = ans;*/
             int add16temp = HL + reg + (F & F_CARRY);
             byte lookup = (byte)(((HL & 0x8800) >> 11) | ((reg & 0x8800) >> 10) | ((add16temp & 0x8800) >> 9));
             HL = add16temp & 0xffff;
@@ -534,20 +380,6 @@ namespace Speccy
 
         //8 bit subtract to accumulator (no carry)
         public void Sub_R(int reg) {
-            /*
-            SetNeg(true);
-
-            int ans = (A - reg) & 0xff;
-            SetCarry(((A - reg) & 0x100) != 0);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            SetParity(((A ^ reg) & (A ^ ans) & 0x80) != 0);
-            SetSign((ans & F_SIGN) != 0);
-            SetHalf((((A & 0x0f) - (reg & 0x0f)) & F_HALF) != 0);
-            SetZero(ans == 0);
-            SetNeg(true);
-
-            A = ans;*/
             int subtemp = A - reg;
             byte lookup = (byte)(((A & 0x88) >> 3) | ((reg & 0x88) >> 2) | ((subtemp & 0x88) >> 1));
             A = subtemp & 0xff;
@@ -556,18 +388,6 @@ namespace Speccy
 
         //8 bit subtract from accumulator with carry (SBC A, r)
         public void Sbc_R(int reg) {
-            /* SetNeg(true);
-             int fc = ((F & F_CARRY) != 0 ? 1 : 0);
-
-             int ans = (A - reg - fc) & 0xff;
-             SetCarry(((A - reg - fc) & 0x100) != 0);
-             SetParity(((A ^ reg) & (A ^ ans) & 0x80) != 0);
-             SetSign((ans & F_SIGN) != 0);
-             SetHalf((((A & 0x0f) - (reg & 0x0f) - fc) & F_HALF) != 0);
-             SetZero(ans == 0);
-             SetF3((ans & F_3) != 0);
-             SetF5((ans & F_5) != 0);
-             A = ans;*/
             int sbctemp = A - reg - (F & F_CARRY);
             byte lookup = (byte)(((A & 0x88) >> 3) | ((reg & 0x88) >> 2) | ((sbctemp & 0x88) >> 1));
             A = sbctemp & 0xff;
@@ -576,22 +396,6 @@ namespace Speccy
 
         //16 bit subtract from HL with carry
         public void Sbc_RR(int reg) {
-            /*
-            SetNeg(true);
-            int fc = ((F & F_CARRY) != 0 ? 1 : 0);
-
-            SetHalf((((HL & 0xfff) - (reg & 0xfff) - fc) & 0x1000) != 0); //Set from high byte of operands
-            // SetHalf((((((HL >> 8) & 0x0f) - ((reg >> 8) & 0x0f)) - fc) & F_HALF) != 0); //Set from high byte of operands
-
-            int ans = (HL - reg - fc) & 0xffff;
-            SetCarry(((HL - reg - fc) & 0x10000) != 0);
-            SetParity(((HL ^ reg) & (HL ^ ans) & 0x8000) != 0);
-            SetSign((ans & (F_SIGN << 8)) != 0);
-            SetZero(ans == 0);
-            SetF3(((ans >> 8) & F_3) != 0);
-            SetF5(((ans >> 8) & F_5) != 0);
-
-            HL = ans;*/
             int sub16temp = HL - reg - (F & F_CARRY);
             byte lookup = (byte)(((HL & 0x8800) >> 11) | ((reg & 0x8800) >> 10) | ((sub16temp & 0x8800) >> 9));
             HL = sub16temp & 0xffff;
@@ -600,18 +404,6 @@ namespace Speccy
 
         //Comparison with accumulator
         public void Cp_R(int reg) {
-            /*
-            SetNeg(true);
-
-            int result = A - reg;
-            int ans = result & 0xff;
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            SetHalf((((A & 0x0f) - (reg & 0x0f)) & F_HALF) != 0);
-            SetParity(((A ^ reg) & (A ^ ans) & 0x80) != 0);
-            SetSign((ans & F_SIGN) != 0);
-            SetZero(ans == 0);
-            SetCarry((result & 0x100) != 0);*/
             int cptemp = A - reg;
             byte lookup = (byte)(((A & 0x88) >> 3) | ((reg & 0x88) >> 2) | ((cptemp & 0x88) >> 1));
             F = ((cptemp & 0x100) > 0 ? F_CARRY : (cptemp > 0 ? 0 : F_ZERO)) | F_NEG | halfcarry_sub[lookup & 0x07] | overflow_sub[lookup >> 4] | (reg & (F_3 | F_5)) | (cptemp & F_SIGN);
@@ -619,19 +411,6 @@ namespace Speccy
 
         //AND with accumulator
         public void And_R(int reg) {
-            /*
-            SetCarry(false);
-            SetNeg(false);
-
-            int ans = A & reg;
-            SetSign((ans & F_SIGN) != 0);
-            SetHalf(true);
-            SetZero(ans == 0);
-            //SetParity(GetParity(ans));
-            SetParity(parity[ans]);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            A = ans;*/
             A &= reg;
             F = F_HALF | sz53p[A];
             if ((reg & ~96) == 0 && reg != 96)
@@ -640,62 +419,18 @@ namespace Speccy
 
         //XOR with accumulator
         public void Xor_R(int reg) {
-            /*
-            SetCarry(false);
-            SetNeg(false);
-
-            int ans = (A ^ reg) & 0xff;
-            SetSign((ans & F_SIGN) != 0);
-            SetHalf(false);
-            SetZero(ans == 0);
-            // SetParity(GetParity(ans));
-            SetParity(parity[ans]);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            A = ans;*/
             A = (A ^ reg) & 0xff;
             F = sz53p[A];
         }
 
         //OR with accumulator
         public void Or_R(int reg) {
-            /*
-            SetCarry(false);
-            SetNeg(false);
-
-            int ans = A | reg;
-            SetSign((ans & F_SIGN) != 0);
-            SetHalf(false);
-            SetZero(ans == 0);
-            //SetParity(GetParity(ans));
-            SetParity(parity[ans]);
-            SetF3((ans & F_3) != 0);
-            SetF5((ans & F_5) != 0);
-            A = ans;*/
             A |= reg;
             F = sz53p[A];
         }
 
         //Rotate left with carry register (RLC r)
         public int Rlc_R(int reg) {
-            /*
-            int msb = reg & F_SIGN;
-
-            if (msb != 0) {
-                reg = ((reg << 1) | 0x01) & 0xff;
-            } else
-                reg = (reg << 1) & 0xff;
-
-            SetCarry(msb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            //SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             reg = ((reg << 1) | (reg >> 7)) & 0xff;
             F = (reg & F_CARRY) | sz53p[reg];
             return reg;
@@ -703,25 +438,6 @@ namespace Speccy
 
         //Rotate right with carry register (RLC r)
         public int Rrc_R(int reg) {
-            /*
-            int lsb = reg & F_CARRY; //save the lsb bit
-
-            if (lsb != 0) {
-                reg = (reg >> 1) | 0x80;
-            } else
-                reg = reg >> 1;
-
-            SetCarry(lsb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            //SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-
-            return reg;*/
             F = reg & F_CARRY;
             reg = ((reg >> 1) | (reg << 7)) & 0xff;
             F |= sz53p[reg];
@@ -730,26 +446,6 @@ namespace Speccy
 
         //Rotate left register (RL r)
         public int Rl_R(int reg) {
-            /*
-            bool rc = (reg & F_SIGN) != 0;
-            int msb = F & F_CARRY; //save the msb bit
-
-            if (msb != 0) {
-                reg = ((reg << 1) | 0x01) & 0xff;
-            } else {
-                reg = (reg << 1) & 0xff;
-            }
-
-            SetCarry(rc);
-            SetHalf(false);
-            SetNeg(false);
-            //SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             byte rltemp = (byte)(reg & 0xff);
             reg = ((reg << 1) | (F & F_CARRY)) & 0xff;
             F = (rltemp >> 7) | sz53p[reg];
@@ -758,25 +454,6 @@ namespace Speccy
 
         //Rotate right register (RL r)
         public int Rr_R(int reg) {
-            /*
-            bool rc = (reg & F_CARRY) != 0;
-            int lsb = F & F_CARRY; //save the lsb bit
-
-            if (lsb != 0) {
-                reg = (reg >> 1) | 0x80;
-            } else
-                reg = reg >> 1;
-
-            SetCarry(rc);
-            SetHalf(false);
-            SetNeg(false);
-            // SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             byte rrtemp = (byte)(reg & 0xff);
             reg = ((reg >> 1) | (F << 7)) & 0xff;
             F = (rrtemp & F_CARRY) | sz53p[reg];
@@ -785,21 +462,6 @@ namespace Speccy
 
         //Shift left arithmetic register (SLA r)
         public int Sla_R(int reg) {
-            /*
-            int msb = reg & F_SIGN; //save the msb bit
-
-            reg = (reg << 1) & 0xff;
-
-            SetCarry(msb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            //SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             F = reg >> 7;
             reg = (reg << 1) & 0xff;
             F |= sz53p[reg];
@@ -808,20 +470,6 @@ namespace Speccy
 
         //Shift right arithmetic register (SRA r)
         public int Sra_R(int reg) {
-            /*
-            int lsb = reg & F_CARRY; //save the lsb bit
-            reg = (reg >> 1) | (reg & F_SIGN);
-
-            SetCarry(lsb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            // SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & 0x80) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             F = reg & F_CARRY;
             reg = ((reg & 0x80) | (reg >> 1)) & 0xff;
             F |= sz53p[reg];
@@ -830,21 +478,6 @@ namespace Speccy
 
         //Shift left logical register (SLL r)
         public int Sll_R(int reg) {
-            /*
-            int msb = reg & F_SIGN; //save the msb bit
-            reg = reg << 1;
-            reg = (reg | 0x01) & 0xff;
-
-            SetCarry(msb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            // SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             F = reg >> 7;
             reg = ((reg << 1) | 0x01) & 0xff;
             F |= sz53p[reg];
@@ -853,20 +486,6 @@ namespace Speccy
 
         //Shift right logical register (SRL r)
         public int Srl_R(int reg) {
-            /*
-            int lsb = reg & F_CARRY; //save the lsb bit
-            reg = reg >> 1;
-
-            SetCarry(lsb != 0);
-            SetHalf(false);
-            SetNeg(false);
-            //SetParity(GetParity(reg));
-            SetParity(parity[reg]);
-            SetZero(reg == 0);
-            SetSign((reg & F_SIGN) != 0);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);
-            return reg;*/
             F = reg & F_CARRY;
             reg = (reg >> 1) & 0xff;
             F |= sz53p[reg];
@@ -875,15 +494,6 @@ namespace Speccy
 
         //Bit test operation (BIT b, r)
         public void Bit_R(int b, int reg) {
-            /*
-            bool bitset = ((reg & (1 << b)) != 0);  //true if bit is set
-            SetZero(!bitset);                       //true if bit is not set, false if bit is set
-            SetParity(!bitset);                     //copy of Z
-            SetNeg(false);
-            SetHalf(true);
-            SetSign((b == 7) ? bitset : false);
-            SetF3((reg & F_3) != 0);
-            SetF5((reg & F_5) != 0);*/
             F = (F & F_CARRY) | F_HALF | (reg & (F_3 | F_5));
             if (!((reg & (0x01 << b)) > 0)) F |= F_PARITY | F_ZERO;
             if (b == 7 && (reg & 0x80) > 0) F |= F_SIGN;

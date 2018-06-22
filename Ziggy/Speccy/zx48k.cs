@@ -105,32 +105,8 @@ namespace Speccy
         }
 
         public override bool IsContended(int addr) {
-            //int addr_hb = (addr & 0xff00) >> 8;
-            // if ((addr > 16383) && (addr < 32768))
-            if ((addr & 49152) == 16384)
-                return true;
-
-            return false;
+            return (addr & 49152) == 16384;
         }
-
-        //_addr = address to test for contention,
-        //_count = how many times to contend
-        //_time = how much time to tack on at end of each _count
-        //public override void Contend(int _addr, int _time, int _count)
-        //{
-        //   // bool addrIsContended = IsContended(_addr);
-        //    if (IsContended(_addr))
-        //    {
-        //        for (int f = 0; f < _count; f++)
-        //        {
-        //            totalTStates += contentionTable[totalTStates];
-        //            totalTStates += _time;
-        //        }
-
-        //    }
-        //    else
-        //        totalTStates += (_time * _count);
-        //}
 
         public override void BuildContentionTable() {
             int t = contentionStartPeriod;
@@ -231,8 +207,8 @@ namespace Speccy
                 if (rzx.inputCount < rzx.frame.inputCount)
                     rzxIN = rzx.frame.inputs[rzx.inputCount++];
                 return rzxIN;
-             }
-            
+            }
+
             int result = 0xff;
             bool lowBitReset = (port & 0x01) == 0;
             //T1
@@ -357,8 +333,6 @@ namespace Speccy
 
             bool lowBitReset = (port & 0x01) == 0;
 
-            //T1
-            //Contend(port, 1, 1);        //N:1 || C:1
             Contend(port);
             totalTStates++;
 
@@ -383,7 +357,8 @@ namespace Speccy
 
                         if (beepVal == 0) {
                             soundOut = MIN_SOUND_VOL;
-                        } else {
+                        }
+                        else {
                             soundOut = MAX_SOUND_VOL;
                         }
 
@@ -406,7 +381,6 @@ namespace Speccy
             if (ULAPlusEnabled) {
                 //ULA Plus
                 if (port == 0xbf3b) {
-                    // UpdateScreenBuffer(totalTStates);
                     tempTStates = totalTStates;
                     totalTStates += contentionTable[totalTStates];  //C:3
 
@@ -415,8 +389,9 @@ namespace Speccy
                     //mode group
                     if (mode == 1) {
                         ULAGroupMode = 1;
-                    } else if (mode == 0) //palette group
-                    {
+                    }
+                    else if (mode == 0) //palette group
+                  {
                         ULAGroupMode = 0;
                         ULAPaletteGroup = val & 0x3f;
                     }
@@ -440,7 +415,8 @@ namespace Speccy
 
                     if (ULAGroupMode == 1) {
                         ULAPaletteEnabled = (val & 0x01) != 0;
-                    } else {
+                    }
+                    else {
                         int bl = val & 0x01;
                         int bm = bl;
                         int bh = (val & 0x02) >> 1;
@@ -493,7 +469,8 @@ namespace Speccy
             // tempTStates = totalTStates;
             if (IsContended(port) && !lowBitReset) {
                 Contend(port, 1, 3);
-            } else {
+            }
+            else {
                 totalTStates += 3;
             }
 
@@ -508,104 +485,20 @@ namespace Speccy
             aySound.Reset();
         }
 
-        //public override void ULAUpdateStart()
-        //{
-        //    ULAByteCtr = 0;
-        //    screenByteCtr = DisplayStart;
-        //    lastTState = ActualULAStart;
-        //    needsPaint = true;
-        //}
-        /*
-        public override void UpdateScreenBuffer(int _tstates)
-        {
-            if (_tstates < ActualULAStart)
-            {
-                return;
-            }
-            else if (_tstates >= FrameLength)
-            {
-                _tstates = FrameLength - 1;
-                //Since we're updating the entire screen here, we don't need to re-paint
-                //it again in the  process loop on framelength overflow.
-                needsPaint = true;
-            }
-
-            //the additional 1 tstate is required to get correct number of bytes to output in ircontention.sna
-            elapsedTStates = _tstates + 1 - lastTState;
-
-            int numBytes = (elapsedTStates >> 2) + ((elapsedTStates % 4) > 0 ? 1 : 0);
-            {
-                for (int i = 0; i < numBytes; i++)
-                {
-                    if (tstateToDisp[lastTState] > 1)
-                    {
-                        screenByteCtr = tstateToDisp[lastTState];
-                        int pixelData = screen[screenByteCtr - 16384];
-
-                        lastPixelValue = pixelData;
-
-                        //Replacing the below with PeekByteNoContend(attr[screenByteCtr - 16384]);
-                        //also works
-                        lastAttrValue = screen[attr[screenByteCtr - 16384] - 16384];
-
-                        int bright = (lastAttrValue & 0x40) >> 3;
-                        bool flashBitOn = (lastAttrValue & 0x80) != 0;
-                        int ink = AttrColors[(lastAttrValue & 0x07) + bright];
-                        int paper = AttrColors[((lastAttrValue >> 3) & 0x7) + bright];
-
-                        if (flashOn && flashBitOn) //swap paper and ink when flash is on
-                        {
-                            int temp = ink;
-                            ink = paper;
-                            paper = temp;
-                        }
-
-                        if (ULAPlusEnabled && ULAPaletteEnabled)
-                        {
-                            ink = ULAPlusColours[((flashBitOn ? 1:0) * 2 + (bright !=0 ? 1:0)) * 16 + (lastAttrValue & 0x07)];
-                            paper = ULAPlusColours[((flashBitOn ? 1 : 0) * 2 + (bright != 0 ? 1 : 0)) * 16 + ((lastAttrValue >> 3) & 0x7) + 8];
-                        }
-
-                        for (int a = 0; a < 8; ++a)
-                        {
-                            if ((pixelData & 0x80) != 0)
-                            {
-                                ScreenBuffer[ULAByteCtr++] = ink;
-                            }
-                            else
-                            {
-                                ScreenBuffer[ULAByteCtr++] = paper;
-                            }
-                            pixelData <<= 1;
-                        }
-                    }
-                    else if (tstateToDisp[lastTState] == 1)
-                    {
-                        for (int g = 0; g < 8; g++)
-                            ScreenBuffer[ULAByteCtr++] = AttrColors[borderColour];
-                    }
-                    lastTState += 4 ;
-                }
-            }
-        }
-        */
-
         public override bool LoadROM(string path, string file) {
             FileStream fs;
             String filename = path + file;
 
-            //Check if we can find the ROM file!
             try {
                 fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            } catch {
+            }
+            catch {
                 return false;
             }
 
-            fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            using (BinaryReader r = new BinaryReader(fs)) {
-                //int bytesRead = ReadBytes(r, mem, 0, 16384);
+            using (BinaryReader reader = new BinaryReader(fs)) {
                 byte[] buffer = new byte[16384];
-                int bytesRead = r.Read(buffer, 0, 16384);
+                int bytesRead = reader.Read(buffer, 0, 16384);
 
                 if (bytesRead == 0)
                     return false; //something bad happened!
@@ -620,9 +513,6 @@ namespace Speccy
         }
 
         public override void UseSNA(SNA_SNAPSHOT sna) {
-            if (sna == null)
-                return;
-
             if (sna is SNA_48K) {
                 lock (lockThis) {
                     I = sna.HEADER.I;
@@ -658,7 +548,7 @@ namespace Speccy
                 }
             }
         }
-  
+
         public override void UseSZX(SZXFile szx) {
             lock (lockThis) {
                 base.UseSZX(szx);
@@ -683,7 +573,8 @@ namespace Speccy
                     if (szx.palette.flags == 1) {
                         ULAPlusEnabled = true;
                         ULAPaletteEnabled = true;
-                    } else {
+                    }
+                    else {
                         ULAPaletteEnabled = false;
                     }
                     ULAPaletteGroup = szx.palette.currentRegister;
