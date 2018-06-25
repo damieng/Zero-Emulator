@@ -63,13 +63,10 @@ namespace Peripherals
 
         public static Z80_SNAPSHOT LoadZ80(Stream fs) {
             Z80_SNAPSHOT snapshot = new Z80_SNAPSHOT();
-            using (BinaryReader r = new BinaryReader(fs)) {
-                int bytesToRead = (int)fs.Length;
-
-                byte[] buffer = new byte[bytesToRead];
-                int bytesRead = r.Read(buffer, 0, bytesToRead);
-
-                if (bytesRead == 0)
+            using (MemoryStream ms = new MemoryStream()) {
+                fs.CopyTo(ms);
+                byte[] buffer = ms.GetBuffer();
+                if (buffer.Length == 0)
                     return null; //something bad happened!
 
                 snapshot.AF = buffer[0] << 8;
@@ -87,7 +84,6 @@ namespace Peripherals
 
                 snapshot.R |= (byte)((byte12 & 0x01) << 7);
                 snapshot.BORDER = (byte)((byte12 >> 1) & 0x07);
-                bool isCompressed = (byte12 & 0x20) != 0;
 
                 snapshot.DE = buffer[13] | (buffer[14] << 8);
                 snapshot.BC_ = buffer[15] | (buffer[16] << 8);
@@ -258,6 +254,7 @@ namespace Peripherals
                     //int screenAddr = GetPageAddress(10);
                     byte[] RAM_48K = new byte[49152];
 
+                    bool isCompressed = (byte12 & 0x20) != 0;
                     if (!isCompressed) {
                         //copy ram bank 5
                         Array.Copy(buffer, 30, RAM_48K, 0, 49152);
