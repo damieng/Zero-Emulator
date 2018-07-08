@@ -174,6 +174,7 @@ namespace Peripherals
                         //Get length of data block
                         int dataLength = buffer[counter] | (buffer[counter + 1] << 8);
                         counter += 2;
+                        if (counter >= buffer.Length) break; // Some 128K .z80 files have a trailing zero or two
                         int page = buffer[counter++];
 
                         //copies page data to temporary RAM array
